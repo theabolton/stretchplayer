@@ -8,7 +8,7 @@ DEPENDPATH += .
 INCLUDEPATH += .
 CONFIG += debug
 
-LIBS += -ljack -lsndfile
+LIBS += -ljack -lsndfile -lsamplerate
 
 # Input
 HEADERS += PlayerWidget.hpp Engine.hpp

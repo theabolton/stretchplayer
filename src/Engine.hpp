@@ -20,11 +20,7 @@
 #define ENGINE_HPP
 
 #include <jack/jack.h>
-#include <sndfile.h>
-#include <boost/shared_ptr.hpp>
-#include <memory>
 #include <QString>
-#include <QAtomicInt>
 #include <QMutex>
 #include <vector>
 

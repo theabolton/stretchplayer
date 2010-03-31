@@ -18,6 +18,8 @@
  */
 
 #include "Engine.hpp"
+#include <sndfile.h>
+#include <samplerate.h>
 #include <iostream>
 #include <stdexcept>
 #include <cassert>
@@ -55,6 +57,8 @@ namespace StretchPlayer
 					    this );
 	if(rv)
 	    throw std::runtime_error("Could not set up jack callback.");
+
+	_sample_rate = jack_get_sample_rate(_jack_client);
 
 	jack_activate(_jack_client);
     }
@@ -154,7 +158,6 @@ namespace StretchPlayer
 	stop();
 	_left.clear();
 	_right.clear();
-	_sample_rate = 0;
 	_position = 0;
 
 	SNDFILE *sf = 0;
@@ -164,24 +167,46 @@ namespace StretchPlayer
 	std::cout << "Opening " << filename.toStdString() << std::endl;
 	sf = sf_open(filename.toLocal8Bit().data(), SFM_READ, &sf_info);
 
-	const unsigned BUF_SIZE = 2048;
-	std::vector<float> buf(BUF_SIZE, 0.0f);
-	sf_count_t read = 1, j, mod;
-	_sample_rate = sf_info.samplerate;
 	_left.reserve( sf_info.frames );
 	_right.reserve( sf_info.frames );
 
-	while(read != 0) {
-	    read = sf_read_float(sf, &buf[0], (BUF_SIZE/sf_info.channels)*sf_info.channels);
-	    for( j=0 ; j<read ; ++j ) {
-		mod = j % sf_info.channels;
-		if( mod == 0 ) {
-		    _left.push_back( buf[j] );
-		} else if ( mod == 1 ) {
-		    _right.push_back( buf[j] );
-		} else {
-		    // remaining channels ignored
-		}
+	std::vector<float> buf(sf_info.frames * sf_info.channels, 0.0f);
+	sf_count_t read;
+	read = sf_read_float(sf, &buf[0], buf.size());
+	std::vector<float> *ptr = &buf;
+	assert(read == (sf_info.frames * sf_info.channels));
+
+	std::vector<float> out;
+	if( sf_info.samplerate != _sample_rate ) {
+	    // Resample
+	    SRC_DATA data;
+	    data.src_ratio = double(_sample_rate) / double(sf_info.samplerate);
+	    std::cout << data.src_ratio << std::endl;
+	    data.data_in = &buf[0];
+	    out.clear();
+	    out.insert(out.end(), size_t(data.src_ratio * buf.size()), 0.0);
+	    data.data_out = &out[0];
+	    ptr = &out;
+	    data.input_frames = sf_info.frames;
+	    data.output_frames = out.size()/sf_info.channels;
+	    int rv = src_simple(&data, SRC_SINC_BEST_QUALITY, sf_info.channels);
+	    if(rv != 0) {
+		std::cerr << src_strerror(rv) << std::endl;
+	    }
+	    assert(rv == 0); // XXX TODO: Handle error
+	    read = data.output_frames_gen * sf_info.channels;
+	}
+
+	sf_count_t j;
+	unsigned mod;
+	for( j=0 ; j<read ; ++j ) {
+	    mod = j % sf_info.channels;
+	    if( mod == 0 ) {
+		_left.push_back( (*ptr)[j] );
+	    } else if ( mod == 1 ) {
+		_right.push_back( (*ptr)[j] );
+	    } else {
+		// remaining channels ignored
 	    }
 	}
 
