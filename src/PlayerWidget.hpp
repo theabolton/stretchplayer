@@ -22,7 +22,7 @@
 #include <QWidget>
 
 class QPushButton;
-class QLCDNumber;
+class QLabel;
 class QVBoxLayout;
 class QHBoxLayout;
 class QSlider;
@@ -40,8 +40,9 @@ public:
 private:
     QVBoxLayout *_vbox;
     QHBoxLayout *_hbox;
-    QLCDNumber *_location;
+    QLabel *_location;
     QSlider *_slider;
+    QSlider *_stretch;
     QPushButton *_play;
 
 }; // PlayerWidget

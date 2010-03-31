@@ -21,10 +21,11 @@
 
 #include <QWidget>
 #include <QPushButton>
-#include <QLCDNumber>
+#include <QLabel>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QSlider>
+#include <QFont>
 
 namespace StretchPlayer
 {
@@ -34,11 +35,16 @@ namespace StretchPlayer
 	_vbox = new QVBoxLayout;
 	_hbox = new QHBoxLayout;
 
-	_location = new QLCDNumber(10, this);
+	_location = new QLabel(this);
 	_slider = new QSlider(Qt::Horizontal, this);
+	_stretch = new QSlider(Qt::Horizontal, this);
 	_play = new QPushButton(this);
 
-	_location->display("00:00:00.0");
+	QFont font = _location->font();
+	font.setPointSize(32);
+	_location->setFont(font);
+	_location->setText("00:00:00.0");
+	_location->setScaledContents(true);
 	_play->setText("P");
 
 	_vbox->addWidget(_location);
@@ -47,6 +53,7 @@ namespace StretchPlayer
 
 	_hbox->addWidget(_play);
 	_hbox->addStretch();
+	_hbox->addWidget(_stretch);
 
 	setLayout(_vbox);
     }
