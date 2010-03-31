@@ -20,9 +20,12 @@
 #define ENGINE_HPP
 
 #include <jack/jack.h>
+#include <memory>
 #include <QString>
 #include <QMutex>
 #include <vector>
+
+class RubberBandStretcher;
 
 namespace StretchPlayer
 {
@@ -36,10 +39,17 @@ public:
     void load_song(const QString& filename);
     void play();
     void stop();
-    void set_stretch(float factor);  // [0.5, 2.0] :: 1.0 == no stretch
     float get_position(); // in seconds
     float get_length();   // in seconds
     void locate(double secs);
+    float get_stretch() {
+	return _stretch;
+    }
+    void set_stretch(float str) {
+	if(str > 0.5 && str < 2.0) {
+	    _stretch = str;
+	}
+    }
 
 private:
     static int static_jack_callback(jack_nframes_t nframes, void* arg) {
@@ -61,6 +71,7 @@ private:
     std::vector<float> _right;
     unsigned long _position;
     float _sample_rate;
+    float _stretch;
 
 }; // Engine
 

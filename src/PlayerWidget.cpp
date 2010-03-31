@@ -51,6 +51,8 @@ namespace StretchPlayer
 
 	_slider->setMinimum(0);
 	_slider->setMaximum(1000);
+	_stretch->setMinimum(0);
+	_stretch->setMaximum(1000);
 
 	_vbox->addWidget(_location);
 	_vbox->addWidget(_slider);
@@ -68,6 +70,9 @@ namespace StretchPlayer
 		this, SLOT(play()));
 	connect(_slider, SIGNAL(sliderMoved(int)),
 		this, SLOT(locate(int)));
+	connect(_stretch, SIGNAL(sliderMoved(int)),
+		this, SLOT(stretch(int)));
+
 	QTimer* timer = new QTimer(this);
 	timer->setSingleShot(false);
 	timer->setInterval(60);
@@ -110,10 +115,16 @@ namespace StretchPlayer
 	_engine->locate(s);
     }
 
+    void PlayerWidget::stretch(int pos)
+    {
+	_engine->set_stretch( double(pos)/500.0 );
+    }
+
     void PlayerWidget::update_time()
     {
 	float pos = _engine->get_position();
 	float len = _engine->get_length();
+	float sch = _engine->get_stretch();
 	_location->setText(QString("%1").arg(pos));
 	if( len > 0 ) {
 	    float prog = 1000.0 * pos / len;
@@ -121,6 +132,7 @@ namespace StretchPlayer
 	} else {
 	    _slider->setValue(0);
 	}
+	_stretch->setValue( sch * 500 );
 	update();
     }
 

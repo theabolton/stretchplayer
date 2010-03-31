@@ -47,6 +47,7 @@ public slots:
     void stop();
     void update_time();
     void locate(int);
+    void stretch(int);
 
 private:
     QVBoxLayout *_vbox;
