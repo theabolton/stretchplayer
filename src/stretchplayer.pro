@@ -6,6 +6,7 @@ TEMPLATE = app
 TARGET = stretchplayer
 DEPENDPATH += .
 INCLUDEPATH += .
+CONFIG += debug
 
 LIBS += -ljack -lsndfile
 

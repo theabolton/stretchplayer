@@ -42,6 +42,7 @@ public:
     void stop();
     void set_stretch(float factor);  // [0.5, 2.0] :: 1.0 == no stretch
     float get_position(); // in seconds
+    float get_length();   // in seconds
 
 private:
     static int static_jack_callback(jack_nframes_t nframes, void* arg) {
@@ -50,6 +51,9 @@ private:
     }
 
     int jack_callback(jack_nframes_t nframes);
+
+    void _zero_buffers(jack_nframes_t nframes);
+    void _process_playing(jack_nframes_t nframes);
 
     jack_client_t* _jack_client;
     jack_port_t *_port_left, *_port_right;

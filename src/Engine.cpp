@@ -20,6 +20,8 @@
 #include "Engine.hpp"
 #include <iostream>
 #include <stdexcept>
+#include <cassert>
+#include <cstring>
 
 namespace StretchPlayer
 {
@@ -69,6 +71,27 @@ namespace StretchPlayer
 	}
     }
 
+    void Engine::_zero_buffers(jack_nframes_t nframes)
+    {
+	// MUTEX MUST ALREADY BE LOCKED
+	if (_jack_client) {
+	    // Just zero the buffers
+	    void *buf_L = 0, *buf_R = 0;
+	    if(_port_left) {
+		buf_L = jack_port_get_buffer(_port_left, nframes);
+	    }
+	    if(buf_L) {
+		memset(buf_L, 0, nframes * sizeof(float));
+	    }
+	    if(_port_right) {
+		buf_R = jack_port_get_buffer(_port_right, nframes);
+	    }
+	    if(buf_R) {
+		memset(buf_R, 0, nframes * sizeof(float));
+	    }
+	}
+    }
+
     int Engine::jack_callback(jack_nframes_t nframes)
     {
 	bool locked = false;
@@ -76,34 +99,13 @@ namespace StretchPlayer
 	try {
 	    locked = _audio_lock.tryLock();
 	    if(locked) {
-		void *buf_L = 0, *buf_R = 0;
-		if(_port_left) {
-		    buf_L = jack_port_get_buffer(_port_left, nframes);
-		}
-		if(buf_L) {
-		    memset(buf_L, 0, nframes * sizeof(float));
-		}
-		if(_port_right) {
-		    buf_R = jack_port_get_buffer(_port_right, nframes);
-		}
-		if(buf_R) {
-		    memset(buf_R, 0, nframes * sizeof(float));
+		if(_playing) {
+		    _process_playing(nframes);
+		} else {
+		    _zero_buffers(nframes);
 		}
 	    } else if (_jack_client) {
-		// Just zero the buffers
-		void *buf_L = 0, *buf_R = 0;
-		if(_port_left) {
-		    buf_L = jack_port_get_buffer(_port_left, nframes);
-		}
-		if(buf_L) {
-		    memset(buf_L, 0, nframes * sizeof(float));
-		}
-		if(_port_right) {
-		    buf_R = jack_port_get_buffer(_port_right, nframes);
-		}
-		if(buf_R) {
-		    memset(buf_R, 0, nframes * sizeof(float));
-		}
+		_zero_buffers(nframes);
 	    } else {
 		// Nothing to do.
 	    }
@@ -115,18 +117,86 @@ namespace StretchPlayer
 	return 0;
     }
 
+    void Engine::_process_playing(jack_nframes_t nframes)
+    {
+	// MUTEX MUST ALREADY BE LOCKED
+	assert(_jack_client);
+	assert(_port_left);
+	assert(_port_right);
+
+	float *buf_L = 0, *buf_R = 0;
+	buf_L = static_cast<float*>( jack_port_get_buffer(_port_left, nframes) );
+	buf_R = static_cast<float*>( jack_port_get_buffer(_port_right, nframes) );
+
+	jack_nframes_t leftover;
+	leftover = _left.size() - _position;
+	if(leftover < nframes) {
+	    _zero_buffers(nframes);
+	    _playing = false;
+	} else {
+	    leftover = nframes;
+	}
+
+	if(buf_L)
+	    memcpy(buf_L, &_left[_position], sizeof(float) * leftover);
+	if(buf_R)
+	    memcpy(buf_R, &_right[_position], sizeof(float) * leftover);
+
+	_position += nframes;
+	if(_position > _left.size()) {
+	    _position = 0;
+	}
+    }
+
     void Engine::load_song(const QString& filename)
     {
-	std::cerr << "Opening " << filename.toStdString() << std::endl;
+	QMutexLocker lk(&_audio_lock);
+	stop();
+	_left.clear();
+	_right.clear();
+	_sample_rate = 0;
+	_position = 0;
+
+	SNDFILE *sf = 0;
+	SF_INFO sf_info;
+	sf_info.format = 0;
+
+	std::cout << "Opening " << filename.toStdString() << std::endl;
+	sf = sf_open(filename.toLocal8Bit().data(), SFM_READ, &sf_info);
+
+	const unsigned BUF_SIZE = 2048;
+	std::vector<float> buf(BUF_SIZE, 0.0f);
+	sf_count_t read = 1, j, mod;
+	_sample_rate = sf_info.samplerate;
+	_left.reserve( sf_info.frames );
+	_right.reserve( sf_info.frames );
+
+	while(read != 0) {
+	    read = sf_read_float(sf, &buf[0], (BUF_SIZE/sf_info.channels)*sf_info.channels);
+	    for( j=0 ; j<read ; ++j ) {
+		mod = j % sf_info.channels;
+		if( mod == 0 ) {
+		    _left.push_back( buf[j] );
+		} else if ( mod == 1 ) {
+		    _right.push_back( buf[j] );
+		} else {
+		    // remaining channels ignored
+		}
+	    }
+	}
+
+	sf_close(sf);	
     }
 
     void Engine::play()
     {
+	std::cout << "Playing..." << std::endl;
 	_playing = true;
     }
 
     void Engine::stop()
     {
+	std::cout << "Stopping..." << std::endl;
 	_playing = false;
     }
 
@@ -138,7 +208,15 @@ namespace StretchPlayer
     float Engine::get_position()
     {
 	if(_left.size() > 0) {
-	    return float(_position) / (_sample_rate * _left.size());
+	    return float(_position) / _sample_rate;
+	}
+	return 0;
+    }
+
+    float Engine::get_length()
+    {
+	if(_left.size() > 0) {
+	    return float(_left.size()) / _sample_rate;
 	}
 	return 0;
     }

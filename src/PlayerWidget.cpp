@@ -49,6 +49,9 @@ namespace StretchPlayer
 	_location->setScaledContents(true);
 	_play->setText("P");
 
+	_slider->setMinimum(0);
+	_slider->setMaximum(1000);
+
 	_vbox->addWidget(_location);
 	_vbox->addWidget(_slider);
 	_vbox->addLayout(_hbox);
@@ -84,17 +87,32 @@ namespace StretchPlayer
     void PlayerWidget::play()
     {
 	_engine->play();
+	disconnect(_play, SIGNAL(clicked()),
+		   this, SLOT(play()));
+	connect(_play, SIGNAL(clicked()),
+		   this, SLOT(stop()));
     }
 
     void PlayerWidget::stop()
     {
 	_engine->stop();
+	disconnect(_play, SIGNAL(clicked()),
+		   this, SLOT(stop()));
+	connect(_play, SIGNAL(clicked()),
+		   this, SLOT(play()));
     }
 
     void PlayerWidget::update_time()
     {
 	float pos = _engine->get_position();
+	float len = _engine->get_length();
 	_location->setText(QString("%1").arg(pos));
+	if( len > 0 ) {
+	    float prog = 1000.0 * pos / len;
+	    _slider->setValue( prog );
+	} else {
+	    _slider->setValue(0);
+	}
 	update();
     }
 

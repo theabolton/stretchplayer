@@ -20,11 +20,19 @@
 #include <QApplication>
 
 #include "PlayerWidget.hpp"
+#include <iostream>
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
     StretchPlayer::PlayerWidget pw;
+
+    if(argc > 1) {
+	QString fn(argv[1]);
+	pw.load_song(fn);
+    } else {
+	std::cout << "Usage: " << argv[0] << " <filename>" << std::endl;
+    }
 
     pw.show();
     app.exec();
