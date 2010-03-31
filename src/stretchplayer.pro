@@ -7,6 +7,8 @@ TARGET = stretchplayer
 DEPENDPATH += .
 INCLUDEPATH += .
 
+LIBS += -ljack -lsndfile
+
 # Input
-HEADERS += PlayerWidget.hpp
-SOURCES += main.cpp PlayerWidget.cpp
+HEADERS += PlayerWidget.hpp Engine.hpp
+SOURCES += main.cpp PlayerWidget.cpp Engine.cpp

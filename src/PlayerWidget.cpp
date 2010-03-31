@@ -18,6 +18,7 @@
  */
 
 #include "PlayerWidget.hpp"
+#include "Engine.hpp"
 
 #include <QWidget>
 #include <QPushButton>
@@ -26,6 +27,7 @@
 #include <QHBoxLayout>
 #include <QSlider>
 #include <QFont>
+#include <QTimer>
 
 namespace StretchPlayer
 {
@@ -56,10 +58,44 @@ namespace StretchPlayer
 	_hbox->addWidget(_stretch);
 
 	setLayout(_vbox);
+
+	_engine.reset(new Engine);
+
+	connect(_play, SIGNAL(clicked()),
+		this, SLOT(play()));
+
+	QTimer* timer = new QTimer(this);
+	timer->setSingleShot(false);
+	timer->setInterval(60);
+	connect(timer, SIGNAL(timeout()),
+		this, SLOT(update_time()));
+	timer->start();
     }
 
     PlayerWidget::~PlayerWidget()
     {
+    }
+
+    void PlayerWidget::load_song(const QString& filename)
+    {
+	_engine->load_song(filename);
+    }
+
+    void PlayerWidget::play()
+    {
+	_engine->play();
+    }
+
+    void PlayerWidget::stop()
+    {
+	_engine->stop();
+    }
+
+    void PlayerWidget::update_time()
+    {
+	float pos = _engine->get_position();
+	_location->setText(QString("%1").arg(pos));
+	update();
     }
 
 } // namespace StretchPlayer

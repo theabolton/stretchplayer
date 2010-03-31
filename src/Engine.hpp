@@ -16,49 +16,53 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef PLAYERWIDGET_HPP
-#define PLAYERWIDGET_HPP
+#ifndef ENGINE_HPP
+#define ENGINE_HPP
 
-#include <QWidget>
+#include <jack/jack.h>
+#include <sndfile.h>
+#include <boost/shared_ptr.hpp>
 #include <memory>
-
-class QPushButton;
-class QLabel;
-class QVBoxLayout;
-class QHBoxLayout;
-class QSlider;
+#include <QString>
+#include <QAtomicInt>
+#include <QMutex>
+#include <vector>
 
 namespace StretchPlayer
 {
 
-class Engine;
-
-class PlayerWidget : public QWidget
+class Engine
 {
-    Q_OBJECT
 public:
-    PlayerWidget(QWidget *parent = 0);
-    ~PlayerWidget();
+    Engine();
+    ~Engine();
 
     void load_song(const QString& filename);
-
-public slots:
     void play();
     void stop();
-    void update_time();
+    void set_stretch(float factor);  // [0.5, 2.0] :: 1.0 == no stretch
+    float get_position(); // in seconds
 
 private:
-    QVBoxLayout *_vbox;
-    QHBoxLayout *_hbox;
-    QLabel *_location;
-    QSlider *_slider;
-    QSlider *_stretch;
-    QPushButton *_play;
+    static int static_jack_callback(jack_nframes_t nframes, void* arg) {
+	Engine *e = static_cast<Engine*>(arg);
+	return e->jack_callback(nframes);
+    }
 
-    std::auto_ptr<Engine> _engine;
+    int jack_callback(jack_nframes_t nframes);
 
-}; // PlayerWidget
+    jack_client_t* _jack_client;
+    jack_port_t *_port_left, *_port_right;
+
+    bool _playing;
+    QMutex _audio_lock;
+    std::vector<float> _left;
+    std::vector<float> _right;
+    unsigned long _position;
+    float _sample_rate;
+
+}; // Engine
 
 } // namespace StretchPlayer
 
-#endif // PLAYERWIDGET_HPP
+#endif // ENGINE_HPP
