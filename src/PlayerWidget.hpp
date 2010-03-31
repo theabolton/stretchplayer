@@ -46,6 +46,7 @@ public slots:
     void play();
     void stop();
     void update_time();
+    void locate(int);
 
 private:
     QVBoxLayout *_vbox;

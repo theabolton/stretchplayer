@@ -66,7 +66,8 @@ namespace StretchPlayer
 
 	connect(_play, SIGNAL(clicked()),
 		this, SLOT(play()));
-
+	connect(_slider, SIGNAL(sliderMoved(int)),
+		this, SLOT(locate(int)));
 	QTimer* timer = new QTimer(this);
 	timer->setSingleShot(false);
 	timer->setInterval(60);
@@ -100,6 +101,13 @@ namespace StretchPlayer
 		   this, SLOT(stop()));
 	connect(_play, SIGNAL(clicked()),
 		   this, SLOT(play()));
+    }
+
+    void PlayerWidget::locate(int pos)
+    {
+	double frac = double(pos) / 1000.0;
+	double s = frac * _engine->get_length();
+	_engine->locate(s);
     }
 
     void PlayerWidget::update_time()

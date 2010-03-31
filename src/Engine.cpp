@@ -246,4 +246,11 @@ namespace StretchPlayer
 	return 0;
     }
 
+    void Engine::locate(double secs)
+    {
+	unsigned long pos = secs * _sample_rate;
+	QMutexLocker lk(&_audio_lock);
+	_position = pos;
+    }
+
 } // namespace StretchPlayer

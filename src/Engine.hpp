@@ -39,6 +39,7 @@ public:
     void set_stretch(float factor);  // [0.5, 2.0] :: 1.0 == no stretch
     float get_position(); // in seconds
     float get_length();   // in seconds
+    void locate(double secs);
 
 private:
     static int static_jack_callback(jack_nframes_t nframes, void* arg) {
