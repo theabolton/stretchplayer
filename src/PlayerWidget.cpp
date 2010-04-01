@@ -28,6 +28,7 @@
 #include <QSlider>
 #include <QFont>
 #include <QTimer>
+#include <QSpinBox>
 
 namespace StretchPlayer
 {
@@ -41,6 +42,7 @@ namespace StretchPlayer
 	_slider = new QSlider(Qt::Horizontal, this);
 	_stretch = new QSlider(Qt::Horizontal, this);
 	_play = new QPushButton(this);
+	_pitch = new QSpinBox(this);
 
 	QFont font = _location->font();
 	font.setPointSize(32);
@@ -53,6 +55,8 @@ namespace StretchPlayer
 	_slider->setMaximum(1000);
 	_stretch->setMinimum(0);
 	_stretch->setMaximum(1000);
+	_pitch->setMinimum(-12);
+	_pitch->setMaximum(12);
 
 	_vbox->addWidget(_location);
 	_vbox->addWidget(_slider);
@@ -61,6 +65,7 @@ namespace StretchPlayer
 	_hbox->addWidget(_play);
 	_hbox->addStretch();
 	_hbox->addWidget(_stretch);
+	_hbox->addWidget(_pitch);
 
 	setLayout(_vbox);
 
@@ -72,7 +77,8 @@ namespace StretchPlayer
 		this, SLOT(locate(int)));
 	connect(_stretch, SIGNAL(sliderMoved(int)),
 		this, SLOT(stretch(int)));
-
+	connect(_pitch, SIGNAL(valueChanged(int)),
+		this, SLOT(pitch(int)));
 	QTimer* timer = new QTimer(this);
 	timer->setSingleShot(false);
 	timer->setInterval(60);
@@ -115,6 +121,11 @@ namespace StretchPlayer
 	_engine->locate(s);
     }
 
+    void PlayerWidget::pitch(int pitch)
+    {
+	_engine->set_pitch(pitch);
+    }
+
     void PlayerWidget::stretch(int pos)
     {
 	_engine->set_stretch( 0.5 + double(pos)/1000.0 );
@@ -125,6 +136,7 @@ namespace StretchPlayer
 	float pos = _engine->get_position();
 	float len = _engine->get_length();
 	float sch = _engine->get_stretch();
+	int pit = _engine->get_pitch();
 	_location->setText(QString("%1").arg(pos));
 	if( len > 0 ) {
 	    float prog = 1000.0 * pos / len;
@@ -133,6 +145,7 @@ namespace StretchPlayer
 	    _slider->setValue(0);
 	}
 	_stretch->setValue( (sch-0.5) * 1000 );
+	_pitch->setValue( pit );
 	update();
     }
 

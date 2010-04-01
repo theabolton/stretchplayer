@@ -27,6 +27,7 @@ class QLabel;
 class QVBoxLayout;
 class QHBoxLayout;
 class QSlider;
+class QSpinBox;
 
 namespace StretchPlayer
 {
@@ -48,6 +49,7 @@ public slots:
     void update_time();
     void locate(int);
     void stretch(int);
+    void pitch(int);
 
 private:
     QVBoxLayout *_vbox;
@@ -56,6 +58,7 @@ private:
     QSlider *_slider;
     QSlider *_stretch;
     QPushButton *_play;
+    QSpinBox *_pitch;
 
     std::auto_ptr<Engine> _engine;
 

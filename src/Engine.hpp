@@ -53,6 +53,18 @@ public:
 	    _stretch = str;
 	}
     }
+    int get_pitch() {
+	return _pitch;
+    }
+    void set_pitch(int pit) {
+	if(pit < -12) {
+	    _pitch = -12;
+	} else if (pit > 12) {
+	    _pitch = 12;
+	} else {
+	    _pitch = pit;
+	}
+    }
 
 private:
     static int static_jack_callback(jack_nframes_t nframes, void* arg) {
@@ -75,6 +87,7 @@ private:
     unsigned long _position;
     float _sample_rate;
     float _stretch;
+    int _pitch;
     std::auto_ptr<RubberBand::RubberBandStretcher> _stretcher;
 
 }; // Engine

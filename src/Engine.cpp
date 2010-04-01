@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <cassert>
 #include <cstring>
+#include <cmath>
 
 using RubberBand::RubberBandStretcher;
 
@@ -32,7 +33,8 @@ namespace StretchPlayer
     Engine::Engine()
 	: _jack_client(0),
 	  _sample_rate(48000.0),
-	  _stretch(1.0)
+	  _stretch(1.0),
+	  _pitch(0)
     {
 	QMutexLocker lk(&_audio_lock);
 
@@ -151,7 +153,7 @@ namespace StretchPlayer
 	jack_nframes_t srate = jack_get_sample_rate(_jack_client);
 
 	_stretcher->setTimeRatio( srate / _sample_rate / _stretch );
-	_stretcher->setPitchScale( _sample_rate / srate );
+	_stretcher->setPitchScale( ::pow(2.0, double(_pitch)/12.0) * _sample_rate / srate );
 
 	jack_nframes_t frame;
 	size_t reqd, gend, zeros, feed;
@@ -183,6 +185,7 @@ namespace StretchPlayer
 	}
 
 	if(_position >= _left.size()) {
+	    _playing = false;
 	    _position = 0;
 	}
     }
