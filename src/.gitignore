@@ -1,0 +1,9 @@
+*.[oa]
+*~
+stretchplayer
+moc_*
+Makefile
+Makefile.Debug
+Makefile.Release
+Debug/
+Release/
