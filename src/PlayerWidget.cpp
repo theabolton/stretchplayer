@@ -81,7 +81,7 @@ namespace StretchPlayer
 		this, SLOT(pitch(int)));
 	QTimer* timer = new QTimer(this);
 	timer->setSingleShot(false);
-	timer->setInterval(60);
+	timer->setInterval(100);
 	connect(timer, SIGNAL(timeout()),
 		this, SLOT(update_time()));
 	timer->start();
@@ -137,7 +137,16 @@ namespace StretchPlayer
 	float len = _engine->get_length();
 	float sch = _engine->get_stretch();
 	int pit = _engine->get_pitch();
-	_location->setText(QString("%1").arg(pos));
+
+	int hour = (int)(pos/3600.0);
+	int min = (int)((pos - hour*3600.0)/60.0);
+	float sec = pos - min*60.0 - hour*3600.0;
+	_location->setText(QString("%1:%2:%3")
+			   .arg(int(hour), 2, 10, QChar('0'))
+			   .arg(int(min), 2, 10, QChar('0'))
+			   .arg(double(sec), 4, 'f', 1, QChar('0'))
+	    );
+
 	if( len > 0 ) {
 	    float prog = 1000.0 * pos / len;
 	    _slider->setValue( prog );
