@@ -117,7 +117,7 @@ namespace StretchPlayer
 
     void PlayerWidget::stretch(int pos)
     {
-	_engine->set_stretch( double(pos)/500.0 );
+	_engine->set_stretch( 0.5 + double(pos)/1000.0 );
     }
 
     void PlayerWidget::update_time()
@@ -132,7 +132,7 @@ namespace StretchPlayer
 	} else {
 	    _slider->setValue(0);
 	}
-	_stretch->setValue( sch * 500 );
+	_stretch->setValue( (sch-0.5) * 1000 );
 	update();
     }
 

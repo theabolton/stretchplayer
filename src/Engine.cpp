@@ -19,10 +19,13 @@
 
 #include "Engine.hpp"
 #include <sndfile.h>
+#include <rubberband/RubberBandStretcher.h>
 #include <iostream>
 #include <stdexcept>
 #include <cassert>
 #include <cstring>
+
+using RubberBand::RubberBandStretcher;
 
 namespace StretchPlayer
 {
@@ -58,6 +61,17 @@ namespace StretchPlayer
 					    this );
 	if(rv)
 	    throw std::runtime_error("Could not set up jack callback.");
+
+	jack_nframes_t sample_rate = jack_get_sample_rate(_jack_client);
+
+	_stretcher.reset(
+	    new RubberBandStretcher( sample_rate,
+				     2,
+				     RubberBandStretcher::OptionProcessRealTime
+				     | RubberBandStretcher::OptionThreadingNever
+		)
+	    );
+	_stretcher->setMaxProcessSize(8192);
 
 	jack_activate(_jack_client);
     }
@@ -128,25 +142,47 @@ namespace StretchPlayer
 	assert(_port_right);
 
 	float *buf_L = 0, *buf_R = 0;
+
 	buf_L = static_cast<float*>( jack_port_get_buffer(_port_left, nframes) );
 	buf_R = static_cast<float*>( jack_port_get_buffer(_port_right, nframes) );
+	float* rb_buf_in[2];
+	float* rb_buf_out[2] = { buf_L, buf_R };
 
-	jack_nframes_t leftover;
-	leftover = _left.size() - _position;
-	if(leftover < nframes) {
-	    _zero_buffers(nframes);
-	    _playing = false;
-	} else {
-	    leftover = nframes;
+	jack_nframes_t srate = jack_get_sample_rate(_jack_client);
+
+	_stretcher->setTimeRatio( srate / _sample_rate / _stretch );
+	_stretcher->setPitchScale( _sample_rate / srate );
+
+	jack_nframes_t frame;
+	size_t reqd, gend, zeros, feed;
+
+	frame = 0;
+	while( frame < nframes ) {
+	    reqd = _stretcher->getSamplesRequired();
+	    zeros = 0;
+	    feed = reqd;
+	    if( _position + reqd > _left.size() ) {
+		feed = _left.size() - _position;
+		zeros = reqd - feed;
+	    }
+	    rb_buf_in[0] = &_left[_position];
+	    rb_buf_in[1] = &_right[_position];
+	    _stretcher->process( rb_buf_in, feed, false);
+	    if(zeros) {
+		float l[zeros], r[zeros];
+		float* z[2] = { l, r };
+		memset(l, 0, zeros * sizeof(float));
+		memset(r, 0, zeros * sizeof(float));
+		_stretcher->process(z, zeros, false);
+	    }
+	    gend = _stretcher->retrieve(rb_buf_out, (nframes-frame));
+	    rb_buf_out[0] += gend;
+	    rb_buf_out[1] += gend;
+	    _position += feed;
+	    frame += gend;
 	}
 
-	if(buf_L)
-	    memcpy(buf_L, &_left[_position], sizeof(float) * leftover);
-	if(buf_R)
-	    memcpy(buf_R, &_right[_position], sizeof(float) * leftover);
-
-	_position += nframes;
-	if(_position > _left.size()) {
+	if(_position >= _left.size()) {
 	    _position = 0;
 	}
     }

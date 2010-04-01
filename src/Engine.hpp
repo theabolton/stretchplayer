@@ -25,7 +25,10 @@
 #include <QMutex>
 #include <vector>
 
-class RubberBandStretcher;
+namespace RubberBand
+{
+    class RubberBandStretcher;
+}
 
 namespace StretchPlayer
 {
@@ -72,6 +75,7 @@ private:
     unsigned long _position;
     float _sample_rate;
     float _stretch;
+    std::auto_ptr<RubberBand::RubberBandStretcher> _stretcher;
 
 }; // Engine
 
