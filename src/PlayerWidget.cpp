@@ -197,11 +197,9 @@ namespace StretchPlayer
 	float sch = _engine->get_stretch();
 	int pit = _engine->get_pitch();
 
-	int hour = (int)(pos/3600.0);
-	int min = (int)((pos - hour*3600.0)/60.0);
-	float sec = pos - min*60.0 - hour*3600.0;
-	_location->setText(QString("%1:%2:%3")
-			   .arg(int(hour), 2, 10, QChar('0'))
+	int min = (int)(pos/60.0);
+	float sec = pos - min*60.0;
+	_location->setText(QString("%1:%2")
 			   .arg(int(min), 2, 10, QChar('0'))
 			   .arg(double(sec), 4, 'f', 1, QChar('0'))
 	    );
