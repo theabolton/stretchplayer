@@ -24,6 +24,7 @@
 #include <QString>
 #include <QMutex>
 #include <vector>
+#include <set>
 
 namespace RubberBand
 {
@@ -32,6 +33,8 @@ namespace RubberBand
 
 namespace StretchPlayer
 {
+
+class EngineMessageCallback;
 
 class Engine
 {
@@ -70,6 +73,19 @@ public:
 	}
     }
 
+    void subscribe_errors(EngineMessageCallback* obj) {
+	_subscribe_list(_error_callbacks, obj);
+    }
+    void unsubscribe_errors(EngineMessageCallback* obj) {
+	_unsubscribe_list(_error_callbacks, obj);
+    }
+    void subscribe_messages(EngineMessageCallback* obj) {
+	_subscribe_list(_message_callbacks, obj);
+    }
+    void unsubscribe_messages(EngineMessageCallback* obj) {
+	_unsubscribe_list(_message_callbacks, obj);
+    }
+
 private:
     static int static_jack_callback(jack_nframes_t nframes, void* arg) {
 	Engine *e = static_cast<Engine*>(arg);
@@ -81,11 +97,23 @@ private:
     void _zero_buffers(jack_nframes_t nframes);
     void _process_playing(jack_nframes_t nframes);
 
+    typedef std::set<EngineMessageCallback*> callback_seq_t;
+
+    void _error(const QString& msg) const {
+	_dispatch_message(_error_callbacks, msg);
+    }
+    void _message(const QString& msg) const {
+	_dispatch_message(_message_callbacks, msg);
+    }
+    void _dispatch_message(const callback_seq_t& seq, const QString& msg) const;
+    void _subscribe_list(callback_seq_t& seq, EngineMessageCallback* obj);
+    void _unsubscribe_list(callback_seq_t& seq, EngineMessageCallback* obj);
+
     jack_client_t* _jack_client;
     jack_port_t *_port_left, *_port_right;
 
     bool _playing;
-    QMutex _audio_lock;
+    mutable QMutex _audio_lock;
     std::vector<float> _left;
     std::vector<float> _right;
     unsigned long _position;
@@ -94,7 +122,30 @@ private:
     int _pitch;
     std::auto_ptr<RubberBand::RubberBandStretcher> _stretcher;
 
+    mutable QMutex _callback_lock;
+    callback_seq_t _error_callbacks;
+    callback_seq_t _message_callbacks;
+
 }; // Engine
+
+class EngineMessageCallback
+{
+public:
+    virtual ~EngineMessageCallback() {
+	if(_parent) {
+	    _parent->unsubscribe_errors(this);
+	}
+	if(_parent) {
+	    _parent->unsubscribe_messages(this);
+	}
+    }
+
+    virtual void operator()(const QString& message) = 0;
+
+private:
+    friend class Engine;
+    Engine *_parent;
+};
 
 } // namespace StretchPlayer
 

@@ -33,6 +33,7 @@ namespace StretchPlayer
 {
 
 class Engine;
+class EngineMessageCallback;
 
 class PlayerWidget : public QWidget
 {
@@ -52,6 +53,7 @@ public slots:
     void locate(int);
     void stretch(int);
     void pitch(int);
+    void status_message(const QString&);
 
 private:
     QLabel *_location;
@@ -62,8 +64,10 @@ private:
     QPushButton *_open;
     QSlider *_stretch;
     QSpinBox *_pitch;
+    QLabel *_status;
 
     std::auto_ptr<Engine> _engine;
+    std::auto_ptr<EngineMessageCallback> _engine_callback;
 
 }; // PlayerWidget
 

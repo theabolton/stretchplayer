@@ -34,6 +34,24 @@
 
 namespace StretchPlayer
 {
+    namespace Details
+    {
+	class PlayerWidgetMessageCallback : public EngineMessageCallback
+	{
+	public:
+	    PlayerWidgetMessageCallback(PlayerWidget* w) : _widget(w)
+		{}
+	    virtual ~PlayerWidgetMessageCallback() {}
+
+	    virtual void operator()(const QString& msg) {
+		_widget->status_message(msg);
+	    }
+	private:
+	    PlayerWidget* _widget;
+	};
+
+    }
+
     PlayerWidget::PlayerWidget(QWidget *parent)
 	: QWidget(parent)
     {
@@ -49,6 +67,7 @@ namespace StretchPlayer
 	_ab = new QPushButton(this);
 	_open = new QPushButton(this);
 	_pitch = new QSpinBox(this);
+	_status = new QLabel(this);
 
 	QFont font = _location->font();
 	font.setPointSize(32);
@@ -59,6 +78,7 @@ namespace StretchPlayer
 	_stop->setText("S");
 	_ab->setText("AB");
 	_open->setText("O");
+	_status->setWordWrap(true);
 
 	_position->setMinimum(0);
 	_position->setMaximum(1000);
@@ -71,6 +91,7 @@ namespace StretchPlayer
 	vbox->addWidget(_position);
 	vbox->addLayout(hbox_ctl);
 	vbox->addLayout(hbox_stretch);
+	vbox->addWidget(_status);
 
 	hbox_ctl->addWidget(_play);
 	hbox_ctl->addWidget(_stop);
@@ -83,7 +104,10 @@ namespace StretchPlayer
 
 	setLayout(vbox);
 
+	_engine_callback.reset(new Details::PlayerWidgetMessageCallback(this));
 	_engine.reset(new Engine);
+	_engine->subscribe_errors(_engine_callback.get());
+	_engine->subscribe_messages(_engine_callback.get());
 
 	connect(_play, SIGNAL(clicked()),
 		this, SLOT(play_pause()));
@@ -101,7 +125,7 @@ namespace StretchPlayer
 		this, SLOT(pitch(int)));
 	QTimer* timer = new QTimer(this);
 	timer->setSingleShot(false);
-	timer->setInterval(100);
+	timer->setInterval(200);
 	connect(timer, SIGNAL(timeout()),
 		this, SLOT(update_time()));
 	timer->start();
@@ -142,6 +166,11 @@ namespace StretchPlayer
 	if( ! filename.isNull() ) {
 	    load_song(filename);
 	}	
+    }
+
+    void PlayerWidget::status_message(const QString& msg) {
+	_status->setText(msg);
+	QTimer::singleShot(10000, _status, SLOT(clear()));
     }
 
     void PlayerWidget::locate(int pos)

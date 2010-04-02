@@ -20,11 +20,11 @@
 #include "Engine.hpp"
 #include <sndfile.h>
 #include <rubberband/RubberBandStretcher.h>
-#include <iostream>
 #include <stdexcept>
 #include <cassert>
 #include <cstring>
 #include <cmath>
+#include <algorithm>
 
 using RubberBand::RubberBandStretcher;
 using namespace std;
@@ -92,6 +92,14 @@ namespace StretchPlayer
 
 	    jack_client_close(_jack_client);
 	    _jack_client = 0;
+	}
+	callback_seq_t::iterator it;
+	QMutexLocker lk_cb(&_callback_lock);
+	for( it=_error_callbacks.begin() ; it!=_error_callbacks.end() ; ++it ) {
+	    (*it)->_parent = 0;
+	}
+	for( it=_message_callbacks.begin() ; it!=_message_callbacks.end() ; ++it ) {
+	    (*it)->_parent = 0;
 	}
     }
 
@@ -207,11 +215,13 @@ namespace StretchPlayer
 	SF_INFO sf_info;
 	memset(&sf_info, 0, sizeof(sf_info));
 
-	std::cout << "Opening " << filename.toStdString() << std::endl;
+	_message( QString("Opening file '%1'")
+		  .arg(filename) );
 	sf = sf_open(filename.toLocal8Bit().data(), SFM_READ, &sf_info);
 	if( !sf ) {
-	    cerr << "Error opening file '" << filename.toStdString() << "': "
-		 << sf_strerror(sf) << endl;
+	    _error( QString("Error opening file '%1': %2")
+		    .arg(filename)
+		    .arg( sf_strerror(sf) ) );
 	    return;
 	}
 
@@ -220,7 +230,8 @@ namespace StretchPlayer
 	_right.reserve( sf_info.frames );
 
 	if(sf_info.frames == 0) {
-	    cerr << "File '" << filename.toStdString() << "' is empty." << endl;
+	    _error( QString("Error opening file '%1': File is empty")
+		    .arg(filename) );
 	    sf_close(sf);
 	    return;
 	}
@@ -229,13 +240,14 @@ namespace StretchPlayer
 	sf_count_t read;
 	read = sf_read_float(sf, &buf[0], buf.size());
 	if( read < 1 ) {
-	    cerr << "Could not read from file." << endl;
+	    _error( QString("Error reading from file '%1'")
+		    .arg(filename) );
 	    sf_close(sf);
 	    return;
 	}
 
 	if( read != (sf_info.frames * sf_info.channels)) {
-	    cerr << "Warning: not all of the file data was read." << endl;
+	    _error( QString("Warning: not all of the file data was read.") );
 	}
 
 	sf_count_t j;
@@ -290,6 +302,31 @@ namespace StretchPlayer
 	unsigned long pos = secs * _sample_rate;
 	QMutexLocker lk(&_audio_lock);
 	_position = pos;
+    }
+
+    void Engine::_dispatch_message(const Engine::callback_seq_t& seq, const QString& msg) const
+    {
+	QMutexLocker lk(&_callback_lock);
+	Engine::callback_seq_t::const_iterator it;
+	for( it=seq.begin() ; it!=seq.end() ; ++it ) {
+	    (**it)(msg);
+	}
+    }
+
+    void Engine::_subscribe_list(Engine::callback_seq_t& seq, EngineMessageCallback* obj)
+    {
+	if( obj == 0 ) return;
+	QMutexLocker lk(&_callback_lock);
+	obj->_parent = this;
+	seq.insert(obj);
+    }
+
+    void Engine::_unsubscribe_list(Engine::callback_seq_t& seq, EngineMessageCallback* obj)
+    {
+	if( obj == 0 ) return;
+	QMutexLocker lk(&_callback_lock);
+	obj->_parent = 0;
+	seq.erase(obj);
     }
 
 } // namespace StretchPlayer
