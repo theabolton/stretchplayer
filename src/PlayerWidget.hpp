@@ -28,6 +28,7 @@ class QVBoxLayout;
 class QHBoxLayout;
 class QSlider;
 class QSpinBox;
+class QPaintEvent;
 
 namespace StretchPlayer
 {
@@ -43,6 +44,7 @@ public:
     ~PlayerWidget();
 
     void load_song(const QString& filename);
+    virtual int heightForWidth(int w) const;
 
 public slots:
     void play_pause();
@@ -54,6 +56,9 @@ public slots:
     void stretch(int);
     void pitch(int);
     void status_message(const QString&);
+
+protected:
+    virtual void paintEvent(QPaintEvent* event);
 
 private:
     QLabel *_location;

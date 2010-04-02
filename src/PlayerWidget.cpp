@@ -30,6 +30,7 @@
 #include <QTimer>
 #include <QSpinBox>
 #include <QFileDialog>
+#include <QPainter>
 #include <iostream>
 
 namespace StretchPlayer
@@ -103,6 +104,10 @@ namespace StretchPlayer
 	hbox_stretch->addWidget(_pitch);
 
 	setLayout(vbox);
+
+	QSizePolicy policy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+	policy.setHeightForWidth(true);
+	setSizePolicy(policy);
 
 	_engine_callback.reset(new Details::PlayerWidgetMessageCallback(this));
 	_engine.reset(new Engine);
@@ -213,6 +218,44 @@ namespace StretchPlayer
 	_stretch->setValue( (sch-0.5) * 1000 );
 	_pitch->setValue( pit );
 	update();
+    }
+
+    int PlayerWidget::heightForWidth(int w) const
+    {
+	return w * 175.0 / 420.0;
+    }
+
+    void PlayerWidget::paintEvent(QPaintEvent * event)
+    {
+	QPainter painter(this);
+	painter.setRenderHints(QPainter::Antialiasing);
+	float w = 420.0;
+	float h = 175.0;
+	float thickline = 5.0;
+	float border_rad = 20.0;
+
+	float scale = width() / w;
+
+	w = width();
+	h *= scale;
+	thickline *= scale;
+	border_rad *= scale;
+
+	QBrush bg_brush( QColor(0xe5, 0xd7, 0x3a) );
+	QPen border_pen( QColor(0, 0, 0) );
+
+	border_pen.setWidthF(thickline);
+	border_pen.setJoinStyle(Qt::RoundJoin);
+	painter.setBrush(bg_brush);
+	painter.setPen(border_pen);
+	painter.drawRoundedRect( QRectF( thickline/2.0,
+					 thickline/2.0,
+					 w-thickline,
+					 h-thickline ),
+				 border_rad,
+				 border_rad );
+
+	QWidget::paintEvent(event);
     }
 
 } // namespace StretchPlayer
