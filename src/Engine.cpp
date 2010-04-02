@@ -27,6 +27,7 @@
 #include <cmath>
 
 using RubberBand::RubberBandStretcher;
+using namespace std;
 
 namespace StretchPlayer
 {
@@ -204,19 +205,38 @@ namespace StretchPlayer
 
 	SNDFILE *sf = 0;
 	SF_INFO sf_info;
-	sf_info.format = 0;
+	memset(&sf_info, 0, sizeof(sf_info));
 
 	std::cout << "Opening " << filename.toStdString() << std::endl;
 	sf = sf_open(filename.toLocal8Bit().data(), SFM_READ, &sf_info);
+	if( !sf ) {
+	    cerr << "Error opening file '" << filename.toStdString() << "': "
+		 << sf_strerror(sf) << endl;
+	    return;
+	}
 
 	_sample_rate = sf_info.samplerate;
 	_left.reserve( sf_info.frames );
 	_right.reserve( sf_info.frames );
 
+	if(sf_info.frames == 0) {
+	    cerr << "File '" << filename.toStdString() << "' is empty." << endl;
+	    sf_close(sf);
+	    return;
+	}
+
 	std::vector<float> buf(sf_info.frames * sf_info.channels, 0.0f);
 	sf_count_t read;
 	read = sf_read_float(sf, &buf[0], buf.size());
-	assert(read == (sf_info.frames * sf_info.channels));
+	if( read < 1 ) {
+	    cerr << "Could not read from file." << endl;
+	    sf_close(sf);
+	    return;
+	}
+
+	if( read != (sf_info.frames * sf_info.channels)) {
+	    cerr << "Warning: not all of the file data was read." << endl;
+	}
 
 	sf_count_t j;
 	unsigned mod;
