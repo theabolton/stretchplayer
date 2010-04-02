@@ -31,6 +31,7 @@
 #include <QSpinBox>
 #include <QFileDialog>
 #include <QPainter>
+#include <QBitmap>
 #include <iostream>
 
 namespace StretchPlayer
@@ -56,6 +57,11 @@ namespace StretchPlayer
     PlayerWidget::PlayerWidget(QWidget *parent)
 	: QWidget(parent)
     {
+	setWindowFlags( Qt::Window
+			| Qt::FramelessWindowHint );
+
+	setBackgroundRole( QPalette::Shadow );
+
 	QVBoxLayout *vbox = new QVBoxLayout;
 	QHBoxLayout *hbox_ctl = new QHBoxLayout;
 	QHBoxLayout *hbox_stretch = new QHBoxLayout;
@@ -240,6 +246,16 @@ namespace StretchPlayer
 	h *= scale;
 	thickline *= scale;
 	border_rad *= scale;
+
+	QImage mask_img(width(), height(), QImage::Format_Mono);
+	mask_img.fill(0xff);
+	QPainter mask_ptr(&mask_img);
+	mask_ptr.setBrush( QBrush( QColor(0, 0, 0) ) );
+	mask_ptr.drawRoundedRect( QRectF( 0, 0, w, h),
+				  border_rad+thickline/2.0,
+				  border_rad+thickline/2.0 );
+	QBitmap bmp = QBitmap::fromImage(mask_img);
+	setMask( bmp );
 
 	QBrush bg_brush( QColor(0xe5, 0xd7, 0x3a) );
 	QPen border_pen( QColor(0, 0, 0) );
