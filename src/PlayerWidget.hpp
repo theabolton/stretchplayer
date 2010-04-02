@@ -44,20 +44,23 @@ public:
     void load_song(const QString& filename);
 
 public slots:
-    void play();
+    void play_pause();
     void stop();
+    void ab();
+    void open_file();
     void update_time();
     void locate(int);
     void stretch(int);
     void pitch(int);
 
 private:
-    QVBoxLayout *_vbox;
-    QHBoxLayout *_hbox;
     QLabel *_location;
-    QSlider *_slider;
-    QSlider *_stretch;
+    QSlider *_position;
     QPushButton *_play;
+    QPushButton *_stop;
+    QPushButton *_ab;
+    QPushButton *_open;
+    QSlider *_stretch;
     QSpinBox *_pitch;
 
     std::auto_ptr<Engine> _engine;

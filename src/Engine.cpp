@@ -32,6 +32,10 @@ namespace StretchPlayer
 {
     Engine::Engine()
 	: _jack_client(0),
+	  _port_left(0),
+	  _port_right(0),
+	  _playing(false),
+	  _position(0),
 	  _sample_rate(48000.0),
 	  _stretch(1.0),
 	  _pitch(0)
@@ -232,13 +236,16 @@ namespace StretchPlayer
 
     void Engine::play()
     {
-	std::cout << "Playing..." << std::endl;
 	_playing = true;
+    }
+
+    void Engine::play_pause()
+    {
+	_playing = (_playing) ? false : true;
     }
 
     void Engine::stop()
     {
-	std::cout << "Stopping..." << std::endl;
 	_playing = false;
     }
 

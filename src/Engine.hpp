@@ -41,7 +41,11 @@ public:
 
     void load_song(const QString& filename);
     void play();
+    void play_pause();
     void stop();
+    bool playing() {
+	return _playing;
+    }
     float get_position(); // in seconds
     float get_length();   // in seconds
     void locate(double secs);

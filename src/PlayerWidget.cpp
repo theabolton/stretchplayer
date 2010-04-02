@@ -29,19 +29,25 @@
 #include <QFont>
 #include <QTimer>
 #include <QSpinBox>
+#include <QFileDialog>
+#include <iostream>
 
 namespace StretchPlayer
 {
     PlayerWidget::PlayerWidget(QWidget *parent)
 	: QWidget(parent)
     {
-	_vbox = new QVBoxLayout;
-	_hbox = new QHBoxLayout;
+	QVBoxLayout *vbox = new QVBoxLayout;
+	QHBoxLayout *hbox_ctl = new QHBoxLayout;
+	QHBoxLayout *hbox_stretch = new QHBoxLayout;
 
 	_location = new QLabel(this);
-	_slider = new QSlider(Qt::Horizontal, this);
+	_position = new QSlider(Qt::Horizontal, this);
 	_stretch = new QSlider(Qt::Horizontal, this);
 	_play = new QPushButton(this);
+	_stop = new QPushButton(this);
+	_ab = new QPushButton(this);
+	_open = new QPushButton(this);
 	_pitch = new QSpinBox(this);
 
 	QFont font = _location->font();
@@ -50,30 +56,44 @@ namespace StretchPlayer
 	_location->setText("00:00:00.0");
 	_location->setScaledContents(true);
 	_play->setText("P");
+	_stop->setText("S");
+	_ab->setText("AB");
+	_open->setText("O");
 
-	_slider->setMinimum(0);
-	_slider->setMaximum(1000);
+	_position->setMinimum(0);
+	_position->setMaximum(1000);
 	_stretch->setMinimum(0);
 	_stretch->setMaximum(1000);
 	_pitch->setMinimum(-12);
 	_pitch->setMaximum(12);
 
-	_vbox->addWidget(_location);
-	_vbox->addWidget(_slider);
-	_vbox->addLayout(_hbox);
+	vbox->addWidget(_location);
+	vbox->addWidget(_position);
+	vbox->addLayout(hbox_ctl);
+	vbox->addLayout(hbox_stretch);
 
-	_hbox->addWidget(_play);
-	_hbox->addStretch();
-	_hbox->addWidget(_stretch);
-	_hbox->addWidget(_pitch);
+	hbox_ctl->addWidget(_play);
+	hbox_ctl->addWidget(_stop);
+	hbox_ctl->addWidget(_ab);
+	hbox_ctl->addStretch();
+	hbox_ctl->addWidget(_open);
 
-	setLayout(_vbox);
+	hbox_stretch->addWidget(_stretch);
+	hbox_stretch->addWidget(_pitch);
+
+	setLayout(vbox);
 
 	_engine.reset(new Engine);
 
 	connect(_play, SIGNAL(clicked()),
-		this, SLOT(play()));
-	connect(_slider, SIGNAL(sliderMoved(int)),
+		this, SLOT(play_pause()));
+	connect(_stop, SIGNAL(clicked()),
+		this, SLOT(stop()));
+	connect(_ab, SIGNAL(clicked()),
+		this, SLOT(ab()));
+	connect(_open, SIGNAL(clicked()),
+		this, SLOT(open_file()));
+	connect(_position, SIGNAL(sliderMoved(int)),
 		this, SLOT(locate(int)));
 	connect(_stretch, SIGNAL(sliderMoved(int)),
 		this, SLOT(stretch(int)));
@@ -96,22 +116,32 @@ namespace StretchPlayer
 	_engine->load_song(filename);
     }
 
-    void PlayerWidget::play()
+    void PlayerWidget::play_pause()
     {
-	_engine->play();
-	disconnect(_play, SIGNAL(clicked()),
-		   this, SLOT(play()));
-	connect(_play, SIGNAL(clicked()),
-		   this, SLOT(stop()));
+	_engine->play_pause();
     }
 
     void PlayerWidget::stop()
     {
 	_engine->stop();
-	disconnect(_play, SIGNAL(clicked()),
-		   this, SLOT(stop()));
-	connect(_play, SIGNAL(clicked()),
-		   this, SLOT(play()));
+	_engine->locate(0);
+    }
+
+    void PlayerWidget::ab()
+    {
+	std::cout << "AB" << std::endl;
+    }
+
+    void PlayerWidget::open_file()
+    {
+	_engine->stop();
+	QString filename = QFileDialog::getOpenFileName(
+	    this,
+	    "Open song file..."
+	    );
+	if( ! filename.isNull() ) {
+	    load_song(filename);
+	}	
     }
 
     void PlayerWidget::locate(int pos)
@@ -149,9 +179,9 @@ namespace StretchPlayer
 
 	if( len > 0 ) {
 	    float prog = 1000.0 * pos / len;
-	    _slider->setValue( prog );
+	    _position->setValue( prog );
 	} else {
-	    _slider->setValue(0);
+	    _position->setValue(0);
 	}
 	_stretch->setValue( (sch-0.5) * 1000 );
 	_pitch->setValue( pit );
