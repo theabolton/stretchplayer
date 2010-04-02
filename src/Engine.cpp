@@ -37,6 +37,8 @@ namespace StretchPlayer
 	  _port_right(0),
 	  _playing(false),
 	  _position(0),
+	  _loop_a(0),
+	  _loop_b(0),
 	  _sample_rate(48000.0),
 	  _stretch(1.0),
 	  _pitch(0)
@@ -176,6 +178,9 @@ namespace StretchPlayer
 	    reqd = _stretcher->getSamplesRequired();
 	    zeros = 0;
 	    feed = reqd;
+	    if( looping() && ((_position + reqd) > _loop_b) ) {
+		reqd = _loop_b - _position;
+	    }
 	    if( _position + reqd > _left.size() ) {
 		feed = _left.size() - _position;
 		zeros = reqd - feed;
@@ -194,6 +199,9 @@ namespace StretchPlayer
 	    rb_buf_out[0] += gend;
 	    rb_buf_out[1] += gend;
 	    _position += feed;
+	    if( looping() && _position > _loop_b ) {
+		_position = _loop_a;
+	    }
 	    frame += gend;
 	}
 
@@ -287,6 +295,23 @@ namespace StretchPlayer
 	    return float(_position) / _sample_rate;
 	}
 	return 0;
+    }
+
+    void Engine::loop_ab()
+    {
+	if( _loop_b > _loop_a ) {
+	    _loop_b = 0;
+	    _loop_a = 0;
+	} else if( _loop_a == 0 ) {
+	    _loop_a = _position;
+	    if(_position == 0) {
+		_loop_a = 1;
+	    }
+	} else if( _loop_a != 0 ) {
+	    _loop_b = _position;
+	} else {
+	    assert(false);  // invalid state
+	}
     }
 
     float Engine::get_length()

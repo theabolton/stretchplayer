@@ -49,6 +49,11 @@ public:
     bool playing() {
 	return _playing;
     }
+    void loop_ab();
+    bool looping() {
+	return _loop_b > _loop_a;
+    }
+
     float get_position(); // in seconds
     float get_length();   // in seconds
     void locate(double secs);
@@ -117,6 +122,8 @@ private:
     std::vector<float> _left;
     std::vector<float> _right;
     unsigned long _position;
+    unsigned long _loop_a;
+    unsigned long _loop_b;
     float _sample_rate;
     float _stretch;
     int _pitch;

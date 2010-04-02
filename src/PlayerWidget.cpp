@@ -153,7 +153,7 @@ namespace StretchPlayer
 
     void PlayerWidget::ab()
     {
-	std::cout << "AB" << std::endl;
+	_engine->loop_ab();
     }
 
     void PlayerWidget::open_file()
