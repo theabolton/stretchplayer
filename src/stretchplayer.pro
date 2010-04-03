@@ -7,6 +7,7 @@ TARGET = stretchplayer
 DEPENDPATH += .
 INCLUDEPATH += .
 CONFIG += debug
+RESOURCES = stretchplayer.qrc
 
 LIBS += -ljack -lsndfile -lrubberband
 

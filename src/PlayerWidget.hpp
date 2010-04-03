@@ -21,6 +21,7 @@
 
 #include <QWidget>
 #include <memory>
+#include <QIcon>
 #include "PlayerSizes.hpp"
 
 class QToolButton;
@@ -68,6 +69,7 @@ protected:
 
 private:
     void _setup_color_scheme(int profile);
+    void _load_icons();
     void _setup_actions();
     void _setup_widgets();
     void _setup_layout();
@@ -78,7 +80,17 @@ private:
     int _to_fader(float val);
 
 private:
-    // Actions and buttons
+    struct icons_t {
+	QIcon play;
+	QIcon stop;
+	QIcon ab;
+	QIcon help;
+	QIcon quit;
+	QIcon plus;
+	QIcon minus;
+	QIcon open;
+    } _ico;
+
     struct actions_t {
 	QAction *play_pause;
 	QAction *stop;

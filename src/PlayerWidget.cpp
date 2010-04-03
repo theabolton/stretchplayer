@@ -69,6 +69,7 @@ namespace StretchPlayer
 
 
 	_setup_color_scheme(0);
+	_load_icons();
 	_setup_actions();
 	_setup_widgets();
 	_setup_layout();
@@ -318,6 +319,18 @@ namespace StretchPlayer
 	setPalette(p);
     }
 
+    void PlayerWidget::_load_icons()
+    {
+	_ico.play.addFile(":img/play.png");
+	_ico.stop.addFile(":img/stop.png");
+	_ico.ab.addFile(":img/ab.png");
+	_ico.help.addFile(":img/help.png");
+	_ico.quit.addFile(":img/quit.png");
+	_ico.plus.addFile(":img/plus.png");
+	_ico.minus.addFile(":img/minus.png");
+	_ico.open.addFile(":img/open.png");
+    }
+
     void PlayerWidget::_setup_actions()
     {
 	memset(&_act, 0, sizeof(_act));
@@ -326,6 +339,7 @@ namespace StretchPlayer
 	_act.play_pause->setToolTip("Play/Pause [Space]");
 	_act.play_pause->setShortcut(Qt::Key_Space);
 	_act.play_pause->setShortcutContext(Qt::ApplicationShortcut);
+	_act.play_pause->setIcon( _ico.play );
 	addAction(_act.play_pause);
 	connect(_act.play_pause, SIGNAL(triggered()),
 		this, SLOT(play_pause()));
@@ -334,6 +348,7 @@ namespace StretchPlayer
 	_act.stop->setToolTip("Stop [S]");
 	_act.stop->setShortcut(Qt::Key_S);
 	_act.stop->setShortcutContext(Qt::ApplicationShortcut);
+	_act.stop->setIcon( _ico.stop );
 	addAction(_act.stop);
 	connect(_act.stop, SIGNAL(triggered()),
 		this, SLOT(stop()));
@@ -345,6 +360,7 @@ namespace StretchPlayer
 	_act.ab->setToolTip("AB Repeat [Enter]");
 	_act.ab->setShortcuts(ab_shortcuts);
 	_act.ab->setShortcutContext(Qt::ApplicationShortcut);
+	_act.ab->setIcon( _ico.ab );
 	addAction(_act.ab);
 	connect(_act.ab, SIGNAL(triggered()),
 		this, SLOT(ab()));
@@ -353,6 +369,7 @@ namespace StretchPlayer
 	_act.open->setToolTip("Open [O]");
 	_act.open->setShortcut(Qt::Key_O);
 	_act.open->setShortcutContext(Qt::ApplicationShortcut);
+	_act.open->setIcon( _ico.open );
 	addAction(_act.open);
 	connect(_act.open, SIGNAL(triggered()),
 		this, SLOT(open_file()));
@@ -361,6 +378,7 @@ namespace StretchPlayer
 	_act.quit->setToolTip("Quit [Esc]");
 	_act.quit->setShortcut(Qt::Key_Escape);
 	_act.quit->setShortcutContext(Qt::ApplicationShortcut);
+	_act.quit->setIcon( _ico.quit );
 	addAction(_act.quit);
 	connect(_act.quit, SIGNAL(triggered()),
 		this, SLOT(close()));
@@ -372,6 +390,7 @@ namespace StretchPlayer
 	_act.pitch_inc->setToolTip("Pitch Increase [+]");
 	_act.pitch_inc->setShortcuts(inc_shortcuts);
 	_act.pitch_inc->setShortcutContext(Qt::ApplicationShortcut);
+	_act.pitch_inc->setIcon( _ico.plus );
 	addAction(_act.pitch_inc);
 	connect(_act.pitch_inc, SIGNAL(triggered()),
 		this, SLOT(pitch_inc()));
@@ -380,6 +399,7 @@ namespace StretchPlayer
 	_act.pitch_dec->setToolTip("Pitch Decrease [-]");
 	_act.pitch_dec->setShortcut(Qt::Key_Minus);
 	_act.pitch_dec->setShortcutContext(Qt::ApplicationShortcut);
+	_act.pitch_dec->setIcon( _ico.minus );
 	addAction(_act.pitch_dec);
 	connect(_act.pitch_dec, SIGNAL(triggered()),
 		this, SLOT(pitch_dec()));

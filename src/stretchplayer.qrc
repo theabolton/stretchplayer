@@ -1,0 +1,12 @@
+<!DOCTYPE RCC><RCC version='1.0'>
+<qresource>
+    <file>img/play.png</file>
+    <file>img/stop.png</file>
+    <file>img/ab.png</file>
+    <file>img/help.png</file>
+    <file>img/quit.png</file>
+    <file>img/plus.png</file>
+    <file>img/minus.png</file>
+    <file>img/file.png</file>
+</qresource>
+</RCC>
