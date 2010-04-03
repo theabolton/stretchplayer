@@ -328,7 +328,7 @@ namespace StretchPlayer
 	_ico.quit.addFile(":img/quit.png");
 	_ico.plus.addFile(":img/plus.png");
 	_ico.minus.addFile(":img/minus.png");
-	_ico.open.addFile(":img/open.png");
+	_ico.open.addFile(":img/file.png");
     }
 
     void PlayerWidget::_setup_actions()
@@ -490,10 +490,9 @@ namespace StretchPlayer
 	hbox_ctl->addWidget(_btn.stop);
 	hbox_ctl->addWidget(_btn.ab);
 	hbox_ctl->addWidget(_stretch);
-	hbox_ctl->addWidget(_btn.pitch_inc);
 	hbox_ctl->addWidget(_btn.pitch_dec);
+	hbox_ctl->addWidget(_btn.pitch_inc);
 	hbox_ctl->addWidget(_btn.open);
-
     }
 
     void PlayerWidget::_setup_signals_and_slots()
