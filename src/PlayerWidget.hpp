@@ -55,6 +55,7 @@ public slots:
     void update_time();
     void locate(float); // [0.0, 1.0]
     void stretch(int);
+    void volume(int);
     void pitch_inc();
     void pitch_dec();
     void speed_inc();
@@ -71,6 +72,10 @@ private:
     void _setup_widgets();
     void _setup_layout();
     void _setup_signals_and_slots();
+
+    // Encode/decode volume fader
+    float _from_fader(int val);
+    int _to_fader(float val);
 
 private:
     // Actions and buttons
@@ -103,6 +108,7 @@ private:
     // Misc widgets
     StatusWidget *_status;
     QSlider *_stretch;
+    QSlider *_volume;
     PlayerSizes _sizes;
 
     std::auto_ptr<Engine> _engine;

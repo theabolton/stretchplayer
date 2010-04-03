@@ -42,7 +42,8 @@ namespace StretchPlayer
 	  _loop_b(0),
 	  _sample_rate(48000.0),
 	  _stretch(1.0),
-	  _pitch(0)
+	  _pitch(0),
+	  _gain(1.0)
     {
 	QMutexLocker lk(&_audio_lock);
 
@@ -234,6 +235,16 @@ namespace StretchPlayer
 		_position = _loop_a;
 	    }
 	    frame += gend;
+	}
+
+	// Apply gain and clip
+	for( frame=0 ; frame<nframes ; ++frame ) {
+	    buf_L[frame] *= _gain;
+	    if(buf_L[frame] > 1.0) buf_L[frame] = 1.0;
+	    if(buf_L[frame] < -1.0) buf_L[frame] = -1.0;
+	    buf_R[frame] *= _gain;
+	    if(buf_R[frame] > 1.0) buf_R[frame] = 1.0;
+	    if(buf_R[frame] < -1.0) buf_R[frame] = -1.0;
 	}
 
 	if(_position >= _left.size()) {

@@ -79,6 +79,19 @@ public:
     }
 
     /**
+     * Clipped to [0.0, 10.0]
+     */
+    void set_volume(float gain) {
+	if(gain < 0.0) gain = 0.0;
+	if(gain > 10.0) gain = 10.0;
+	_gain=gain;
+    }
+
+    float get_volume() {
+	return _gain;
+    }
+
+    /**
      * Returns estimate of CPU load [0.0, 1.0]
      */
     float get_cpu_load();
@@ -132,6 +145,7 @@ private:
     float _sample_rate;
     float _stretch;
     int _pitch;
+    float _gain;
     std::auto_ptr<RubberBand::RubberBandStretcher> _stretcher;
 
     mutable QMutex _callback_lock;

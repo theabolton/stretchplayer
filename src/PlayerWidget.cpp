@@ -35,6 +35,8 @@
 #include <QBitmap>
 #include <QAction>
 
+#include <cmath>
+
 namespace StretchPlayer
 {
     namespace Details
@@ -144,6 +146,63 @@ namespace StretchPlayer
 	_engine->set_stretch( 0.5 + double(pos)/1000.0 );
     }
 
+    void PlayerWidget::volume(int vol)
+    {
+	_engine->set_volume( _from_fader(vol) );
+    }
+
+    /**
+     * "Traditional" fader mapping
+     */
+    float PlayerWidget::_from_fader(int p_val)
+    {
+	float fader = float(p_val)/1000.0f;
+	float gain;
+	float db;
+
+	if(fader == 0) {
+	    gain = 0.0f;
+	} else if(fader < .04) {
+	    gain = fader * 1e-6f / .04f;
+	} else if(fader < .16) {
+	    db = -60.0 + 20.0f * (fader-.04) / .12f;
+	    gain = exp10(db/10.0);
+	} else if(fader < .52) {
+	    db = -40.0 + 10.0f * (fader-.16) / .12f;
+	    gain = exp10(db/10.0);
+	} else {
+	    db = -10.0 + 5.0f * (fader-.52) / .12f;
+	    gain = exp10(db/10.0);
+	}
+
+	return gain;
+    }
+
+    /**
+     * "Traditional" fader mapping
+     */
+    int PlayerWidget::_to_fader(float gain)
+    {
+	if(gain == 0.0f) return 0;
+
+	float fader;
+	float db = 10.0 * log10(gain);
+
+	if(db < -60.0) {
+	    fader = gain * .04f / 1e-6f;
+	} else if(db < -40.0) {
+	    fader = .04f + ((db + 60.0f) * .12f / 20.0f);
+	} else if(db < -10.0) {
+	    fader = .16f + ((db + 40.0f) * .12f / 10.0f);
+	} else {
+	    fader = .52f + ((db + 10.0f) * .12f / 5.0f);
+	}
+
+	if( fader > 1.0 ) fader = 1.0f;
+
+        return ::round(fader * 1000.0);
+    }
+
     void PlayerWidget::reset()
     {
 	stop();
@@ -167,6 +226,10 @@ namespace StretchPlayer
 
 	float cpu = _engine->get_cpu_load();
 	_status->cpu(cpu);
+
+	float vol = _engine->get_volume();
+	_volume->setValue( _to_fader(vol) );
+	_status->volume(vol);
 
 	_stretch->setValue( (sch-0.5) * 1000 );
 	update();
@@ -382,6 +445,9 @@ namespace StretchPlayer
 	_stretch->setMinimum(0);
 	_stretch->setMaximum(1000);
 
+	_volume = new QSlider(Qt::Vertical, this);
+	_volume->setMinimum(0);
+	_volume->setMaximum(1000);
     }
 
     void PlayerWidget::_setup_layout()
@@ -398,7 +464,7 @@ namespace StretchPlayer
 	top_hbox->addLayout(top_right_vbox);
 
 	top_right_vbox->addWidget(_btn.quit);
-	top_right_vbox->addWidget(new QSlider(Qt::Vertical, this));
+	top_right_vbox->addWidget(_volume);
 
 	hbox_ctl->addWidget(_btn.play);
 	hbox_ctl->addWidget(_btn.stop);
@@ -421,6 +487,8 @@ namespace StretchPlayer
 		this, SLOT(stretch(int)));
 	connect(_status, SIGNAL(locate(float)),
 		this, SLOT(locate(float)));
+	connect(_volume, SIGNAL(sliderMoved(int)),
+		this, SLOT(volume(int)));
 
 	QTimer* timer = new QTimer(this);
 	timer->setSingleShot(false);
