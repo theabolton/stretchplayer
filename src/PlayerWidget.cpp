@@ -171,7 +171,7 @@ namespace StretchPlayer
 	    db = -40.0 + 10.0f * (fader-.16) / .12f;
 	    gain = exp10(db/10.0);
 	} else {
-	    db = -10.0 + 5.0f * (fader-.52) / .12f;
+	    db = -10.0 + 15.0f * (fader-.52) / .48f;
 	    gain = exp10(db/10.0);
 	}
 
@@ -195,7 +195,7 @@ namespace StretchPlayer
 	} else if(db < -10.0) {
 	    fader = .16f + ((db + 40.0f) * .12f / 10.0f);
 	} else {
-	    fader = .52f + ((db + 10.0f) * .12f / 5.0f);
+	    fader = .52f + ((db + 10.0f) * .48f / 15.0f);
 	}
 
 	if( fader > 1.0 ) fader = 1.0f;
@@ -229,7 +229,7 @@ namespace StretchPlayer
 
 	float vol = _engine->get_volume();
 	_volume->setValue( _to_fader(vol) );
-	_status->volume(vol);
+	_status->volume( _volume->value() / 1000.0 );
 
 	_stretch->setValue( (sch-0.5) * 1000 );
 	update();

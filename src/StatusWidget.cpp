@@ -131,14 +131,14 @@ namespace StretchPlayer
     {
 	g *= 100.0;
 	_volume->setText( QString("VOL: %1%")
-			  .arg(g, 3, 'f', 0) );
+			  .arg(g, 3, 'f', 0, ' ') );
     }
 
     void StatusWidget::cpu(float c)
     {
 	c *= 100.0;
 	_cpu->setText( QString("CPU: %1%")
-		       .arg(c, 3, 'f', 0) );
+		       .arg(c, 3, 'f', 0, ' ') );
     }
 
     void StatusWidget::message(QString msg)
