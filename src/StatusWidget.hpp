@@ -67,6 +67,8 @@ private:
     virtual void paintEvent(QPaintEvent *event);
 
 private:
+    QVBoxLayout *_vlay;
+
     QLabel *_time;
     QLabel *_speed;
     QLabel *_pitch;

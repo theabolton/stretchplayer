@@ -43,7 +43,7 @@ namespace StretchPlayer
 	  _sizes(sizes),
 	  _colors(colors)
     {
-	QVBoxLayout *vlay = new QVBoxLayout(this);
+	_vlay = new QVBoxLayout(this);
 	QHBoxLayout *top_lay = new QHBoxLayout;
 	QVBoxLayout *top_right_lay = new QVBoxLayout;
 
@@ -76,9 +76,9 @@ namespace StretchPlayer
 
 	_status->setWordWrap(true);
 
-	vlay->addLayout(top_lay);
-	vlay->addWidget(_status);
-	vlay->addWidget(_position);
+	_vlay->addLayout(top_lay);
+	_vlay->addWidget(_status);
+	_vlay->addWidget(_position);
 
 	top_lay->addWidget(_time);
 	top_lay->addLayout(top_right_lay);
@@ -154,8 +154,32 @@ namespace StretchPlayer
 
     void StatusWidget::paintEvent(QPaintEvent *event)
     {
+	// Using REVERSE colors.
+
 	_position->set_line_widths(_sizes->thin_line(), _sizes->thick_line());
-	_position->set_foreground(_colors->border());
+	_position->set_foreground(_colors->background());
+
+	QPainter painter(this);
+	painter.setRenderHints(QPainter::Antialiasing);
+	painter.setBackgroundMode(Qt::TransparentMode);
+
+	QBrush brush( _colors->foreground() );
+	QPen pen( _colors->foreground() );
+
+	float x, y, w, h;
+	float radius, margin;
+
+	x = 0.0;
+	y = 0.0;
+	w = width();
+	h = height();
+	radius = _sizes->thicker_line() * 2.0;
+	margin = radius * .75;
+
+	_vlay->setContentsMargins(margin, margin, margin, margin);
+	painter.setBrush(brush);
+	painter.setPen(pen);
+	painter.drawRoundedRect( x, y, w, h, radius, radius );
 
 	QWidget::paintEvent(event);
     }
