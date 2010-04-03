@@ -78,6 +78,11 @@ public:
 	}
     }
 
+    /**
+     * Returns estimate of CPU load [0.0, 1.0]
+     */
+    float get_cpu_load();
+
     void subscribe_errors(EngineMessageCallback* obj) {
 	_subscribe_list(_error_callbacks, obj);
     }

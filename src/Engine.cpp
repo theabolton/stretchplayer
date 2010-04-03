@@ -354,4 +354,9 @@ namespace StretchPlayer
 	seq.erase(obj);
     }
 
+    float Engine::get_cpu_load()
+    {
+	return jack_cpu_load(_jack_client)/100.0;
+    }
+
 } // namespace StretchPlayer

@@ -11,5 +11,13 @@ CONFIG += debug
 LIBS += -ljack -lsndfile -lrubberband
 
 # Input
-HEADERS += PlayerWidget.hpp Engine.hpp
-SOURCES += main.cpp PlayerWidget.cpp Engine.cpp
+HEADERS += PlayerWidget.hpp \
+        Engine.hpp \
+        StatusWidget.hpp \
+        PlayerSizes.hpp
+SOURCES += main.cpp \
+        PlayerWidget.cpp \
+        Engine.cpp \
+        StatusWidget.cpp \
+        PlayerSizes.cpp
+

@@ -16,12 +16,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef PLAYERWIDGET_HPP
-#define PLAYERWIDGET_HPP
+#ifndef STATUS_HPP
+#define STATUS_HPP
 
 #include <QWidget>
 #include <memory>
-#include "PlayerSizes.hpp"
 
 class QPushButton;
 class QLabel;
@@ -34,52 +33,41 @@ class QPaintEvent;
 namespace StretchPlayer
 {
 
-class Engine;
-class EngineMessageCallback;
-class StatusWidget;
+class PlayerSizes;
 
-class PlayerWidget : public QWidget
+class StatusWidget : public QWidget
 {
     Q_OBJECT
 public:
-    PlayerWidget(QWidget *parent = 0);
-    ~PlayerWidget();
-
-    void load_song(const QString& filename);
-    virtual int heightForWidth(int w) const;
+    StatusWidget(QWidget *parent, PlayerSizes *sizes);
+    ~StatusWidget();
 
 public slots:
-    void play_pause();
-    void stop();
-    void ab();
-    void open_file();
-    void update_time();
-    void locate(int);
-    void stretch(int);
+    void position(float);
+    void time(float);
+    void speed(float);
     void pitch(int);
-    void status_message(const QString&);
+    void volume(float);
+    void cpu(float);
+    void message(QString);
 
-protected:
-    virtual void paintEvent(QPaintEvent* event);
+signals:
+    void locate(float);
+
+private slots:
+    void _changing_position(int);
 
 private:
+    QLabel *_time;
+    QLabel *_speed;
+    QLabel *_pitch;
+    QLabel *_volume;
+    QLabel *_cpu;
+    QLabel *_status;
+    QSlider *_position;
+    PlayerSizes *_sizes;
 
-    QVBoxLayout *_vlay;
-
-    StatusWidget *_status;
-    QPushButton *_play;
-    QPushButton *_stop;
-    QPushButton *_ab;
-    QPushButton *_open;
-    QPushButton *_quit;
-    QSlider *_stretch;
-    QSpinBox *_pitch;
-    PlayerSizes _sizes;
-
-    std::auto_ptr<Engine> _engine;
-    std::auto_ptr<EngineMessageCallback> _engine_callback;
-
-}; // PlayerWidget
+}; // StatusWidget
 
 } // namespace StretchPlayer
 

@@ -19,6 +19,7 @@
 
 #include "PlayerWidget.hpp"
 #include "Engine.hpp"
+#include "StatusWidget.hpp"
 
 #include <QWidget>
 #include <QPushButton>
@@ -60,56 +61,49 @@ namespace StretchPlayer
 	setWindowFlags( Qt::Window
 			| Qt::FramelessWindowHint );
 
-	setBackgroundRole( QPalette::Shadow );
+	setAttribute( Qt::WA_TranslucentBackground );
 
-	QVBoxLayout *vbox = new QVBoxLayout;
+	_vlay = new QVBoxLayout(this);
+	QHBoxLayout *top_hbox = new QHBoxLayout;
+	QVBoxLayout *top_right_vbox = new QVBoxLayout;
 	QHBoxLayout *hbox_ctl = new QHBoxLayout;
-	QHBoxLayout *hbox_stretch = new QHBoxLayout;
 
-	_location = new QLabel(this);
-	_position = new QSlider(Qt::Horizontal, this);
+	_status = new StatusWidget(this, &_sizes);
+
 	_stretch = new QSlider(Qt::Horizontal, this);
 	_play = new QPushButton(this);
 	_stop = new QPushButton(this);
 	_ab = new QPushButton(this);
 	_open = new QPushButton(this);
 	_pitch = new QSpinBox(this);
-	_status = new QLabel(this);
+	_quit = new QPushButton(this);
 
-	QFont font = _location->font();
-	font.setPointSize(32);
-	_location->setFont(font);
-	_location->setText("00:00:00.0");
-	_location->setScaledContents(true);
 	_play->setText("P");
 	_stop->setText("S");
 	_ab->setText("AB");
 	_open->setText("O");
-	_status->setWordWrap(true);
+	_quit->setText("X");
 
-	_position->setMinimum(0);
-	_position->setMaximum(1000);
 	_stretch->setMinimum(0);
 	_stretch->setMaximum(1000);
 	_pitch->setMinimum(-12);
 	_pitch->setMaximum(12);
 
-	vbox->addWidget(_location);
-	vbox->addWidget(_position);
-	vbox->addLayout(hbox_ctl);
-	vbox->addLayout(hbox_stretch);
-	vbox->addWidget(_status);
+	_vlay->addLayout(top_hbox);
+	_vlay->addLayout(hbox_ctl);
+
+	top_hbox->addWidget(_status);
+	top_hbox->addLayout(top_right_vbox);
+
+	top_right_vbox->addWidget(_quit);
+	top_right_vbox->addWidget(new QSlider(Qt::Vertical, this));
 
 	hbox_ctl->addWidget(_play);
 	hbox_ctl->addWidget(_stop);
 	hbox_ctl->addWidget(_ab);
-	hbox_ctl->addStretch();
+	hbox_ctl->addWidget(_stretch);
+	hbox_ctl->addWidget(_pitch);
 	hbox_ctl->addWidget(_open);
-
-	hbox_stretch->addWidget(_stretch);
-	hbox_stretch->addWidget(_pitch);
-
-	setLayout(vbox);
 
 	QSizePolicy policy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	policy.setHeightForWidth(true);
@@ -128,12 +122,13 @@ namespace StretchPlayer
 		this, SLOT(ab()));
 	connect(_open, SIGNAL(clicked()),
 		this, SLOT(open_file()));
-	connect(_position, SIGNAL(sliderMoved(int)),
-		this, SLOT(locate(int)));
 	connect(_stretch, SIGNAL(sliderMoved(int)),
 		this, SLOT(stretch(int)));
 	connect(_pitch, SIGNAL(valueChanged(int)),
 		this, SLOT(pitch(int)));
+	connect(_quit, SIGNAL(clicked()),
+		this, SLOT(close()));
+
 	QTimer* timer = new QTimer(this);
 	timer->setSingleShot(false);
 	timer->setInterval(200);
@@ -180,8 +175,7 @@ namespace StretchPlayer
     }
 
     void PlayerWidget::status_message(const QString& msg) {
-	_status->setText(msg);
-	QTimer::singleShot(10000, _status, SLOT(clear()));
+	_status->message(msg);
     }
 
     void PlayerWidget::locate(int pos)
@@ -204,23 +198,20 @@ namespace StretchPlayer
     void PlayerWidget::update_time()
     {
 	float pos = _engine->get_position();
+	_status->time(pos);
+
 	float len = _engine->get_length();
+	_status->position(pos/len);
+
 	float sch = _engine->get_stretch();
+	_status->speed(sch);
+
 	int pit = _engine->get_pitch();
+	_status->pitch(pit);
 
-	int min = (int)(pos/60.0);
-	float sec = pos - min*60.0;
-	_location->setText(QString("%1:%2")
-			   .arg(int(min), 2, 10, QChar('0'))
-			   .arg(double(sec), 4, 'f', 1, QChar('0'))
-	    );
+	float cpu = _engine->get_cpu_load();
+	_status->cpu(cpu);
 
-	if( len > 0 ) {
-	    float prog = 1000.0 * pos / len;
-	    _position->setValue( prog );
-	} else {
-	    _position->setValue(0);
-	}
 	_stretch->setValue( (sch-0.5) * 1000 );
 	_pitch->setValue( pit );
 	update();
@@ -235,17 +226,18 @@ namespace StretchPlayer
     {
 	QPainter painter(this);
 	painter.setRenderHints(QPainter::Antialiasing);
-	float w = 420.0;
-	float h = 175.0;
-	float thickline = 5.0;
-	float border_rad = 20.0;
 
-	float scale = width() / w;
+	float scale = width()/450.0;
+	_sizes.scale(scale);
 
-	w = width();
-	h *= scale;
-	thickline *= scale;
-	border_rad *= scale;
+	float thickline = _sizes.thicker_line();
+	float border_rad = thickline * 4.0;
+	float margin = thickline * 2.5;
+
+	float w = width();
+	float h = height();
+
+	_vlay->setContentsMargins(margin, margin, margin, margin);
 
 	QImage mask_img(width(), height(), QImage::Format_Mono);
 	mask_img.fill(0xff);
