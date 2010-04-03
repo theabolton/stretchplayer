@@ -23,7 +23,7 @@
 #include <memory>
 #include "PlayerSizes.hpp"
 
-class QPushButton;
+class QToolButton;
 class QLabel;
 class QVBoxLayout;
 class QHBoxLayout;
@@ -46,7 +46,6 @@ public:
     ~PlayerWidget();
 
     void load_song(const QString& filename);
-    virtual int heightForWidth(int w) const;
 
 public slots:
     void play_pause();
@@ -56,27 +55,54 @@ public slots:
     void update_time();
     void locate(float); // [0.0, 1.0]
     void stretch(int);
-    void pitch(int);
+    void pitch_inc();
+    void pitch_dec();
+    void speed_inc();
+    void speed_dec();
     void status_message(const QString&);
+    void reset();
 
 protected:
     virtual void paintEvent(QPaintEvent* event);
 
 private:
     void _setup_color_scheme(int profile);
+    void _setup_actions();
+    void _setup_widgets();
+    void _setup_layout();
+    void _setup_signals_and_slots();
 
 private:
+    // Actions and buttons
+    struct actions_t {
+	QAction *play_pause;
+	QAction *stop;
+	QAction *ab;
+	QAction *open;
+	QAction *quit;
+	QAction *pitch_inc;
+	QAction *pitch_dec;
+	QAction *speed_inc;
+	QAction *speed_dec;
+	QAction *reset;
+    } _act;
 
+    struct buttons_t {
+	QToolButton *play;
+	QToolButton *stop;
+	QToolButton *ab;
+	QToolButton *open;
+	QToolButton *quit;
+	QToolButton *pitch_inc;
+	QToolButton *pitch_dec;
+    } _btn;
+
+    // Master layout (for border)
     QVBoxLayout *_vlay;
 
+    // Misc widgets
     StatusWidget *_status;
-    QPushButton *_play;
-    QPushButton *_stop;
-    QPushButton *_ab;
-    QPushButton *_open;
-    QPushButton *_quit;
     QSlider *_stretch;
-    QSpinBox *_pitch;
     PlayerSizes _sizes;
 
     std::auto_ptr<Engine> _engine;
