@@ -69,7 +69,7 @@ namespace StretchPlayer
 	QVBoxLayout *top_right_vbox = new QVBoxLayout;
 	QHBoxLayout *hbox_ctl = new QHBoxLayout;
 
-	_status = new StatusWidget(this, &_sizes);
+	_status = new StatusWidget(this, &_sizes, &_colors);
 
 	_stretch = new QSlider(Qt::Horizontal, this);
 	_play = new QPushButton(this);

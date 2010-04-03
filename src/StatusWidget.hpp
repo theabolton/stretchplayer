@@ -26,7 +26,7 @@ class QPushButton;
 class QLabel;
 class QVBoxLayout;
 class QHBoxLayout;
-class QSlider;
+class Slider;
 class QSpinBox;
 class QPaintEvent;
 
@@ -34,12 +34,18 @@ namespace StretchPlayer
 {
 
 class PlayerSizes;
+class PlayerColors;
+
+    namespace Widgets
+    {
+	class ThinSlider;
+    }
 
 class StatusWidget : public QWidget
 {
     Q_OBJECT
 public:
-    StatusWidget(QWidget *parent, PlayerSizes *sizes);
+    StatusWidget(QWidget *parent, PlayerSizes *sizes, PlayerColors *colors);
     ~StatusWidget();
 
 public slots:
@@ -58,14 +64,18 @@ private slots:
     void _changing_position(int);
 
 private:
+    virtual void paintEvent(QPaintEvent *event);
+
+private:
     QLabel *_time;
     QLabel *_speed;
     QLabel *_pitch;
     QLabel *_volume;
     QLabel *_cpu;
     QLabel *_status;
-    QSlider *_position;
+    Widgets::ThinSlider *_position;
     PlayerSizes *_sizes;
+    PlayerColors *_colors;
 
 }; // StatusWidget
 

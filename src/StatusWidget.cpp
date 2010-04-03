@@ -18,6 +18,9 @@
  */
 
 #include "StatusWidget.hpp"
+#include "ThinSlider.hpp"
+#include "PlayerSizes.hpp"
+#include "PlayerColors.hpp"
 
 #include <QWidget>
 #include <QPushButton>
@@ -35,9 +38,10 @@
 namespace StretchPlayer
 {
 
-    StatusWidget::StatusWidget(QWidget *parent, PlayerSizes *sizes)
+    StatusWidget::StatusWidget(QWidget *parent, PlayerSizes *sizes, PlayerColors *colors)
 	: QWidget(parent),
-	  _sizes(sizes)
+	  _sizes(sizes),
+	  _colors(colors)
     {
 	QVBoxLayout *vlay = new QVBoxLayout(this);
 	QHBoxLayout *top_lay = new QHBoxLayout;
@@ -49,7 +53,7 @@ namespace StretchPlayer
 	_volume = new QLabel(this);
 	_cpu = new QLabel(this);
 	_status = new QLabel(this);
-	_position = new QSlider(Qt::Horizontal, this);
+	_position = new Widgets::ThinSlider(this);
 
 	QFont font = _time->font();
 	font.setPointSize(32);
@@ -68,6 +72,7 @@ namespace StretchPlayer
 
 	_position->setMinimum(0);
 	_position->setMaximum(1000);
+	_position->setOrientation(Qt::Horizontal);
 
 	_status->setWordWrap(true);
 
@@ -95,6 +100,7 @@ namespace StretchPlayer
     void StatusWidget::position(float pos)
     {
 	_position->setValue( pos * 1000.0 );
+	_position->update();
     }
 
     void StatusWidget::time(float time)
@@ -144,6 +150,14 @@ namespace StretchPlayer
     {
 	float p = float(pos) / 1000.0;
 	emit locate(p);
+    }
+
+    void StatusWidget::paintEvent(QPaintEvent *event)
+    {
+	_position->set_line_widths(_sizes->thin_line(), _sizes->thick_line());
+	_position->set_foreground(_colors->border());
+
+	QWidget::paintEvent(event);
     }
 
 } // namespace StretchPlayer
