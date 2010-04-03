@@ -34,7 +34,6 @@ namespace StretchPlayer
 {
 
 class PlayerSizes;
-class PlayerColors;
 
     namespace Widgets
     {
@@ -45,7 +44,7 @@ class StatusWidget : public QWidget
 {
     Q_OBJECT
 public:
-    StatusWidget(QWidget *parent, PlayerSizes *sizes, PlayerColors *colors);
+    StatusWidget(QWidget *parent, PlayerSizes *sizes);
     ~StatusWidget();
 
 public slots:
@@ -65,6 +64,7 @@ private slots:
 
 private:
     virtual void paintEvent(QPaintEvent *event);
+    void _update_palette();
 
 private:
     QVBoxLayout *_vlay;
@@ -77,7 +77,6 @@ private:
     QLabel *_status;
     Widgets::ThinSlider *_position;
     PlayerSizes *_sizes;
-    PlayerColors *_colors;
 
 }; // StatusWidget
 

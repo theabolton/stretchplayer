@@ -56,9 +56,10 @@ namespace StretchPlayer
     }
 
     PlayerWidget::PlayerWidget(QWidget *parent)
-	: QWidget(parent),
-	  _colors(1)
+	: QWidget(parent)
     {
+	_setup_color_scheme(0);
+
 	setWindowFlags( Qt::Window
 			| Qt::FramelessWindowHint );
 
@@ -69,7 +70,7 @@ namespace StretchPlayer
 	QVBoxLayout *top_right_vbox = new QVBoxLayout;
 	QHBoxLayout *hbox_ctl = new QHBoxLayout;
 
-	_status = new StatusWidget(this, &_sizes, &_colors);
+	_status = new StatusWidget(this, &_sizes);
 
 	_stretch = new QSlider(Qt::Horizontal, this);
 	_play = new QPushButton(this);
@@ -228,6 +229,8 @@ namespace StretchPlayer
 	QPainter painter(this);
 	painter.setRenderHints(QPainter::Antialiasing);
 
+	const QPalette& pal = palette();
+
 	float scale = width()/450.0;
 	_sizes.scale(scale);
 
@@ -250,8 +253,8 @@ namespace StretchPlayer
 	QBitmap bmp = QBitmap::fromImage(mask_img);
 	setMask( bmp );
 
-	QBrush bg_brush( _colors.background() );
-	QPen border_pen( _colors.border() );
+	QBrush bg_brush( pal.color(QPalette::Active, QPalette::Window) );
+	QPen border_pen( pal.color(QPalette::Active, QPalette::Dark) );
 
 	border_pen.setWidthF(thickline);
 	border_pen.setJoinStyle(Qt::RoundJoin);
@@ -265,6 +268,43 @@ namespace StretchPlayer
 				 border_rad );
 
 	QWidget::paintEvent(event);
+    }
+
+    void PlayerWidget::_setup_color_scheme(int profile)
+    {
+	QPalette p;
+	QColor base, bright, light, mid, dark;
+
+	switch(profile) {
+        // case 0: // default
+	case 1: // Blue
+	    bright.setRgb(0xff, 0xff, 0xff, 0xff); // white
+	    light.setRgb(0x76, 0xc6, 0xf5, 0xff); // light blue
+	    mid.setRgb(68, 141, 189, 0xff); // average
+	    dark.setRgb(0x12, 0x55, 0x85, 0xff); // dark blue
+	    base = light;
+	    break;
+	default: // Yellow
+	    bright.setRgb(0xff, 0xff, 0xff, 0xff); //white
+	    light.setRgb(0xe5, 0xd7, 0x3a, 0xff); // yellow
+	    mid.setRgb(114, 107, 29, 0xff); // average
+	    dark.setRgb(0, 0, 0, 0xff); // black
+	    base = light;
+	}
+
+	p.setColorGroup(QPalette::Active,
+			dark, // Window Text
+			light, // button
+			light, // light
+			dark, // dark
+			mid, // mid
+			dark, // text
+			bright, // bright text
+			base, // base
+			light // window
+	    );			
+
+	setPalette(p);
     }
 
 } // namespace StretchPlayer

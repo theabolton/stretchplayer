@@ -20,7 +20,6 @@
 #include "StatusWidget.hpp"
 #include "ThinSlider.hpp"
 #include "PlayerSizes.hpp"
-#include "PlayerColors.hpp"
 
 #include <QWidget>
 #include <QPushButton>
@@ -38,10 +37,9 @@
 namespace StretchPlayer
 {
 
-    StatusWidget::StatusWidget(QWidget *parent, PlayerSizes *sizes, PlayerColors *colors)
+    StatusWidget::StatusWidget(QWidget *parent, PlayerSizes *sizes)
 	: QWidget(parent),
-	  _sizes(sizes),
-	  _colors(colors)
+	  _sizes(sizes)
     {
 	_vlay = new QVBoxLayout(this);
 	QHBoxLayout *top_lay = new QHBoxLayout;
@@ -154,17 +152,15 @@ namespace StretchPlayer
 
     void StatusWidget::paintEvent(QPaintEvent *event)
     {
-	// Using REVERSE colors.
-
-	_position->set_line_widths(_sizes->thin_line(), _sizes->thick_line());
-	_position->set_foreground(_colors->background());
+	// Using REVERSE colors of parent.
+	_update_palette();
 
 	QPainter painter(this);
 	painter.setRenderHints(QPainter::Antialiasing);
 	painter.setBackgroundMode(Qt::TransparentMode);
 
-	QBrush brush( _colors->foreground() );
-	QPen pen( _colors->foreground() );
+	QBrush brush( palette().color(QPalette::Active, QPalette::Window ) );
+	QPen pen( palette().color(QPalette::Active, QPalette::Dark) );
 
 	float x, y, w, h;
 	float radius, margin;
@@ -182,6 +178,32 @@ namespace StretchPlayer
 	painter.drawRoundedRect( x, y, w, h, radius, radius );
 
 	QWidget::paintEvent(event);
+    }
+
+    void StatusWidget::_update_palette()
+    {
+	QPalette p(parentWidget()->palette());
+
+	QColor base, bright, light, mid, dark;
+	base = p.color(QPalette::Active, QPalette::Dark);
+	bright = p.color(QPalette::Active, QPalette::BrightText);
+	light = p.color(QPalette::Active, QPalette::Light);
+	mid = p.color(QPalette::Active, QPalette::Mid);
+	dark = p.color(QPalette::Active, QPalette::Dark);
+
+	p.setColorGroup( QPalette::Active,
+			 bright, // Window Text
+			 dark, // Button
+			 light, // light
+			 dark, // dark
+			 mid, // mid
+			 light, // text
+			 light, // bright text
+			 base, // base
+			 dark // window
+	    );
+	setPalette(p);
+	
     }
 
 } // namespace StretchPlayer

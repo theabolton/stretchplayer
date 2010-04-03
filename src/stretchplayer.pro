@@ -15,13 +15,11 @@ HEADERS += PlayerWidget.hpp \
         Engine.hpp \
         StatusWidget.hpp \
         PlayerSizes.hpp \
-        PlayerColors.hpp \
         ThinSlider.hpp
 SOURCES += main.cpp \
         PlayerWidget.cpp \
         Engine.cpp \
         StatusWidget.cpp \
         PlayerSizes.cpp \
-        PlayerColors.cpp \
         ThinSlider.cpp
 

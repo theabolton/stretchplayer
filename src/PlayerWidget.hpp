@@ -22,7 +22,6 @@
 #include <QWidget>
 #include <memory>
 #include "PlayerSizes.hpp"
-#include "PlayerColors.hpp"
 
 class QPushButton;
 class QLabel;
@@ -64,6 +63,9 @@ protected:
     virtual void paintEvent(QPaintEvent* event);
 
 private:
+    void _setup_color_scheme(int profile);
+
+private:
 
     QVBoxLayout *_vlay;
 
@@ -76,7 +78,6 @@ private:
     QSlider *_stretch;
     QSpinBox *_pitch;
     PlayerSizes _sizes;
-    PlayerColors _colors;
 
     std::auto_ptr<Engine> _engine;
     std::auto_ptr<EngineMessageCallback> _engine_callback;

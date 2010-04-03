@@ -39,8 +39,6 @@ namespace Widgets
 	 * widget size... but the widget is still expandable.
 	 */
 	void set_line_widths(float thin, float thick);
-	void set_foreground(const QColor& color);
-	void set_background(const QColor& color);
 
     private:
 	void init();
@@ -49,8 +47,6 @@ namespace Widgets
 	virtual void paintEvent(QPaintEvent *event);
 	
     private:
-	QColor _foreground;
-	QColor _background;
 	float _thin;
 	float _thick;
     };

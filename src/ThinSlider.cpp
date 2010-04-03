@@ -30,8 +30,6 @@ namespace Widgets
 
     ThinSlider::ThinSlider(QWidget* parent) :
 	QAbstractSlider(parent),
-	_foreground(0x00, 0x00, 0x00, 0xff), // black
-	_background(0xff, 0xff, 0xff, 0x00),  // transparent white
 	_thin(1.0),
 	_thick(3.0)
     {
@@ -73,16 +71,6 @@ namespace Widgets
 	}
     }
 
-    void ThinSlider::set_foreground(const QColor& color)
-    {
-	_foreground = color;
-    }
-
-    void ThinSlider::set_background(const QColor& color)
-    {
-	_background = color;
-    }
-
     void ThinSlider::paintEvent(QPaintEvent * /*event*/)
     {
 	QPointF start, end, pos;
@@ -113,11 +101,10 @@ namespace Widgets
 	QPainter painter(this);
 	painter.setRenderHints(QPainter::Antialiasing);
 	painter.setBackgroundMode(Qt::TransparentMode);
-	painter.fillRect(0, 0, width(), height(), _background);
 
-	QColor thin_color( _foreground );
+	QColor thin_color( palette().color(QPalette::Active, QPalette::WindowText) );
 	thin_color.setAlphaF(0.25);
-	QColor thick_color( _foreground );
+	QColor thick_color( palette().color(QPalette::Active, QPalette::WindowText) );
 
 	QPen line_pen( thin_color );
 	line_pen.setWidthF(_thin);
