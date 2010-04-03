@@ -26,7 +26,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
-#include <iostream>
 
 using RubberBand::RubberBandStretcher;
 using namespace std;

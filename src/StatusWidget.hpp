@@ -57,7 +57,7 @@ public slots:
     void message(QString);
 
 signals:
-    void locate(float);
+    void locate(float); // [0.0, 1.0]
 
 private slots:
     void _changing_position(int);

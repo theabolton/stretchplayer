@@ -89,6 +89,9 @@ namespace StretchPlayer
 
 	QSizePolicy policy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	setSizePolicy(policy);
+
+	connect(_position, SIGNAL(sliderMoved(int)),
+		this, SLOT(_changing_position(int)));
     }
 
     StatusWidget::~StatusWidget()

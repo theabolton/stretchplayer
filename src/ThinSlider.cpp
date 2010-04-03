@@ -21,6 +21,7 @@
 
 #include <QPainter>
 #include <QPen>
+#include <QMouseEvent>
 
 namespace StretchPlayer
 {
@@ -47,9 +48,9 @@ namespace Widgets
     QSize ThinSlider::sizeHint() const
     {
 	if(orientation() == Qt::Horizontal) {
-	    return QSize(85, _thick);
+	    return QSize(85, 2 * _thick);
 	}
-	return QSize(_thick, 85);
+	return QSize(2 * _thick, 85);
     }
 
     QSize ThinSlider::minimumSizeHint() const
@@ -69,6 +70,69 @@ namespace Widgets
 	} else {
 	    setMinimumWidth(_thick);
 	}
+    }
+
+    void ThinSlider::mousePressEvent(QMouseEvent *ev)
+    {
+	if(maximum() == minimum() || (ev->buttons() ^ ev->button())) {
+	    ev->ignore();
+	    return;
+	}
+	if( ! (ev->button() & Qt::LeftButton) ) {
+	    ev->ignore();
+	    return;
+	}
+
+	ev->accept();
+	setSliderDown(true);
+	float pos;
+	if( orientation() == Qt::Horizontal ) {
+	    pos = float(ev->x()) / (width() - _thick);
+	} else {
+	    pos = float(ev->y()) / (height() - _thick);
+	}
+	if( pos < 0.0 ) pos = 0.0;
+	if( pos > 1.0 ) pos = 1.0;
+	setSliderPosition( pos * (maximum()-minimum()) + minimum() );
+    }
+
+    void ThinSlider::mouseMoveEvent(QMouseEvent *ev)
+    {
+	if( ! (ev->buttons() & Qt::LeftButton) ) {
+	    ev->ignore();
+	    return;
+	}
+
+	ev->accept();
+	float pos;
+	if( orientation() == Qt::Horizontal ) {
+	    pos = float(ev->x()) / (width() - _thick);
+	} else {
+	    pos = float(ev->y()) / (height() - _thick);
+	}
+	if( pos < 0.0 ) pos = 0.0;
+	if( pos > 1.0 ) pos = 1.0;
+	setSliderPosition( pos * (maximum()-minimum()) + minimum() );
+    }
+
+    void ThinSlider::mouseReleaseEvent(QMouseEvent *ev)
+    {
+	if( ! (ev->button() & Qt::LeftButton) ) {
+	    ev->ignore();
+	    return;
+	}
+
+	ev->accept();
+	float pos;
+	if( orientation() == Qt::Horizontal ) {
+	    pos = float(ev->x()) / (width() - _thick);
+	} else {
+	    pos = float(ev->y()) / (height() - _thick);
+	}
+	if( pos < 0.0 ) pos = 0.0;
+	if( pos > 1.0 ) pos = 1.0;
+	setSliderPosition( pos * (maximum()-minimum()) + minimum() );
+	setSliderDown(false);
     }
 
     void ThinSlider::paintEvent(QPaintEvent * /*event*/)

@@ -33,7 +33,6 @@
 #include <QFileDialog>
 #include <QPainter>
 #include <QBitmap>
-#include <iostream>
 
 namespace StretchPlayer
 {
@@ -130,6 +129,8 @@ namespace StretchPlayer
 		this, SLOT(pitch(int)));
 	connect(_quit, SIGNAL(clicked()),
 		this, SLOT(close()));
+	connect(_status, SIGNAL(locate(float)),
+		this, SLOT(locate(float)));
 
 	QTimer* timer = new QTimer(this);
 	timer->setSingleShot(false);
@@ -180,11 +181,9 @@ namespace StretchPlayer
 	_status->message(msg);
     }
 
-    void PlayerWidget::locate(int pos)
+    void PlayerWidget::locate(float pos)
     {
-	double frac = double(pos) / 1000.0;
-	double s = frac * _engine->get_length();
-	_engine->locate(s);
+	_engine->locate(pos * _engine->get_length());
     }
 
     void PlayerWidget::pitch(int pitch)

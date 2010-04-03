@@ -46,6 +46,10 @@ namespace Widgets
 	virtual QSize minimumSizeHint() const;
 	virtual void paintEvent(QPaintEvent *event);
 	
+	virtual void mousePressEvent(QMouseEvent *ev);
+	virtual void mouseMoveEvent(QMouseEvent *ev);
+	virtual void mouseReleaseEvent(QMouseEvent *ev);
+
     private:
 	float _thin;
 	float _thick;

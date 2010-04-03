@@ -54,7 +54,7 @@ public slots:
     void ab();
     void open_file();
     void update_time();
-    void locate(int);
+    void locate(float); // [0.0, 1.0]
     void stretch(int);
     void pitch(int);
     void status_message(const QString&);
