@@ -14,10 +14,12 @@ LIBS += -ljack -lsndfile -lrubberband
 HEADERS += PlayerWidget.hpp \
         Engine.hpp \
         StatusWidget.hpp \
-        PlayerSizes.hpp
+        PlayerSizes.hpp \
+        PlayerColors.hpp
 SOURCES += main.cpp \
         PlayerWidget.cpp \
         Engine.cpp \
         StatusWidget.cpp \
-        PlayerSizes.cpp
+        PlayerSizes.cpp \
+        PlayerColors.cpp
 

@@ -56,7 +56,8 @@ namespace StretchPlayer
     }
 
     PlayerWidget::PlayerWidget(QWidget *parent)
-	: QWidget(parent)
+	: QWidget(parent),
+	  _colors(1)
     {
 	setWindowFlags( Qt::Window
 			| Qt::FramelessWindowHint );
@@ -249,8 +250,8 @@ namespace StretchPlayer
 	QBitmap bmp = QBitmap::fromImage(mask_img);
 	setMask( bmp );
 
-	QBrush bg_brush( QColor(0xe5, 0xd7, 0x3a) );
-	QPen border_pen( QColor(0, 0, 0) );
+	QBrush bg_brush( _colors.background() );
+	QPen border_pen( _colors.border() );
 
 	border_pen.setWidthF(thickline);
 	border_pen.setJoinStyle(Qt::RoundJoin);
