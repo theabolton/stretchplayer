@@ -24,7 +24,9 @@
 #include <cassert>
 #include <cstring>
 #include <cmath>
+#include <cstdlib>
 #include <algorithm>
+#include <iostream>
 
 using RubberBand::RubberBandStretcher;
 using namespace std;
@@ -83,6 +85,36 @@ namespace StretchPlayer
 	_stretcher->setMaxProcessSize(8192);
 
 	jack_activate(_jack_client);
+
+	// Autoconnection to first two ports we find.
+	const char** ports = jack_get_ports( _jack_client,
+					     0,
+					     JACK_DEFAULT_AUDIO_TYPE,
+					     JackPortIsInput
+	    );
+	int k;
+	for( k=0 ; ports && ports[k] != 0 ; ++k ) {
+	    if(k==0) {
+		rv = jack_connect( _jack_client,
+				   jack_port_name(_port_left),
+				   ports[k] );
+	    } else if (k==1) {
+		rv = jack_connect( _jack_client,
+				   jack_port_name(_port_right),
+				   ports[k] );
+	    } else {
+		break;
+	    }
+	    if( rv ) {
+		_error("Could not connect output ports");
+	    }
+	}
+	if(k==0) {
+	    _error("There were no output ports to connect to.");
+	}
+	if(ports) {
+	    free(ports);
+	}
     }
 
     Engine::~Engine()
