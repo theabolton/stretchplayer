@@ -434,22 +434,27 @@ namespace StretchPlayer
 	_btn.play = new QToolButton(this);
 	_btn.play->setDefaultAction(_act.play_pause);
 	_btn.play->setAutoRaise(true);
+	_btn.play->setContentsMargins(0, 0, 0, 0);
 
 	_btn.stop = new QToolButton(this);
 	_btn.stop->setDefaultAction(_act.stop);
 	_btn.stop->setAutoRaise(true);
+	_btn.stop->setContentsMargins(0, 0, 0, 0);
 
 	_btn.ab = new QToolButton(this);
 	_btn.ab->setDefaultAction(_act.ab);
 	_btn.ab->setAutoRaise(true);
+	_btn.ab->setContentsMargins(0, 0, 0, 0);
 
 	_btn.open = new QToolButton(this);
 	_btn.open->setDefaultAction(_act.open);
 	_btn.open->setAutoRaise(true);
+	_btn.open->setContentsMargins(0, 0, 0, 0);
 
 	_btn.quit = new QToolButton(this);
 	_btn.quit->setDefaultAction(_act.quit);
 	_btn.quit->setAutoRaise(true);
+	_btn.quit->setContentsMargins(0, 0, 0, 0);
 
 	_btn.pitch_inc = new QToolButton(this);
 	_btn.pitch_inc->setDefaultAction(_act.pitch_inc);
