@@ -30,9 +30,17 @@ class PlayerSizes
 public:
     float scale();
     void scale(float val);
+    void set_scale_from(float width, float height);
 
     float ppi_setting();
     void ppi_setting(float val);
+
+    float preferred_width();
+    float preferred_height();
+
+    int width();
+    int height();
+    int height_for_width(int w);
 
     /**
      * Returns number of pixels for grid size.
@@ -53,16 +61,11 @@ private:
     float _grid;  //< inches
     float _text;  //< inches, tall
     float _ppi;   //< pixels per inch
-
+    float _width; // < preferred, pixels
+    float _height; // < preferred, pixels
 public:
-    PlayerSizes() :
-	_scale(1.0),
-	_grid(.25),
-	_text(.125),
-	_ppi(120.0)
-	{}
-
-    ~PlayerSizes() {}
+    PlayerSizes();
+    ~PlayerSizes();
 };
 
 } // namespace StretchPlayer

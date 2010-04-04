@@ -56,7 +56,7 @@ namespace StretchPlayer
 	QFont font = _time->font();
 	font.setPointSize(32);
 	_time->setFont(font);
-	_time->setText("00:00:00.0");
+	_time->setText("00:00.0");
 	_time->setScaledContents(true);
 
 	_speed->setText("SPEED: 100%");

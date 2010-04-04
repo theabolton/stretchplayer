@@ -18,9 +18,22 @@
  */
 
 #include "PlayerSizes.hpp"
+#include <cmath>
 
 namespace StretchPlayer
 {
+
+    PlayerSizes::PlayerSizes() :
+	_scale(1.0),
+	_grid(.25),
+	_text(.125),
+	_ppi(120.0),
+	_width(470.0),
+	_height(180.0)
+    { }
+
+    PlayerSizes::~PlayerSizes()
+    { }
 
     float PlayerSizes::scale()
     {
@@ -36,6 +49,17 @@ namespace StretchPlayer
 	}
     }    
 
+    void PlayerSizes::set_scale_from(float width, float height)
+    {
+	float aspect = _height/_width;
+	float w_aspect = height/width;
+	if( w_aspect > aspect ) {
+	    _scale = width/_width;
+	} else {
+	    _scale = height/_height;
+	}
+    }
+
     float PlayerSizes::ppi_setting()
     {
 	return _ppi;
@@ -48,6 +72,31 @@ namespace StretchPlayer
 	} else {
 	    _ppi = val;
 	}
+    }
+
+    float PlayerSizes::preferred_width()
+    {
+	return _width;
+    }
+
+    float PlayerSizes::preferred_height()
+    {
+	return _height;
+    }
+
+    int PlayerSizes::height_for_width(int w)
+    {
+	return int( 0.5 + (w * _height / _width) );
+    }
+
+    int PlayerSizes::width()
+    {
+	return int( 0.5 + (_width * _scale) );
+    }
+
+    int PlayerSizes::height()
+    {
+	return int( 0.5 + (_height * _scale) );
     }
 
     float PlayerSizes::widget_grid_size()

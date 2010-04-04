@@ -37,7 +37,6 @@
 #include <QResizeEvent>
 
 #include <cmath>
-#include <iostream>
 
 namespace StretchPlayer
 {
@@ -60,23 +59,27 @@ namespace StretchPlayer
     }
 
     PlayerWidget::PlayerWidget(QWidget *parent)
-	: QWidget(parent)
+	: QMainWindow(parent)
     {
 	setWindowFlags( Qt::Window
-			| Qt::FramelessWindowHint );
+			| Qt::FramelessWindowHint
+	    );
 
 	setAttribute( Qt::WA_TranslucentBackground );
-	QSizePolicy policy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+	setMinimumSize(_sizes.preferred_width()*2/3, _sizes.preferred_height()*2/3);
+
+	QSizePolicy policy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+	policy.setHeightForWidth(true);
 	setSizePolicy(policy);
 
-	resize(470, 180);
+	resize(_sizes.preferred_width(), _sizes.preferred_height());
 
 	_setup_color_scheme(0);
 	_load_icons();
 	_setup_actions();
 	_setup_widgets();
-	_setup_layout();
 	_setup_signals_and_slots();
+	_layout_widgets();
     }
 
     PlayerWidget::~PlayerWidget()
@@ -86,6 +89,11 @@ namespace StretchPlayer
     void PlayerWidget::load_song(const QString& filename)
     {
 	_engine->load_song(filename);
+    }
+
+    int PlayerWidget::heightForWidth(int w)
+    {
+	return _sizes.height_for_width(w);
     }
 
     void PlayerWidget::play_pause()
@@ -239,22 +247,10 @@ namespace StretchPlayer
 	update();
     }
 
-    void PlayerWidget::resizeEvent(QResizeEvent * event)
+    void PlayerWidget::resizeEvent(QResizeEvent * /*event*/)
     {
-	const QSize& size = event->size();
-	float scale = size.width()/450.0;
-	_sizes.scale(scale);
-
-        float button = _sizes.widget_grid_size();
-	QSize wid(button, button);
-
-	_btn.play->setIconSize(wid);
-	_btn.stop->setIconSize(wid);
-	_btn.ab->setIconSize(wid);
-	_btn.open->setIconSize(wid);
-	_btn.quit->setIconSize(wid);
-	_btn.pitch_inc->setIconSize(wid);
-	_btn.pitch_dec->setIconSize(wid);
+	_sizes.set_scale_from(width(), height());
+	_layout_widgets();
     }
 
     void PlayerWidget::paintEvent(QPaintEvent * event)
@@ -264,17 +260,11 @@ namespace StretchPlayer
 
 	const QPalette& pal = palette();
 
-	float scale = width()/450.0;
-	_sizes.scale(scale);
-
 	float thickline = _sizes.thicker_line();
 	float border_rad = thickline * 4.0;
-	float margin = thickline * 2.5;
 
 	float w = width();
 	float h = height();
-
-	_vlay->setContentsMargins(margin, margin, margin, margin);
 
 	QImage mask_img(width(), height(), QImage::Format_Mono);
 	mask_img.fill(0xff);
@@ -497,29 +487,69 @@ namespace StretchPlayer
 	_volume->setMaximum(1000);
     }
 
-    void PlayerWidget::_setup_layout()
+    void PlayerWidget::_layout_widgets()
     {
-	_vlay = new QVBoxLayout(this);
-	QHBoxLayout *top_hbox = new QHBoxLayout;
-	QVBoxLayout *top_right_vbox = new QVBoxLayout;
-	QHBoxLayout *hbox_ctl = new QHBoxLayout;
+	int h, w;
+	int margin;
+	int grid;
 
-	_vlay->addLayout(top_hbox);
-	_vlay->addLayout(hbox_ctl);
+	h = height();
+	w = width();
+	grid = _sizes.widget_grid_size() + .5;
+	margin = _sizes.thicker_line() * 3.0;
 
-	top_hbox->addWidget(_status);
-	top_hbox->addLayout(top_right_vbox);
+	QSize grid_size(grid, grid);
+	int n_ctrl_btns = 6;
 
-	top_right_vbox->addWidget(_btn.quit);
-	top_right_vbox->addWidget(_volume);
+	int btn_y = h - margin - grid;
+	int btn_x = margin;
 
-	hbox_ctl->addWidget(_btn.play);
-	hbox_ctl->addWidget(_btn.stop);
-	hbox_ctl->addWidget(_btn.ab);
-	hbox_ctl->addWidget(_stretch);
-	hbox_ctl->addWidget(_btn.pitch_dec);
-	hbox_ctl->addWidget(_btn.pitch_inc);
-	hbox_ctl->addWidget(_btn.open);
+	// CONTROL BAR (BOTTOM)
+	_btn.play->setIconSize(grid_size);
+	_btn.play->setGeometry( btn_x, btn_y, grid, grid );
+	btn_x += grid;
+
+	_btn.stop->setIconSize(grid_size);
+	_btn.stop->setGeometry( btn_x, btn_y, grid, grid );
+	btn_x += grid;
+
+	_btn.ab->setIconSize(grid_size);
+	_btn.ab->setGeometry( btn_x, btn_y, grid, grid );
+	btn_x += grid;
+
+	_stretch->setGeometry( btn_x,
+			       btn_y,
+			       w - 2*margin - n_ctrl_btns*grid,
+			       grid );
+	btn_x += _stretch->width();
+
+	_btn.pitch_inc->setIconSize(grid_size);
+	_btn.pitch_inc->setGeometry( btn_x, btn_y, grid, grid );
+	btn_x += grid;
+
+	_btn.pitch_dec->setIconSize(grid_size);
+	_btn.pitch_dec->setGeometry( btn_x, btn_y, grid, grid );
+	btn_x += grid;
+
+	_btn.open->setIconSize(grid_size);
+	_btn.open->setGeometry( btn_x, btn_y, grid, grid );
+	btn_x += grid;
+
+	// STATUS AND VERT CONTROLS
+	_status->setGeometry( margin,
+			      margin,
+			      w - 2*margin - grid,
+			      h - 2*margin - grid );
+
+	_btn.quit->setIconSize(grid_size);
+	_btn.quit->setGeometry( w - margin - grid,
+				margin,
+				grid,
+				grid );
+	_volume->setGeometry( w - margin - grid,
+			      margin + grid,
+			      grid,
+			      h - 2*margin - 2*grid );
     }
 
     void PlayerWidget::_setup_signals_and_slots()

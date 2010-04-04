@@ -19,7 +19,7 @@
 #ifndef PLAYERWIDGET_HPP
 #define PLAYERWIDGET_HPP
 
-#include <QWidget>
+#include <QMainWindow>
 #include <memory>
 #include <QIcon>
 #include "PlayerSizes.hpp"
@@ -40,7 +40,7 @@ class Engine;
 class EngineMessageCallback;
 class StatusWidget;
 
-class PlayerWidget : public QWidget
+class PlayerWidget : public QMainWindow
 {
     Q_OBJECT
 public:
@@ -48,6 +48,7 @@ public:
     ~PlayerWidget();
 
     void load_song(const QString& filename);
+    virtual int heightForWidth(int w);
 
 public slots:
     void play_pause();
@@ -74,7 +75,7 @@ private:
     void _load_icons();
     void _setup_actions();
     void _setup_widgets();
-    void _setup_layout();
+    void _layout_widgets();
     void _setup_signals_and_slots();
 
     // Encode/decode volume fader
@@ -115,9 +116,6 @@ private:
 	QToolButton *pitch_inc;
 	QToolButton *pitch_dec;
     } _btn;
-
-    // Master layout (for border)
-    QVBoxLayout *_vlay;
 
     // Misc widgets
     QStyle *_style;
