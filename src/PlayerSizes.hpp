@@ -57,9 +57,9 @@ private:
 public:
     PlayerSizes() :
 	_scale(1.0),
-	_grid(.375),
+	_grid(.25),
 	_text(.125),
-	_ppi(120.)
+	_ppi(120.0)
 	{}
 
     ~PlayerSizes() {}

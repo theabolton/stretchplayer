@@ -31,6 +31,7 @@ class QHBoxLayout;
 class QSlider;
 class QSpinBox;
 class QPaintEvent;
+class QStyle;
 
 namespace StretchPlayer
 {
@@ -65,6 +66,7 @@ public slots:
     void reset();
 
 protected:
+    virtual void resizeEvent(QResizeEvent* event);
     virtual void paintEvent(QPaintEvent* event);
 
 private:
@@ -118,6 +120,7 @@ private:
     QVBoxLayout *_vlay;
 
     // Misc widgets
+    QStyle *_style;
     StatusWidget *_status;
     QSlider *_stretch;
     QSlider *_volume;

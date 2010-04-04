@@ -21,11 +21,14 @@
 
 #include "PlayerWidget.hpp"
 #include <iostream>
+#include <QPlastiqueStyle>
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
     StretchPlayer::PlayerWidget pw;
+
+    app.setStyle( new QPlastiqueStyle );
 
     if(argc > 1) {
 	QString fn(argv[1]);

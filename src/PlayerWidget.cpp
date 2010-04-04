@@ -34,8 +34,10 @@
 #include <QPainter>
 #include <QBitmap>
 #include <QAction>
+#include <QResizeEvent>
 
 #include <cmath>
+#include <iostream>
 
 namespace StretchPlayer
 {
@@ -67,6 +69,7 @@ namespace StretchPlayer
 	QSizePolicy policy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	setSizePolicy(policy);
 
+	resize(470, 180);
 
 	_setup_color_scheme(0);
 	_load_icons();
@@ -234,6 +237,24 @@ namespace StretchPlayer
 
 	_stretch->setValue( (sch-0.5) * 1000 );
 	update();
+    }
+
+    void PlayerWidget::resizeEvent(QResizeEvent * event)
+    {
+	const QSize& size = event->size();
+	float scale = size.width()/450.0;
+	_sizes.scale(scale);
+
+        float button = _sizes.widget_grid_size();
+	QSize wid(button, button);
+
+	_btn.play->setIconSize(wid);
+	_btn.stop->setIconSize(wid);
+	_btn.ab->setIconSize(wid);
+	_btn.open->setIconSize(wid);
+	_btn.quit->setIconSize(wid);
+	_btn.pitch_inc->setIconSize(wid);
+	_btn.pitch_dec->setIconSize(wid);
     }
 
     void PlayerWidget::paintEvent(QPaintEvent * event)
@@ -435,6 +456,7 @@ namespace StretchPlayer
 	_btn.play->setDefaultAction(_act.play_pause);
 	_btn.play->setAutoRaise(true);
 	_btn.play->setContentsMargins(0, 0, 0, 0);
+	_btn.play->setMaximumSize(256, 256);
 
 	_btn.stop = new QToolButton(this);
 	_btn.stop->setDefaultAction(_act.stop);
