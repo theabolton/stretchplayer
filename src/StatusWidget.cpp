@@ -180,6 +180,8 @@ namespace StretchPlayer
 	painter.setPen(pen);
 	painter.drawRoundedRect( x, y, w, h, radius, radius );
 
+	_position->set_line_widths( _sizes->thin_line(), _sizes->thicker_line() );
+
 	QWidget::paintEvent(event);
     }
 
