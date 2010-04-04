@@ -64,6 +64,20 @@ namespace StretchPlayer
 	}
     }
 
+    float PlayerSizes::text_size()
+    {
+	return _text * _ppi * _scale;
+    }
+
+    void PlayerSizes::text_size(float inches)
+    {
+	if( inches < .06 ) {
+	    _text = .03;
+	} else {
+	    _text = inches;
+	}
+    }
+
     float PlayerSizes::thicker_line()
     {
 	return line() * 2.0;

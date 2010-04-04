@@ -40,6 +40,9 @@ public:
     float widget_grid_size();
     void widget_grid_size(float inches);
 
+    float text_size();
+    void text_size(float inches_tall);
+
     float thicker_line();
     float thick_line();
     float line();
@@ -48,12 +51,14 @@ public:
 private:
     float _scale; //< Raw scaling factor
     float _grid;  //< inches
+    float _text;  //< inches, tall
     float _ppi;   //< pixels per inch
 
 public:
     PlayerSizes() :
 	_scale(1.0),
 	_grid(.375),
+	_text(.125),
 	_ppi(120.)
 	{}
 
