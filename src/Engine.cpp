@@ -223,7 +223,7 @@ namespace StretchPlayer
 	    if( unsigned(avail) >= nframes ) reqd = 0;
 	    zeros = 0;
 	    feed = reqd;
-	    if( looping() && ((_position + reqd) > _loop_b) ) {
+	    if( looping() && ((_position + reqd) >=_loop_b) ) {
 		assert( _loop_b >= _position );
 		reqd = _loop_b - _position;
 	    }
@@ -233,11 +233,12 @@ namespace StretchPlayer
 	    }
 	    rb_buf_in[0] = &_left[_position];
 	    rb_buf_in[1] = &_right[_position];
-	    assert(feed <= reqd);
-	    assert(zeros <= reqd);
+	    if( reqd == 0 ) {
+		feed = 0;
+		zeros = 0;
+	    }
 	    _stretcher->process( rb_buf_in, feed, false);
 	    if(reqd && zeros) {
-		std::cout << "fill zeros" << std::endl;
 		float l[zeros], r[zeros];
 		float* z[2] = { l, r };
 		memset(l, 0, zeros * sizeof(float));
@@ -249,13 +250,12 @@ namespace StretchPlayer
 		gend = _stretcher->retrieve(rb_buf_out, (nframes-frame));
 		rb_buf_out[0] += gend;
 		rb_buf_out[1] += gend;
-		if( looping() && _position > _loop_b ) {
-		    _position = _loop_a;
-		}
 		frame += gend;
 	    }
 	    _position += feed;
-	    std::cout << "feed " << feed << std::endl;
+	    if( looping() && _position >= _loop_b ) {
+		_position = _loop_a;
+	    }
 	}
 
 	// Apply gain and clip
