@@ -16,7 +16,7 @@ endif(COMMAND cmake_policy)
 ### Qt 4 http://qt.nokia.com/
 ###
 
-FIND_PACKAGE(Qt4 4.3.0 REQUIRED)
+FIND_PACKAGE(Qt4 4.5.0 REQUIRED)
 INCLUDE(${QT_USE_FILE})
 SET(LIBS ${QT_LIBRARIES})
 
