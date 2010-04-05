@@ -155,6 +155,18 @@ namespace StretchPlayer
 	_engine->set_stretch( _engine->get_stretch() - .05 );
     }
 
+    void PlayerWidget::volume_inc()
+    {
+	float gain = _from_fader(_volume->value() + 50);
+	_engine->set_volume( gain );
+    }
+
+    void PlayerWidget::volume_dec()
+    {
+	float gain = _from_fader(_volume->value() - 50);
+	_engine->set_volume( gain );
+    }
+
     void PlayerWidget::stretch(int pos)
     {
 	_engine->set_stretch( 0.5 + double(pos)/1000.0 );
@@ -456,20 +468,36 @@ namespace StretchPlayer
 		this, SLOT(pitch_dec()));
 
 	_act.speed_inc = new QAction("Faster", this);
-	_act.speed_inc->setToolTip("Play faster [Up]");
-	_act.speed_inc->setShortcut(Qt::Key_Up);
+	_act.speed_inc->setToolTip("Play faster [Right Arrow]");
+	_act.speed_inc->setShortcut(Qt::Key_Right);
 	_act.speed_inc->setShortcutContext(Qt::ApplicationShortcut);
 	addAction(_act.speed_inc);
 	connect(_act.speed_inc, SIGNAL(triggered()),
 		this, SLOT(speed_inc()));
 
 	_act.speed_dec = new QAction("Slower", this);
-	_act.speed_dec->setToolTip("Play slower [Down]");
-	_act.speed_dec->setShortcut(Qt::Key_Down);
+	_act.speed_dec->setToolTip("Play slower [Left Arrow]");
+	_act.speed_dec->setShortcut(Qt::Key_Left);
 	_act.speed_dec->setShortcutContext(Qt::ApplicationShortcut);
 	addAction(_act.speed_dec);
 	connect(_act.speed_dec, SIGNAL(triggered()),
 		this, SLOT(speed_dec()));
+
+	_act.vol_inc = new QAction("Louder", this);
+	_act.vol_inc->setToolTip("Louder [Up]");
+	_act.vol_inc->setShortcut(Qt::Key_Up);
+	_act.vol_inc->setShortcutContext(Qt::ApplicationShortcut);
+	addAction(_act.vol_inc);
+	connect(_act.vol_inc, SIGNAL(triggered()),
+		this, SLOT(volume_inc()));
+
+	_act.vol_dec = new QAction("Louder", this);
+	_act.vol_dec->setToolTip("Quieter [Down]");
+	_act.vol_dec->setShortcut(Qt::Key_Down);
+	_act.vol_dec->setShortcutContext(Qt::ApplicationShortcut);
+	addAction(_act.vol_dec);
+	connect(_act.vol_dec, SIGNAL(triggered()),
+		this, SLOT(volume_dec()));
 
 	_act.reset = new QAction("Reset", this);
 	_act.reset->setToolTip("Reset all settings [Home]");
@@ -521,10 +549,12 @@ namespace StretchPlayer
 	_stretch = new QSlider(Qt::Horizontal, this);
 	_stretch->setMinimum(0);
 	_stretch->setMaximum(1000);
+	_stretch->setToolTip("Playback Speed [Left/Right Arrow]");
 
 	_volume = new QSlider(Qt::Vertical, this);
 	_volume->setMinimum(0);
 	_volume->setMaximum(1000);
+	_volume->setToolTip("Volume [Up/Down]");
     }
 
     void PlayerWidget::_layout_widgets()

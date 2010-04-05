@@ -63,6 +63,8 @@ public slots:
     void pitch_dec();
     void speed_inc();
     void speed_dec();
+    void volume_inc();
+    void volume_dec();
     void status_message(const QString&);
     void reset();
 
@@ -111,6 +113,8 @@ private:
 	QAction *pitch_dec;
 	QAction *speed_inc;
 	QAction *speed_dec;
+	QAction *vol_inc;
+	QAction *vol_dec;
 	QAction *reset;
     } _act;
 
