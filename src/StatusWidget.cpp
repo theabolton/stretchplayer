@@ -194,10 +194,21 @@ namespace StretchPlayer
 	QFontMetrics small_m( _small_font );
 
 	int stretch;
-	stretch = 100.0 * _time_zone.width() / large_m.width(_time);
-	if(stretch < _large_font.stretch() ) _large_font.setStretch(stretch);
-	stretch = 100.0 * _stats_zone.width() / small_m.width(_speed);
-	if(stretch < _small_font.stretch() ) _small_font.setStretch(stretch);
+	int twid;
+	twid = large_m.width(_time);
+	if( twid > 0 ) {
+	    stretch = 100.0 * _time_zone.width() / large_m.width(_time);
+	    if(stretch < _large_font.stretch() && stretch > 10 ) {
+		_large_font.setStretch(stretch);
+	    }
+	}
+	twid = small_m.width(_speed);
+	if( twid > 0 ) {
+	    stretch = 100.0 * _stats_zone.width() / small_m.width(_speed);
+	    if(stretch < _small_font.stretch() && stretch > 10 ) {
+		_small_font.setStretch(stretch);
+	    }
+	}
 
 	painter.setFont(_large_font);
 	painter.drawText(_time_zone, _time);
