@@ -26,6 +26,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
+#include <iostream>
 
 using RubberBand::RubberBandStretcher;
 using namespace std;
@@ -171,7 +172,11 @@ namespace StretchPlayer
 	    }
 	    if(locked) {
 		if(_playing) {
-		    _process_playing(nframes);
+		    if(_left.size()) {
+			_process_playing(nframes);
+		    } else {
+			_playing = false;
+		    }
 		} else {
 		    _zero_buffers(nframes);
 		}
@@ -213,9 +218,13 @@ namespace StretchPlayer
 	frame = 0;
 	while( frame < nframes ) {
 	    reqd = _stretcher->getSamplesRequired();
+	    int avail = _stretcher->available();
+	    if( avail <= 0 ) avail = 0;
+	    if( unsigned(avail) >= nframes ) reqd = 0;
 	    zeros = 0;
 	    feed = reqd;
 	    if( looping() && ((_position + reqd) > _loop_b) ) {
+		assert( _loop_b >= _position );
 		reqd = _loop_b - _position;
 	    }
 	    if( _position + reqd > _left.size() ) {
@@ -224,22 +233,29 @@ namespace StretchPlayer
 	    }
 	    rb_buf_in[0] = &_left[_position];
 	    rb_buf_in[1] = &_right[_position];
+	    assert(feed <= reqd);
+	    assert(zeros <= reqd);
 	    _stretcher->process( rb_buf_in, feed, false);
-	    if(zeros) {
+	    if(reqd && zeros) {
+		std::cout << "fill zeros" << std::endl;
 		float l[zeros], r[zeros];
 		float* z[2] = { l, r };
 		memset(l, 0, zeros * sizeof(float));
 		memset(r, 0, zeros * sizeof(float));
 		_stretcher->process(z, zeros, false);
 	    }
-	    gend = _stretcher->retrieve(rb_buf_out, (nframes-frame));
-	    rb_buf_out[0] += gend;
-	    rb_buf_out[1] += gend;
-	    _position += feed;
-	    if( looping() && _position > _loop_b ) {
-		_position = _loop_a;
+	    gend = 1;
+	    while( gend && frame < nframes ) {
+		gend = _stretcher->retrieve(rb_buf_out, (nframes-frame));
+		rb_buf_out[0] += gend;
+		rb_buf_out[1] += gend;
+		if( looping() && _position > _loop_b ) {
+		    _position = _loop_a;
+		}
+		frame += gend;
 	    }
-	    frame += gend;
+	    _position += feed;
+	    std::cout << "feed " << feed << std::endl;
 	}
 
 	// Apply gain and clip
