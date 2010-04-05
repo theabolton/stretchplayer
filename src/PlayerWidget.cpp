@@ -323,7 +323,7 @@ namespace StretchPlayer
 	Qt::CursorShape loc = _which_cursor(event->pos());
 	if( (event->buttons() & Qt::LeftButton)
 	    && (cur != Qt::ArrowCursor) ) {
-	    _drag_resize(loc, event);
+	    _drag_resize(cur, event);
 	} else if( cur != loc ) {
 	    event->accept();
 	    QCursor new_cur(loc);
