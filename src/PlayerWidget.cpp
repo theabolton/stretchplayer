@@ -538,8 +538,8 @@ namespace StretchPlayer
 	// STATUS AND VERT CONTROLS
 	_status->setGeometry( margin,
 			      margin,
-			      w - 2*margin - grid,
-			      h - 2*margin - grid );
+			      w - 2*margin - margin/2 - grid,
+			      h - 2*margin - margin/2 - grid );
 
 	_btn.quit->setIconSize(grid_size);
 	_btn.quit->setGeometry( w - margin - grid,
