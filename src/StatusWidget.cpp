@@ -153,6 +153,7 @@ namespace StretchPlayer
 	_large_font.setStretch( 100 );
 	_small_font.setPixelSize( _stats_zone.height() * 7 / 10 / 4 );
 	_small_font.setStretch( 100 );
+	_small_font.setWeight(QFont::Bold);
 
 	QFontMetrics large_m( _large_font );
 	QFontMetrics small_m( _small_font );
@@ -188,6 +189,8 @@ namespace StretchPlayer
         // Change pen color to draw text.
 	pen.setColor( palette().color(QPalette::Active, QPalette::WindowText) );
 	painter.setPen(pen);
+	brush.setColor( palette().color(QPalette::Active, QPalette::WindowText) );
+	painter.setBrush(brush);
 
 	// Audit the font sizes.  Only change them if there is a problem.
 	QFontMetrics large_m( _large_font );
@@ -214,6 +217,7 @@ namespace StretchPlayer
 	painter.drawText(_time_zone, _time);
 
 	painter.setFont(_small_font);
+	painter.setRenderHints(QPainter::TextAntialiasing, false);
 	QRect stat = _stats_zone;
 	stat.setHeight( stat.height() / 4 );
 	painter.drawText(stat, _speed);
