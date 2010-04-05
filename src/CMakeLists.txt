@@ -29,7 +29,9 @@ INCLUDE(${LibSndfile_INCLUDE_DIRS})
 SET(LIBS ${LIBS} ${LibSndfile_LIBRARIES})
 
 ### Don't have a module for rubberband, yet.
-SET(LIBS ${LIBS} -lrubberband)
+FIND_PACKAGE(RubberBand REQUIRED)
+INCLUDE(${RubberBand_INCLUDE_DIRS})
+SET(LIBS ${LIBS} ${RubberBand_LIBRARIES})
 
 ######################################################################
 ### LIBRARY SOURCES AND BUILD                                      ###
@@ -98,4 +100,4 @@ ENDMACRO(lib_report)
 lib_report(QT4)
 lib_report(JACK)
 lib_report(LibSndfile)
-
+lib_report(RubberBand)
