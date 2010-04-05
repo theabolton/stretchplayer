@@ -96,4 +96,6 @@ MACRO(lib_report name)
 ENDMACRO(lib_report)
 
 lib_report(QT4)
+lib_report(JACK)
+lib_report(LibSndfile)
 
