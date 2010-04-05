@@ -149,9 +149,9 @@ namespace StretchPlayer
 			     _time_zone.height() );
 
 	// Size the fonts...
-	_large_font.setPixelSize( _time_zone.height() * 8 / 10 );
+	_large_font.setPixelSize( _time_zone.height() * 9 / 10 );
 	_large_font.setStretch( 100 );
-	_small_font.setPixelSize( _stats_zone.height() * 8 / 10 / 4 );
+	_small_font.setPixelSize( _stats_zone.height() * 7 / 10 / 4 );
 	_small_font.setStretch( 100 );
 
 	QFontMetrics large_m( _large_font );
@@ -160,7 +160,7 @@ namespace StretchPlayer
 	int stretch;
 	stretch = 100.0 * _time_zone.width() / large_m.width("99:99.9");
 	_large_font.setStretch(stretch);
-	stretch = 100.0 * _stats_zone.width() / small_m.width("SPEED: 100%");
+	stretch = 100.0 * _stats_zone.width() / small_m.width(".SPEED: 100%");
 	_small_font.setStretch(stretch);
 
 	_message_font = _small_font;
@@ -185,10 +185,19 @@ namespace StretchPlayer
 	painter.setPen(pen);
 	painter.drawRoundedRect( _bg_zone, radius, radius );
 
-
         // Change pen color to draw text.
 	pen.setColor( palette().color(QPalette::Active, QPalette::WindowText) );
 	painter.setPen(pen);
+
+	// Audit the font sizes.  Only change them if there is a problem.
+	QFontMetrics large_m( _large_font );
+	QFontMetrics small_m( _small_font );
+
+	int stretch;
+	stretch = 100.0 * _time_zone.width() / large_m.width(_time);
+	if(stretch < _large_font.stretch() ) _large_font.setStretch(stretch);
+	stretch = 100.0 * _stats_zone.width() / small_m.width(_speed);
+	if(stretch < _small_font.stretch() ) _small_font.setStretch(stretch);
 
 	painter.setFont(_large_font);
 	painter.drawText(_time_zone, _time);
