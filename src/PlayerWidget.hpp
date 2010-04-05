@@ -69,6 +69,9 @@ public slots:
 protected:
     virtual void resizeEvent(QResizeEvent* event);
     virtual void paintEvent(QPaintEvent* event);
+    virtual void mousePressEvent(QMouseEvent* event);
+    virtual void mouseMoveEvent(QMouseEvent* event);
+    //virtual void mouseReleaseEvent(QMouseEvent* event);
 
 private:
     void _setup_color_scheme(int profile);
@@ -77,10 +80,14 @@ private:
     void _setup_widgets();
     void _layout_widgets();
     void _setup_signals_and_slots();
+    Qt::CursorShape _which_cursor(const QPoint& pos);
+    void _drag_resize(Qt::CursorShape cur, QMouseEvent* event);
 
     // Encode/decode volume fader
     float _from_fader(int val);
     int _to_fader(float val);
+
+    float _margin();
 
 private:
     struct icons_t {
@@ -126,6 +133,9 @@ private:
 
     std::auto_ptr<Engine> _engine;
     std::auto_ptr<EngineMessageCallback> _engine_callback;
+
+    // State variables
+    QPoint _anchor; // for window moves
 
 }; // PlayerWidget
 

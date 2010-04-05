@@ -72,6 +72,8 @@ namespace StretchPlayer
 	policy.setHeightForWidth(true);
 	setSizePolicy(policy);
 
+	setMouseTracking(true);
+
 	resize(_sizes.preferred_width(), _sizes.preferred_height());
 
 	_setup_color_scheme(0);
@@ -293,6 +295,44 @@ namespace StretchPlayer
 	QWidget::paintEvent(event);
     }
 
+    void PlayerWidget::mousePressEvent(QMouseEvent *event)
+    {
+	if(event->button() & Qt::LeftButton) {
+	    Qt::CursorShape cur = cursor().shape();
+	    switch(cur) {
+	    case Qt::SizeAllCursor:
+		_anchor = event->globalPos();
+	    case Qt::SizeHorCursor:
+	    case Qt::SizeVerCursor:
+	    case Qt::SizeFDiagCursor:
+	    case Qt::SizeBDiagCursor:
+		event->accept();
+		_drag_resize(cur, event);
+		break;
+	    default:
+		event->ignore();
+	    }
+	} else {
+	    event->ignore();
+	}
+    }
+
+    void PlayerWidget::mouseMoveEvent(QMouseEvent *event)
+    {
+	Qt::CursorShape cur = cursor().shape();
+	Qt::CursorShape loc = _which_cursor(event->pos());
+	if( (event->buttons() & Qt::LeftButton)
+	    && (cur != Qt::ArrowCursor) ) {
+	    _drag_resize(loc, event);
+	} else if( cur != loc ) {
+	    event->accept();
+	    QCursor new_cur(loc);
+	    setCursor(new_cur);
+	} else {
+	    event->ignore();
+	}
+    }
+
     void PlayerWidget::_setup_color_scheme(int profile)
     {
 	QPalette p;
@@ -496,7 +536,7 @@ namespace StretchPlayer
 	h = height();
 	w = width();
 	grid = _sizes.widget_grid_size() + .5;
-	margin = _sizes.thicker_line() * 3.0;
+	margin = _margin();
 
 	QSize grid_size(grid, grid);
 	int n_ctrl_btns = 6;
@@ -572,6 +612,107 @@ namespace StretchPlayer
 	connect(timer, SIGNAL(timeout()),
 		this, SLOT(update_time()));
 	timer->start();
+    }
+
+    float PlayerWidget::_margin()
+    {
+	return _sizes.thicker_line() * 3.0;
+    }
+
+    /**
+     * \selects correct cursor.
+     *
+     * Along left and top edges:  move window.
+     * Along bottom and right edges: resize window.
+     *
+     */
+    Qt::CursorShape PlayerWidget::_which_cursor(const QPoint& pos)
+    {
+	bool left = false;
+	bool right = false;
+	bool top = false;
+	bool bottom = false;
+	Qt::CursorShape rv = Qt::ArrowCursor;
+
+	int margin = _sizes.thicker_line() * 3 / 2;
+
+	if( pos.x() <= margin ) left = true;
+	if( pos.x() >= width()-margin ) right = true;
+	if( pos.y() <= margin ) top = true;
+	if( pos.y() >= height()-margin ) bottom = true;
+
+	// Check for corners
+	int rad = 2*margin;
+	if( pos.x() <= rad ) {
+	    if( pos.y() <= rad ) {
+		left = true;
+		top = true;
+	    } else if( pos.y() >= height()-rad ) {
+		left = true;
+		bottom = true;
+	    }
+	} else if( pos.x() >= width()-rad ) {
+	    if( pos.y() <= rad ) {
+		right = true;
+		top = true;
+	    } else if( pos.y() >= height()-rad ) {
+		right = true;
+		bottom = true;
+	    }
+	}
+
+	if( left ) {
+	    rv = Qt::SizeAllCursor;
+	} else if( right ) {
+	    if( top ) {
+		rv = Qt::SizeAllCursor;
+	    } else if(bottom) {
+		rv = Qt::SizeFDiagCursor;
+	    } else {
+		rv = Qt::SizeHorCursor;
+	    }
+	} else if( top ) {
+	    rv = Qt::SizeAllCursor;
+	} else if( bottom ) {
+	    rv = Qt::SizeVerCursor;
+	}
+
+	return rv;
+    }
+
+    /**
+     * Evokes resize events based on cursor type.
+     *
+     * Note the assumptions made with _which_cursor();
+     */
+    void PlayerWidget::_drag_resize(Qt::CursorShape cur, QMouseEvent* ev)
+    {
+	QRect win(pos().x(), pos().y(), width(), height());
+	QPoint gps = ev->globalPos();
+
+	switch(cur) {
+	case Qt::SizeAllCursor:
+	    win.translate(gps - _anchor);
+	    _anchor = gps;
+	    break;
+	case Qt::SizeHorCursor:
+	    // Right edge
+	    win.setRight( gps.x() );
+	    break;
+	case Qt::SizeVerCursor:
+	    win.setBottom( gps.y() );
+	    break;
+	case Qt::SizeFDiagCursor:
+	    win.setBottomRight( gps );
+	    break;
+	case Qt::SizeBDiagCursor:
+	    // Not used
+	    break;
+	default:
+	    break;
+	}
+
+	setGeometry(win);
     }
 
 } // namespace StretchPlayer
