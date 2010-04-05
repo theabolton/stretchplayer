@@ -378,7 +378,11 @@ namespace StretchPlayer
 		_loop_a = 1;
 	    }
 	} else if( _loop_a != 0 ) {
-	    _loop_b = _position;
+	    if( _position > _loop_a ) {
+		_loop_b = _position;
+	    } else {
+		_loop_a = _position;
+	    }
 	} else {
 	    assert(false);  // invalid state
 	}
