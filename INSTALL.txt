@@ -1,0 +1,139 @@
+StretchPlayer - Audio file stretch player and phrase trainer
+
+BUILDING AND INSTALLING STRETCHPLAYER
+=====================================
+
+Contents:
+
+1. System Requirements
+2. Download
+3. Binary Packages
+4. Prerequisites to Build from Source
+5. Build and Install from Source (Simple)
+6. Build and Install from Source (Detailed Configuration)
+7. INSTALL.txt Changelog
+
+1. System Requirements
+----------------------
+
+Composite is supported on the following operating systems:
+
+  * Linux/Unix/BSD
+
+Composite is not yet supported on Windows or OS X.  If you would like
+to help, please let me know.  <gabriel@teuton.org>
+
+StretchPlayer is very calculation-intensive (via librubberband).  It
+is known to /not/ work on PIII 800 MHz machines because they're not
+fast enough.
+
+  Pentium 4 1200 MHz
+  512 MB RAM
+  Consumer-Grade (cheap) audio card
+  Keyboard and Mouse
+
+2. Download
+-----------
+
+StretchPlayer's source code can be downloaded for the home page:
+
+	http://www.teuton.org/~gabriel/stretchplayer/
+
+The source code for the current development version can be checked out
+via Git:
+
+	$ git clone git://gitorious.org/stretchplayer/stretchplayer.git
+
+3. Binary Packages
+------------------
+
+There are currently no binary packages available.
+
+4. Prerequisites to Build from Source
+-------------------------------------
+
+In order to build from source, you will need the following libraries
+installed on your system, and the development header files.
+
+	REQUIRED
+	* Qt 4 Library (>=4.5.0)
+	* Qt 4 SDK (moc, uic, etc.)
+	* GNU g++ compiler (>=4.0, 3.x might work)
+	* CMake (>= 2.6, earlier might work)
+	* JACK (jack1 >= 0.109.0, jack2 >= 1.9.3, earlier ones may
+          work on some systems)
+	* libsndfile >=1.0.17
+	* librubberband
+
+On a dual-core, 32-bit, 1800MHz processor using a parallel build,
+StretchPlayer takes about 10 seconds to compile.
+
+5. Build and Install from Source (Simple)
+-----------------------------------------
+
+After you have all the prerequisites, building and installing will
+look like this:
+
+	$ tar xjf stretchplayer-0.500.tar.bz2
+	$ cd stretchplayer-0.500
+        $ mkdir build
+	$ cd build
+	$ cmake .. \
+		-DCMAKE_BUILD_TYPE=Debug \
+		-DCMAKE_INSTALL_PREFIX=/usr/local
+	$ make
+        $ sudo make install
+
+     +---------------------------------------------------+
+     | NOTICE:  BUILDING WITH 'cmake .' IS NOT SUPPORTED |
+     +---------------------------------------------------+
+
+To change the directory where StretchPlayer is installed, it is done like
+this on the last step:
+
+	$ sudo make install DESTDIR=/mnt/chroot
+
+THERE IS NO UNINSTALL. USE A PACKAGE MANAGER.
+
+Composite uses a tool that detects the correct Qt settings.  Please
+make sure that qmake for Qt4 is in your path... and all will be well.
+
+___CREATING A BINARY PACKAGE___
+
+If you are a package maintainer and wish for your packaging scripts to
+be included in the StretchPlayer source tree, we would be happy to work
+with you.  Please contact Gabriel Beddingfield <gabriel@teuton.org>.
+
+6. Build and Install from Source (Detailed Configuration)
+---------------------------------------------------------
+
+Unfortunately, CMake doesn't have something that works exactly like
+'./configure --help' that will show you all the configuration
+options.  The best way to see the standard options is to run:
+
+	$ ccmake /path/to/sources/stretchplayer-0.500
+
+Which will give you a listing of the options from the CMakeLists.txt
+file.  You have the following commands (and more) available:
+
+	h - get help on the current field/option
+	c - Reconfigure
+	g - Generate makefiles
+	t - Toggle advanced mode so that you can set
+            -funroll-loops -fomit-frame-pointer
+
+The following information is for your convenience, and is bound to go
+out-of date as things change:
+
+  DEBUG BUILDS -- Either `cmake -DCMAKE_BUILD_TYPE=Debug /path/to/srcs`
+                  or     `cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo /path/to/srcs`
+
+  PREFIX -- `cmake -DCMAKE_INSTALL_PREFIX=/usr/local /path/to/srcs`
+
+  DESTDIR -- With GNU Makefiles, `make install DESTDIR=/mnt/chroot`
+
+7. INSTALL.txt Changelog
+------------------------
+
+2010-04-05 Gabriel M. Beddingfield <gabriel@teuton.org>
+	* Copied INSTALL.txt from Composite and modified it.
