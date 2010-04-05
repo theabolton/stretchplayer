@@ -160,7 +160,7 @@ namespace StretchPlayer
 	int stretch;
 	stretch = 100.0 * _time_zone.width() / large_m.width("99:99.9");
 	_large_font.setStretch(stretch);
-	stretch = 100.0 * _stats_zone.width() / small_m.width(" VOLUME: 100%");
+	stretch = 100.0 * _stats_zone.width() / small_m.width("SPEED: 100%");
 	_small_font.setStretch(stretch);
 
 	_message_font = _small_font;
