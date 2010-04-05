@@ -101,13 +101,13 @@ namespace StretchPlayer
 
     void StatusWidget::message(QString msg)
     {
-	_status = msg;
+	_message = msg;
 	QTimer::singleShot(10000, this, SLOT(clear_message()));
     }
 
     void StatusWidget::clear_message()
     {
-	_status.clear();
+	_message.clear();
     }
 
     void StatusWidget::_changing_position(int pos)
@@ -214,7 +214,7 @@ namespace StretchPlayer
 	painter.drawText(stat, _volume);
 
 	painter.setFont(_message_font);
-	painter.drawText(_message_zone, _status);
+	painter.drawText(_message_zone, _message);
     }
 
     void StatusWidget::_update_palette()

@@ -76,8 +76,8 @@ private:
     QString _pitch;
     QString _volume;
     QString _cpu;
-    QString _status;
-    QTimer _status_scroll_timer;
+    QString _message;
+    QTimer _message_scroll_timer;
 
     QFont _large_font;
     QFont _small_font;
