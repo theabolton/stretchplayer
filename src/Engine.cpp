@@ -81,7 +81,7 @@ namespace StretchPlayer
 	    new RubberBandStretcher( sample_rate,
 				     2,
 				     RubberBandStretcher::OptionProcessRealTime
-				     | RubberBandStretcher::OptionThreadingNever
+				     | RubberBandStretcher::OptionThreadingAuto
 		)
 	    );
 	_stretcher->setMaxProcessSize(8192);
