@@ -37,6 +37,7 @@ namespace StretchPlayer
 	  _port_left(0),
 	  _port_right(0),
 	  _playing(false),
+	  _state_changed(false),
 	  _position(0),
 	  _loop_a(0),
 	  _loop_b(0),
@@ -164,6 +165,10 @@ namespace StretchPlayer
 
 	try {
 	    locked = _audio_lock.tryLock();
+	    if(_state_changed) {
+		_state_changed = false;
+		_stretcher->reset();
+	    }
 	    if(locked) {
 		if(_playing) {
 		    _process_playing(nframes);
@@ -318,17 +323,24 @@ namespace StretchPlayer
 
     void Engine::play()
     {
-	_playing = true;
+	if( ! _playing ) {
+	    _state_changed = true;
+	    _playing = true;
+	}
     }
 
     void Engine::play_pause()
     {
 	_playing = (_playing) ? false : true;
+	_state_changed = true;
     }
 
     void Engine::stop()
     {
-	_playing = false;
+	if( _playing ) {
+	    _playing = false;
+	    _state_changed = true;
+	}
     }
 
     float Engine::get_position()
@@ -369,6 +381,7 @@ namespace StretchPlayer
 	unsigned long pos = secs * _sample_rate;
 	QMutexLocker lk(&_audio_lock);
 	_position = pos;
+	_state_changed = true;
     }
 
     void Engine::_dispatch_message(const Engine::callback_seq_t& seq, const QString& msg) const

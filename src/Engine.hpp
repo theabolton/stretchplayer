@@ -136,6 +136,7 @@ private:
     jack_port_t *_port_left, *_port_right;
 
     bool _playing;
+    bool _state_changed;
     mutable QMutex _audio_lock;
     std::vector<float> _left;
     std::vector<float> _right;
