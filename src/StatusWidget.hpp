@@ -21,6 +21,8 @@
 
 #include <QWidget>
 #include <memory>
+#include <QString>
+#include <QTimer>
 
 class QPushButton;
 class QLabel;
@@ -55,6 +57,7 @@ public slots:
     void volume(float);
     void cpu(float);
     void message(QString);
+    void clear_message();
 
 signals:
     void locate(float); // [0.0, 1.0]
@@ -63,18 +66,28 @@ private slots:
     void _changing_position(int);
 
 private:
+    virtual void resizeEvent(QResizeEvent *event);
     virtual void paintEvent(QPaintEvent *event);
     void _update_palette();
 
 private:
-    QVBoxLayout *_vlay;
+    QString _time;
+    QString _speed;
+    QString _pitch;
+    QString _volume;
+    QString _cpu;
+    QString _status;
+    QTimer _status_scroll_timer;
 
-    QLabel *_time;
-    QLabel *_speed;
-    QLabel *_pitch;
-    QLabel *_volume;
-    QLabel *_cpu;
-    QLabel *_status;
+    QFont _large_font;
+    QFont _small_font;
+    QFont _message_font;
+
+    QRect _bg_zone;
+    QRect _time_zone;
+    QRect _stats_zone;
+    QRect _message_zone;
+
     Widgets::ThinSlider *_position;
     PlayerSizes *_sizes;
 

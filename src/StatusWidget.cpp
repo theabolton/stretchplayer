@@ -41,51 +41,10 @@ namespace StretchPlayer
 	: QWidget(parent),
 	  _sizes(sizes)
     {
-	_vlay = new QVBoxLayout(this);
-	QHBoxLayout *top_lay = new QHBoxLayout;
-	QVBoxLayout *top_right_lay = new QVBoxLayout;
-
-	_time = new QLabel(this);
-	_speed = new QLabel(this);
-	_pitch = new QLabel(this);
-	_volume = new QLabel(this);
-	_cpu = new QLabel(this);
-	_status = new QLabel(this);
 	_position = new Widgets::ThinSlider(this);
-
-	QFont font = _time->font();
-	font.setPointSize(32);
-	_time->setFont(font);
-	_time->setText("00:00.0");
-	_time->setScaledContents(true);
-
-	_speed->setText("SPEED: 100%");
-	_speed->setAlignment(Qt::AlignRight);
-	_pitch->setText("PITCH:    0");
-	_pitch->setAlignment(Qt::AlignRight);
-	_volume->setText("VOL: 100%");
-	_volume->setAlignment(Qt::AlignRight);
-	_cpu->setText("CPU:   0%");
-	_cpu->setAlignment(Qt::AlignRight);
-
 	_position->setMinimum(0);
 	_position->setMaximum(1000);
 	_position->setOrientation(Qt::Horizontal);
-
-	_status->setWordWrap(true);
-
-	_vlay->addLayout(top_lay);
-	_vlay->addWidget(_status);
-	_vlay->addWidget(_position);
-
-	top_lay->addWidget(_time);
-	top_lay->addLayout(top_right_lay);
-
-	top_right_lay->addWidget(_speed);
-	top_right_lay->addWidget(_pitch);
-	top_right_lay->addWidget(_volume);
-	top_right_lay->addWidget(_cpu);
-	top_right_lay->addStretch();
 
 	QSizePolicy policy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	setSizePolicy(policy);
@@ -108,43 +67,47 @@ namespace StretchPlayer
     {
 	int min = (int)(time/60.0);
 	float sec = time - min*60.0;
-	_time->setText(QString("%1:%2")
-		       .arg(int(min), 2, 10, QChar('0'))
-		       .arg(double(sec), 4, 'f', 1, QChar('0'))
-	    );
+	_time = QString("%1:%2")
+	    .arg(int(min), 2, 10, QChar('0'))
+	    .arg(double(sec), 4, 'f', 1, QChar('0'));
     }
 
     void StatusWidget::speed(float val)
     {
 	val *= 100.0;
-	_speed->setText( QString("SPEED: %1%")
-			 .arg(val, 3, 'f', 0) );
+	_speed = QString("SPEED: %1%")
+	    .arg(val, 3, 'f', 0);
     }
 
     void StatusWidget::pitch(int p)
     {
-	_pitch->setText( QString("PITCH: %1")
-			 .arg(int(p)) );
+	_pitch = QString("PITCH: %1")
+	    .arg(int(p));
     }
 
     void StatusWidget::volume(float g)
     {
 	g *= 100.0;
-	_volume->setText( QString("VOL: %1%")
-			  .arg(g, 3, 'f', 0, ' ') );
+	_volume = QString("VOL: %1%")
+	    .arg(g, 3, 'f', 0, ' ');
     }
 
     void StatusWidget::cpu(float c)
     {
 	c *= 100.0;
-	_cpu->setText( QString("CPU: %1%")
-		       .arg(c, 3, 'f', 0, ' ') );
+	_cpu = QString("CPU: %1%")
+	    .arg(c, 3, 'f', 0, ' ');
     }
 
     void StatusWidget::message(QString msg)
     {
-	_status->setText( msg );
-	QTimer::singleShot(10000, _status, SLOT(clear()));
+	_status = msg;
+	QTimer::singleShot(10000, this, SLOT(clear_message()));
+    }
+
+    void StatusWidget::clear_message()
+    {
+	_status.clear();
     }
 
     void StatusWidget::_changing_position(int pos)
@@ -153,7 +116,58 @@ namespace StretchPlayer
 	emit locate(p);
     }
 
-    void StatusWidget::paintEvent(QPaintEvent *event)
+    void StatusWidget::resizeEvent(QResizeEvent * /*event*/)
+    {
+	float w, h, margin, radius;
+
+	w = width();
+	h = height();
+	radius = _sizes->thicker_line() * 2.0;
+	margin = radius;
+
+	_bg_zone.setRect( 0, 0, w, h );
+
+	_position->set_line_widths( _sizes->thin_line(), _sizes->thicker_line() );
+	QSize pos_sz = _position->sizeHint();
+	_position->setGeometry( margin,
+				h - margin - pos_sz.height(),
+				w - 2*margin,
+				pos_sz.height() );
+
+	// Since that's been drawn... discout it from the
+	// height and calculate all the text.
+	h -= pos_sz.height();
+
+	_message_zone.setRect( margin, h - h/5 - margin, w-2*margin, h/5 );
+
+	h -= _message_zone.height();
+
+	_time_zone.setRect( margin, margin, w*2/3, _message_zone.y() );
+	_stats_zone.setRect( _time_zone.right() + 2*margin,
+			     _time_zone.y(),
+			     w - 3*margin - _time_zone.right(),
+			     _time_zone.height() );
+
+	// Size the fonts...
+	_large_font.setPixelSize( _time_zone.height() * 8 / 10 );
+	_large_font.setStretch( 100 );
+	_small_font.setPixelSize( _stats_zone.height() * 8 / 10 / 4 );
+	_small_font.setStretch( 100 );
+
+	QFontMetrics large_m( _large_font );
+	QFontMetrics small_m( _small_font );
+
+	int stretch;
+	stretch = 100.0 * _time_zone.width() / large_m.width("99:99.9");
+	_large_font.setStretch(stretch);
+	stretch = 100.0 * _stats_zone.width() / small_m.width(" VOLUME: 100%");
+	_small_font.setStretch(stretch);
+
+	_message_font = _small_font;
+	_message_font.setStretch(100);
+    }
+
+    void StatusWidget::paintEvent(QPaintEvent * /*event*/)
     {
 	// Using REVERSE colors of parent.
 	_update_palette();
@@ -165,24 +179,33 @@ namespace StretchPlayer
 	QBrush brush( palette().color(QPalette::Active, QPalette::Window ) );
 	QPen pen( palette().color(QPalette::Active, QPalette::Dark) );
 
-	float x, y, w, h;
-	float radius, margin;
+	int radius = _sizes->thicker_line() * 2.0;
 
-	x = 0.0;
-	y = 0.0;
-	w = width();
-	h = height();
-	radius = _sizes->thicker_line() * 2.0;
-	margin = radius * .75;
-
-	_vlay->setContentsMargins(margin, margin, margin, margin);
 	painter.setBrush(brush);
 	painter.setPen(pen);
-	painter.drawRoundedRect( x, y, w, h, radius, radius );
+	painter.drawRoundedRect( _bg_zone, radius, radius );
 
-	_position->set_line_widths( _sizes->thin_line(), _sizes->thicker_line() );
 
-	QWidget::paintEvent(event);
+        // Change pen color to draw text.
+	pen.setColor( palette().color(QPalette::Active, QPalette::WindowText) );
+	painter.setPen(pen);
+
+	painter.setFont(_large_font);
+	painter.drawText(_time_zone, _time);
+
+	painter.setFont(_small_font);
+	QRect stat = _stats_zone;
+	stat.setHeight( stat.height() / 4 );
+	painter.drawText(stat, _speed);
+	stat.moveTo( stat.x(), stat.bottom() );
+	painter.drawText(stat, _pitch);
+	stat.moveTo( stat.x(), stat.bottom() );
+	painter.drawText(stat, _cpu);
+	stat.moveTo( stat.x(), stat.bottom() );
+	painter.drawText(stat, _volume);
+
+	painter.setFont(_message_font);
+	painter.drawText(_message_zone, _status);
     }
 
     void StatusWidget::_update_palette()

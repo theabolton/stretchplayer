@@ -40,10 +40,12 @@ namespace Widgets
 	 */
 	void set_line_widths(float thin, float thick);
 
-    private:
-	void init();
+    public:
 	virtual QSize sizeHint() const;
 	virtual QSize minimumSizeHint() const;
+
+    private:
+	void init();
 	virtual void paintEvent(QPaintEvent *event);
 	
 	virtual void mousePressEvent(QMouseEvent *ev);
