@@ -140,6 +140,7 @@ private:
 
     // State variables
     QPoint _anchor; // for window moves
+    bool _compositing;
 
 }; // PlayerWidget
 

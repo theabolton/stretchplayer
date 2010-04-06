@@ -65,7 +65,12 @@ namespace StretchPlayer
 			| Qt::FramelessWindowHint
 	    );
 
+#if QT_VERSION >= 0x040500
 	setAttribute( Qt::WA_TranslucentBackground );
+	_compositing = true;
+#else
+	_compositing = false;
+#endif
 	setMinimumSize(_sizes.preferred_width()*2/3, _sizes.preferred_height()*2/3);
 
 	QSizePolicy policy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -280,27 +285,34 @@ namespace StretchPlayer
 	float w = width();
 	float h = height();
 
-	QImage mask_img(width(), height(), QImage::Format_Mono);
-	mask_img.fill(0xff);
-	QPainter mask_ptr(&mask_img);
-	mask_ptr.setBrush( QBrush( QColor(0, 0, 0) ) );
-	mask_ptr.drawRoundedRect( QRectF( 0, 0, w, h),
-				  border_rad+thickline/2.0,
-				  border_rad+thickline/2.0 );
-	QBitmap bmp = QBitmap::fromImage(mask_img);
-	setMask( bmp );
+	if(_compositing) {
+	    QImage mask_img(width(), height(), QImage::Format_Mono);
+	    mask_img.fill(0xff);
+	    QPainter mask_ptr(&mask_img);
+	    mask_ptr.setBrush( QBrush( QColor(0, 0, 0) ) );
+	    mask_ptr.drawRoundedRect( QRectF( 0, 0, w, h),
+				      border_rad+thickline/2.0,
+				      border_rad+thickline/2.0 );
+	    QBitmap bmp = QBitmap::fromImage(mask_img);
+	    setMask( bmp );
+	}
 
 	QBrush bg_brush( pal.color(QPalette::Active, QPalette::Window) );
 	QPen border_pen( pal.color(QPalette::Active, QPalette::Dark) );
 
 	border_pen.setWidthF(thickline);
 	border_pen.setJoinStyle(Qt::RoundJoin);
-	painter.setBrush(bg_brush);
 	painter.setPen(border_pen);
-	painter.drawRoundedRect( QRectF( thickline/2.0,
-					 thickline/2.0,
-					 w-thickline,
-					 h-thickline ),
+	QRectF bg_rect = QRectF( thickline/2.0,
+				 thickline/2.0,
+				 w-thickline,
+				 h-thickline );
+	if(!_compositing) {
+	    painter.setBrush( pal.color(QPalette::Active, QPalette::Dark) );
+	    painter.drawRect( 0, 0, width(), height() );
+	}
+	painter.setBrush(bg_brush);
+	painter.drawRoundedRect( bg_rect,
 				 border_rad,
 				 border_rad );
 
