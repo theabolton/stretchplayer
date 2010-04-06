@@ -84,7 +84,7 @@ namespace StretchPlayer
 				     | RubberBandStretcher::OptionThreadingAuto
 		)
 	    );
-	_stretcher->setMaxProcessSize(8192);
+	_stretcher->setMaxProcessSize(16384);
 
 	jack_activate(_jack_client);
 
