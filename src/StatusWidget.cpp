@@ -51,7 +51,7 @@ namespace StretchPlayer
 	_position->setOrientation(Qt::Horizontal);
 
 	_message = new Widgets::Marquee(this);
-	_message->set_permanent("I am the very model of a modern major general.  I've information vegetable animal and mineral.");
+	_message->set_permanent("No file loaded.");
 
 	QSizePolicy policy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	setSizePolicy(policy);
