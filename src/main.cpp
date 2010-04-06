@@ -29,18 +29,24 @@ int main(int argc, char* argv[])
     QApplication app(argc, argv);
     std::auto_ptr<StretchPlayer::PlayerWidget> pw;
 
+    std::cout << "StretchPlayer version 0.500, Copyright 2010 Gabriel M. Beddingfield\n"
+	      << "StretchPlayer comes with ABSOLUTELY NO WARRANTY;\n"
+	      << "This is free software, and you are welcome to redistribute it\n"
+	      << "under terms of the GNU Public License (ver. 2 or later)\n"
+	      << std::endl;	
+
     pw.reset(new StretchPlayer::PlayerWidget);
 
     app.setStyle( new QPlastiqueStyle );
 
+    pw->show();
+
     if(argc > 1) {
 	QString fn(argv[1]);
+	std::cout << "Loading file " << argv[1] << std::endl;
 	pw->load_song(fn);
-    } else {
-	std::cout << "Usage: " << argv[0] << " <filename>" << std::endl;
     }
 
-    pw->show();
     app.exec();
 
     return 0;

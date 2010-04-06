@@ -307,6 +307,8 @@ namespace StretchPlayer
 	    return;
 	}
 
+	_message( QString("Opening file '%1'")
+		  .arg(filename) );
 	std::vector<float> buf(4096, 0.0f);
 	sf_count_t read, k;
 	unsigned mod;

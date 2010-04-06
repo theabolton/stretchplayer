@@ -35,6 +35,7 @@
 #include <QBitmap>
 #include <QAction>
 #include <QResizeEvent>
+#include <QCoreApplication>
 
 #include <cmath>
 
@@ -51,6 +52,7 @@ namespace StretchPlayer
 
 	    virtual void operator()(const QString& msg) {
 		_widget->status_message(msg);
+		QCoreApplication::processEvents();
 	    }
 	private:
 	    PlayerWidget* _widget;
