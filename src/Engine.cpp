@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <iostream>
+#include <QFileInfo>
 
 using RubberBand::RubberBandStretcher;
 using namespace std;
@@ -274,7 +275,12 @@ namespace StretchPlayer
 	}
     }
 
-    void Engine::load_song(const QString& filename)
+    /**
+     * Load a file
+     *
+     * \return Name of song
+     */
+    QString Engine::load_song(const QString& filename)
     {
 	QMutexLocker lk(&_audio_lock);
 	stop();
@@ -286,14 +292,13 @@ namespace StretchPlayer
 	SF_INFO sf_info;
 	memset(&sf_info, 0, sizeof(sf_info));
 
-	_message( QString("Opening file '%1'")
-		  .arg(filename) );
+	_message( QString("Opening file...") );
 	sf = sf_open(filename.toLocal8Bit().data(), SFM_READ, &sf_info);
 	if( !sf ) {
 	    _error( QString("Error opening file '%1': %2")
 		    .arg(filename)
 		    .arg( sf_strerror(sf) ) );
-	    return;
+	    return QString();
 	}
 
 	_sample_rate = sf_info.samplerate;
@@ -304,11 +309,10 @@ namespace StretchPlayer
 	    _error( QString("Error opening file '%1': File is empty")
 		    .arg(filename) );
 	    sf_close(sf);
-	    return;
+	    return QString();
 	}
 
-	_message( QString("Opening file '%1'")
-		  .arg(filename) );
+	_message( QString("Opening file...") );
 	std::vector<float> buf(4096, 0.0f);
 	sf_count_t read, k;
 	unsigned mod;
@@ -331,7 +335,9 @@ namespace StretchPlayer
 	    _error( QString("Warning: not all of the file data was read.") );
 	}
 
-	sf_close(sf);	
+	sf_close(sf);
+	QFileInfo f_info(filename);
+	return f_info.fileName();
     }
 
     void Engine::play()

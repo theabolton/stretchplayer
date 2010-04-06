@@ -40,6 +40,7 @@ class PlayerSizes;
     namespace Widgets
     {
 	class ThinSlider;
+	class Marquee;
     }
 
 class StatusWidget : public QWidget
@@ -57,7 +58,7 @@ public slots:
     void volume(float);
     void cpu(float);
     void message(QString);
-    void clear_message();
+    void song_name(QString);
 
 signals:
     void locate(float); // [0.0, 1.0]
@@ -76,8 +77,6 @@ private:
     QString _pitch;
     QString _volume;
     QString _cpu;
-    QString _message;
-    QTimer _message_scroll_timer;
 
     QFont _large_font;
     QFont _small_font;
@@ -89,6 +88,7 @@ private:
     QRect _message_zone;
 
     Widgets::ThinSlider *_position;
+    Widgets::Marquee *_message;
     PlayerSizes *_sizes;
 
 }; // StatusWidget

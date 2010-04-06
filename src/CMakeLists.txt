@@ -44,6 +44,7 @@ LIST(APPEND sp_cpp
   StatusWidget.cpp
   PlayerSizes.cpp
   ThinSlider.cpp
+  Marquee.cpp
   )
 
 LIST(APPEND sp_hpp
@@ -52,11 +53,13 @@ LIST(APPEND sp_hpp
   StatusWidget.hpp
   PlayerSizes.hpp
   ThinSlider.hpp
+  Marquee.hpp
   )
 
 LIST(APPEND sp_moc_hpp
   PlayerWidget.hpp
   StatusWidget.hpp
+  Marquee.hpp
   )
 
 QT4_WRAP_CPP(sp_moc ${sp_moc_hpp}) 

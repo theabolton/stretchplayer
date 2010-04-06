@@ -20,6 +20,7 @@
 #include "StatusWidget.hpp"
 #include "ThinSlider.hpp"
 #include "PlayerSizes.hpp"
+#include "Marquee.hpp"
 
 #include <QWidget>
 #include <QPushButton>
@@ -41,10 +42,16 @@ namespace StretchPlayer
 	: QWidget(parent),
 	  _sizes(sizes)
     {
+	// Using REVERSE colors of parent.
+	_update_palette();
+
 	_position = new Widgets::ThinSlider(this);
 	_position->setMinimum(0);
 	_position->setMaximum(1000);
 	_position->setOrientation(Qt::Horizontal);
+
+	_message = new Widgets::Marquee(this);
+	_message->set_permanent("I am the very model of a modern major general.  I've information vegetable animal and mineral.");
 
 	QSizePolicy policy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	setSizePolicy(policy);
@@ -101,13 +108,12 @@ namespace StretchPlayer
 
     void StatusWidget::message(QString msg)
     {
-	_message = msg;
-	QTimer::singleShot(10000, this, SLOT(clear_message()));
+	_message->set_temporary( msg );
     }
 
-    void StatusWidget::clear_message()
+    void StatusWidget::song_name(QString msg)
     {
-	_message.clear();
+	_message->set_permanent( msg );
     }
 
     void StatusWidget::_changing_position(int pos)
@@ -139,6 +145,7 @@ namespace StretchPlayer
 	h -= pos_sz.height();
 
 	_message_zone.setRect( margin, h - h/5 - margin, w-2*margin, h/5 );
+	_message->setGeometry(_message_zone);
 
 	h -= _message_zone.height();
 
@@ -166,6 +173,7 @@ namespace StretchPlayer
 
 	_message_font = _small_font;
 	_message_font.setStretch(100);
+	_message->set_font(_message_font);
     }
 
     void StatusWidget::paintEvent(QPaintEvent * /*event*/)
@@ -228,8 +236,9 @@ namespace StretchPlayer
 	stat.moveTo( stat.x(), stat.bottom() );
 	painter.drawText(stat, _volume);
 
-	painter.setFont(_message_font);
-	painter.drawText(_message_zone, _message);
+	_message->update();
+	//painter.setFont(_message_font);
+	//painter.drawText(_message_zone, _message);
     }
 
     void StatusWidget::_update_palette()

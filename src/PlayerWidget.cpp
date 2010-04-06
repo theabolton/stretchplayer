@@ -97,7 +97,12 @@ namespace StretchPlayer
 
     void PlayerWidget::load_song(const QString& filename)
     {
-	_engine->load_song(filename);
+	QString name = _engine->load_song(filename);
+	if(name.isEmpty()) {
+	    _status->song_name("No song loaded.");
+	} else {
+	    _status->song_name(name);
+	}
     }
 
     int PlayerWidget::heightForWidth(int w)

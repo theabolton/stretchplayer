@@ -42,7 +42,7 @@ public:
     Engine();
     ~Engine();
 
-    void load_song(const QString& filename);
+    QString load_song(const QString& filename);
     void play();
     void play_pause();
     void stop();
