@@ -612,12 +612,12 @@ namespace StretchPlayer
 			       grid );
 	btn_x += _stretch->width();
 
-	_btn.pitch_inc->setIconSize(grid_size);
-	_btn.pitch_inc->setGeometry( btn_x, btn_y, grid, grid );
-	btn_x += grid;
-
 	_btn.pitch_dec->setIconSize(grid_size);
 	_btn.pitch_dec->setGeometry( btn_x, btn_y, grid, grid );
+	btn_x += grid;
+
+	_btn.pitch_inc->setIconSize(grid_size);
+	_btn.pitch_inc->setGeometry( btn_x, btn_y, grid, grid );
 	btn_x += grid;
 
 	_btn.open->setIconSize(grid_size);
