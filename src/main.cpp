@@ -22,22 +22,25 @@
 #include "PlayerWidget.hpp"
 #include <iostream>
 #include <QPlastiqueStyle>
+#include <memory>
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
-    StretchPlayer::PlayerWidget pw;
+    std::auto_ptr<StretchPlayer::PlayerWidget> pw;
+
+    pw.reset(new StretchPlayer::PlayerWidget);
 
     app.setStyle( new QPlastiqueStyle );
 
     if(argc > 1) {
 	QString fn(argv[1]);
-	pw.load_song(fn);
+	pw->load_song(fn);
     } else {
 	std::cout << "Usage: " << argv[0] << " <filename>" << std::endl;
     }
 
-    pw.show();
+    pw->show();
     app.exec();
 
     return 0;

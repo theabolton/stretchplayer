@@ -307,31 +307,26 @@ namespace StretchPlayer
 	    return;
 	}
 
-	std::vector<float> buf(sf_info.frames * sf_info.channels, 0.0f);
-	sf_count_t read;
-	read = sf_read_float(sf, &buf[0], buf.size());
-	if( read < 1 ) {
-	    _error( QString("Error reading from file '%1'")
-		    .arg(filename) );
-	    sf_close(sf);
-	    return;
-	}
-
-	if( read != (sf_info.frames * sf_info.channels)) {
-	    _error( QString("Warning: not all of the file data was read.") );
-	}
-
-	sf_count_t j;
+	std::vector<float> buf(4096, 0.0f);
+	sf_count_t read, k;
 	unsigned mod;
-	for( j=0 ; j<read ; ++j ) {
-	    mod = j % sf_info.channels;
-	    if( mod == 0 ) {
-		_left.push_back( buf[j] );
-	    } else if ( mod == 1 ) {
-		_right.push_back( buf[j] );
-	    } else {
-		// remaining channels ignored
+	while(true) {
+	    read = sf_read_float(sf, &buf[0], buf.size());
+	    if( read < 1 ) break;
+	    for(k=0 ; k<read ; ++k) {
+		mod = k % sf_info.channels;
+		if( mod == 0 ) {
+		    _left.push_back( buf[k] );
+		} else if( mod == 1 ) {
+		    _right.push_back( buf[k] );
+		} else {
+		    // remaining channels ignored
+		}
 	    }
+	}
+
+	if( _left.size() != sf_info.frames ) {
+	    _error( QString("Warning: not all of the file data was read.") );
 	}
 
 	sf_close(sf);	
