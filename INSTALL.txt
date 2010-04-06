@@ -32,6 +32,10 @@ fast enough.
   Consumer-Grade (cheap) audio card
   Keyboard and Mouse
 
+However, if you are careful (stay within about 30% of orig. speed and
+with +/- 5 half-steps) and use a large buffer size (e.g. 4096), it is
+possible to get this to work on a PIII 800 MHz.
+
 2. Download
 -----------
 

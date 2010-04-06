@@ -48,10 +48,18 @@ USAGE
 
 $ stretchplayer
 
-Note that if you use JACK with a buffer size less than 256,
-StretchPlayer is known to give poor audio.  If you are getting poor
-audio, try increasing your buffer size.  We are working to improve
-this.
+If you hover over the buttons with your mouse, you'll find several
+keyboard shortcuts.  One extra shortcut is the [HOME] key, which will
+set everything back to default settings (including relocating to the
+beginning of the song).
+
+    +-------------------------------------------+
+    | Important: Performance                    |
+    |                                           |
+    | Make sure that you use a JACK buffer size |
+    | larger than 256.  Less than 256 is known  |
+    | to have real-time issues.                 |
+    +-------------------------------------------+
 
 ABOUT STRETCHPLAYER
 ===================
