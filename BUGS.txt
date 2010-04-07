@@ -1,0 +1,50 @@
+BUGS FOR STRETCHPLAYER
+----------------------
+
+Here is an unordered list of complaints, shorcomings, wishes, and
+bugs.
+
+* Clicks when changing speed/pitch.
+
+* Clicks on A/B Repeat.
+
+* QFont::setStretch() doesn't work on all fonts.
+  Where it doesn't work, they get massively
+  kerned.  Would be better to just make the font
+  smaller.  This is especially bad on Windows.
+
+* The font layout is .... ok.... but still looks
+  a little amateurish.
+
+* Doesn't work with buffer size < 256
+
+* Doesn't work on older computers (<= 800 MHz)
+
+* Memory hog.  Needs to stream.
+
+* Add MP3 support.
+
+* Create CLI version.
+
+* Create Windows version with MSI package.
+
+* Add PortAudio support
+
+* Sliders don't match the UI.
+
+* debian package
+
+* stretchplayer.desktop file
+
+* Get the version into the CMake stuff.
+
+* needs a help/version button.
+
+* one user complained that unity gain on the fader is at 85% rather
+  than 100%.
+
+* Faders need a detented spot (stretch fader near 100%, volume fader
+  near unity gain).
+
+* Using arrow keys will not get the stretch fader to go to the extreme
+  position.
