@@ -45,6 +45,7 @@ LIST(APPEND sp_cpp
   PlayerSizes.cpp
   ThinSlider.cpp
   Marquee.cpp
+  JackAudioSystem.cpp
   )
 
 LIST(APPEND sp_hpp
@@ -54,6 +55,8 @@ LIST(APPEND sp_hpp
   PlayerSizes.hpp
   ThinSlider.hpp
   Marquee.hpp
+  AudioSystem.hpp
+  JackAudioSystem.hpp
   )
 
 LIST(APPEND sp_moc_hpp

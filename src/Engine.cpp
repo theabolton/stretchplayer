@@ -28,6 +28,9 @@
 #include <algorithm>
 #include <iostream>
 #include <QFileInfo>
+#include <AudioSystem.hpp>
+#include <JackAudioSystem.hpp>
+#include <QString>
 
 using RubberBand::RubberBandStretcher;
 using namespace std;
@@ -35,10 +38,7 @@ using namespace std;
 namespace StretchPlayer
 {
     Engine::Engine()
-	: _jack_client(0),
-	  _port_left(0),
-	  _port_right(0),
-	  _playing(false),
+	: _playing(false),
 	  _state_changed(false),
 	  _position(0),
 	  _loop_a(0),
@@ -48,35 +48,19 @@ namespace StretchPlayer
 	  _pitch(0),
 	  _gain(1.0)
     {
+	QString err;
 	QMutexLocker lk(&_audio_lock);
 
-	_jack_client = jack_client_open("StretchPlayer", JackNullOption, 0);
-	if(!_jack_client)
-	    throw std::runtime_error("Could not set up JACK");
+	_audio_system.reset( new JackAudioSystem );
+	QString app_name("StretchPlayer");
+	_audio_system->init( &app_name, &err);
+	_audio_system->set_process_callback(Engine::static_process_callback, this);
 
-	_port_left = jack_port_register( _jack_client,
-					 "left",
-					 JACK_DEFAULT_AUDIO_TYPE,
-					 JackPortIsOutput,
-					 0 );
-	if(!_port_left)
-	    throw std::runtime_error("Could not set up left out");
+	if( ! err.isNull() )
+	    throw std::runtime_error(err.toLocal8Bit().data());
 
-	_port_right = jack_port_register( _jack_client,
-					  "right",
-					  JACK_DEFAULT_AUDIO_TYPE,
-					  JackPortIsOutput,
-					  0 );
-	if(!_port_right)
-	    throw std::runtime_error("Could not set up right out");
 
-	int rv = jack_set_process_callback( _jack_client,
-					    Engine::static_jack_callback,
-					    this );
-	if(rv)
-	    throw std::runtime_error("Could not set up jack callback.");
-
-	jack_nframes_t sample_rate = jack_get_sample_rate(_jack_client);
+	uint32_t sample_rate = _audio_system->sample_rate();
 
 	_stretcher.reset(
 	    new RubberBandStretcher( sample_rate,
@@ -87,49 +71,18 @@ namespace StretchPlayer
 	    );
 	_stretcher->setMaxProcessSize(16384);
 
-	jack_activate(_jack_client);
+	if( _audio_system->activate(&err) )
+	    throw std::runtime_error(err.toLocal8Bit().data());
 
-	// Autoconnection to first two ports we find.
-	const char** ports = jack_get_ports( _jack_client,
-					     0,
-					     JACK_DEFAULT_AUDIO_TYPE,
-					     JackPortIsInput
-	    );
-	int k;
-	for( k=0 ; ports && ports[k] != 0 ; ++k ) {
-	    if(k==0) {
-		rv = jack_connect( _jack_client,
-				   jack_port_name(_port_left),
-				   ports[k] );
-	    } else if (k==1) {
-		rv = jack_connect( _jack_client,
-				   jack_port_name(_port_right),
-				   ports[k] );
-	    } else {
-		break;
-	    }
-	    if( rv ) {
-		_error("Could not connect output ports");
-	    }
-	}
-	if(k==0) {
-	    _error("There were no output ports to connect to.");
-	}
-	if(ports) {
-	    free(ports);
-	}
     }
 
     Engine::~Engine()
     {
 	QMutexLocker lk(&_audio_lock);
 
-	if(_jack_client) {
-	    jack_deactivate(_jack_client);
+	_audio_system->deactivate();
+	_audio_system->cleanup();
 
-	    jack_client_close(_jack_client);
-	    _jack_client = 0;
-	}
 	callback_seq_t::iterator it;
 	QMutexLocker lk_cb(&_callback_lock);
 	for( it=_error_callbacks.begin() ; it!=_error_callbacks.end() ; ++it ) {
@@ -140,28 +93,23 @@ namespace StretchPlayer
 	}
     }
 
-    void Engine::_zero_buffers(jack_nframes_t nframes)
+    void Engine::_zero_buffers(uint32_t nframes)
     {
 	// MUTEX MUST ALREADY BE LOCKED
-	if (_jack_client) {
-	    // Just zero the buffers
-	    void *buf_L = 0, *buf_R = 0;
-	    if(_port_left) {
-		buf_L = jack_port_get_buffer(_port_left, nframes);
-	    }
-	    if(buf_L) {
-		memset(buf_L, 0, nframes * sizeof(float));
-	    }
-	    if(_port_right) {
-		buf_R = jack_port_get_buffer(_port_right, nframes);
-	    }
-	    if(buf_R) {
-		memset(buf_R, 0, nframes * sizeof(float));
-	    }
+
+	// Just zero the buffers
+	void *buf_L = 0, *buf_R = 0;
+	buf_L = _audio_system->output_buffer(0);
+	if(buf_L) {
+	    memset(buf_L, 0, nframes * sizeof(float));
+	}
+	buf_R = _audio_system->output_buffer(1);
+	if(buf_R) {
+	    memset(buf_R, 0, nframes * sizeof(float));
 	}
     }
 
-    int Engine::jack_callback(jack_nframes_t nframes)
+    int Engine::process_callback(uint32_t nframes)
     {
 	bool locked = false;
 
@@ -181,10 +129,8 @@ namespace StretchPlayer
 		} else {
 		    _zero_buffers(nframes);
 		}
-	    } else if (_jack_client) {
-		_zero_buffers(nframes);
 	    } else {
-		// Nothing to do.
+		_zero_buffers(nframes);
 	    }
 	} catch (...) {
 	}
@@ -194,26 +140,22 @@ namespace StretchPlayer
 	return 0;
     }
 
-    void Engine::_process_playing(jack_nframes_t nframes)
+    void Engine::_process_playing(uint32_t nframes)
     {
 	// MUTEX MUST ALREADY BE LOCKED
-	assert(_jack_client);
-	assert(_port_left);
-	assert(_port_right);
-
 	float *buf_L = 0, *buf_R = 0;
 
-	buf_L = static_cast<float*>( jack_port_get_buffer(_port_left, nframes) );
-	buf_R = static_cast<float*>( jack_port_get_buffer(_port_right, nframes) );
+	buf_L = _audio_system->output_buffer(0);
+	buf_R = _audio_system->output_buffer(1);
 	float* rb_buf_in[2];
 	float* rb_buf_out[2] = { buf_L, buf_R };
 
-	jack_nframes_t srate = jack_get_sample_rate(_jack_client);
+	uint32_t srate = _audio_system->sample_rate();
 
 	_stretcher->setTimeRatio( srate / _sample_rate / _stretch );
 	_stretcher->setPitchScale( ::pow(2.0, double(_pitch)/12.0) * _sample_rate / srate );
 
-	jack_nframes_t frame;
+	uint32_t frame;
 	size_t reqd, gend, zeros, feed;
 
 	frame = 0;
@@ -434,7 +376,7 @@ namespace StretchPlayer
 
     float Engine::get_cpu_load()
     {
-	return jack_cpu_load(_jack_client)/100.0;
+	return _audio_system->dsp_load();
     }
 
 } // namespace StretchPlayer

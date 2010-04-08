@@ -19,7 +19,7 @@
 #ifndef ENGINE_HPP
 #define ENGINE_HPP
 
-#include <jack/jack.h>
+#include <stdint.h>
 #include <memory>
 #include <QString>
 #include <QMutex>
@@ -35,6 +35,7 @@ namespace StretchPlayer
 {
 
 class EngineMessageCallback;
+class AudioSystem;
 
 class Engine
 {
@@ -112,15 +113,15 @@ public:
     }
 
 private:
-    static int static_jack_callback(jack_nframes_t nframes, void* arg) {
+    static int static_process_callback(uint32_t nframes, void* arg) {
 	Engine *e = static_cast<Engine*>(arg);
-	return e->jack_callback(nframes);
+	return e->process_callback(nframes);
     }
 
-    int jack_callback(jack_nframes_t nframes);
+    int process_callback(uint32_t nframes);
 
-    void _zero_buffers(jack_nframes_t nframes);
-    void _process_playing(jack_nframes_t nframes);
+    void _zero_buffers(uint32_t nframes);
+    void _process_playing(uint32_t nframes);
 
     typedef std::set<EngineMessageCallback*> callback_seq_t;
 
@@ -133,9 +134,6 @@ private:
     void _dispatch_message(const callback_seq_t& seq, const QString& msg) const;
     void _subscribe_list(callback_seq_t& seq, EngineMessageCallback* obj);
     void _unsubscribe_list(callback_seq_t& seq, EngineMessageCallback* obj);
-
-    jack_client_t* _jack_client;
-    jack_port_t *_port_left, *_port_right;
 
     bool _playing;
     bool _state_changed;
@@ -150,6 +148,7 @@ private:
     int _pitch;
     float _gain;
     std::auto_ptr<RubberBand::RubberBandStretcher> _stretcher;
+    std::auto_ptr<AudioSystem> _audio_system;
 
     mutable QMutex _callback_lock;
     callback_seq_t _error_callbacks;
