@@ -18,8 +18,10 @@
  */
 
 #include "Engine.hpp"
+#include "AudioSystem.hpp"
+#include "JackAudioSystem.hpp"
+#include "RubberBandServer.hpp"
 #include <sndfile.h>
-#include <rubberband/RubberBandStretcher.h>
 #include <stdexcept>
 #include <cassert>
 #include <cstring>
@@ -28,9 +30,9 @@
 #include <algorithm>
 #include <iostream>
 #include <QFileInfo>
-#include <AudioSystem.hpp>
-#include <JackAudioSystem.hpp>
 #include <QString>
+
+#include <iostream>
 
 using RubberBand::RubberBandStretcher;
 using namespace std;
@@ -39,6 +41,7 @@ namespace StretchPlayer
 {
     Engine::Engine()
 	: _playing(false),
+	  _hit_end(false),
 	  _state_changed(false),
 	  _position(0),
 	  _loop_a(0),
@@ -62,14 +65,8 @@ namespace StretchPlayer
 
 	uint32_t sample_rate = _audio_system->sample_rate();
 
-	_stretcher.reset(
-	    new RubberBandStretcher( sample_rate,
-				     2,
-				     RubberBandStretcher::OptionProcessRealTime
-				     | RubberBandStretcher::OptionThreadingAuto
-		)
-	    );
-	_stretcher->setMaxProcessSize(16384);
+	_stretcher.reset( new RubberBandServer(sample_rate) );
+	_stretcher->start();
 
 	if( _audio_system->activate(&err) )
 	    throw std::runtime_error(err.toLocal8Bit().data());
@@ -79,6 +76,9 @@ namespace StretchPlayer
     Engine::~Engine()
     {
 	QMutexLocker lk(&_audio_lock);
+
+	_stretcher->go_idle();
+	_stretcher->shutdown();
 
 	_audio_system->deactivate();
 	_audio_system->cleanup();
@@ -91,6 +91,8 @@ namespace StretchPlayer
 	for( it=_message_callbacks.begin() ; it!=_message_callbacks.end() ; ++it ) {
 	    (*it)->_parent = 0;
 	}
+
+	_stretcher->wait();
     }
 
     void Engine::_zero_buffers(uint32_t nframes)
@@ -147,73 +149,86 @@ namespace StretchPlayer
 
 	buf_L = _audio_system->output_buffer(0);
 	buf_R = _audio_system->output_buffer(1);
-	float* rb_buf_in[2];
-	float* rb_buf_out[2] = { buf_L, buf_R };
 
 	uint32_t srate = _audio_system->sample_rate();
+	float time_ratio = srate / _sample_rate / _stretch;
 
-	_stretcher->setTimeRatio( srate / _sample_rate / _stretch );
-	_stretcher->setPitchScale( ::pow(2.0, double(_pitch)/12.0) * _sample_rate / srate );
+	_stretcher->time_ratio( time_ratio );
+	_stretcher->pitch_scale( ::pow(2.0, double(_pitch)/12.0) * _sample_rate / srate );
 
 	uint32_t frame;
 	size_t reqd, gend, zeros, feed;
 
-	frame = 0;
-	while( frame < nframes ) {
-	    reqd = _stretcher->getSamplesRequired();
-	    int avail = _stretcher->available();
-	    if( avail <= 0 ) avail = 0;
-	    if( unsigned(avail) >= nframes ) reqd = 0;
-	    zeros = 0;
-	    feed = reqd;
-	    if( looping() && ((_position + reqd) >=_loop_b) ) {
-		assert( _loop_b >= _position );
-		reqd = _loop_b - _position;
+	assert( _stretcher->is_running() );
+
+	int32_t write_space;
+	write_space = _stretcher->available_write();
+	int32_t input_frames;
+	input_frames = (unsigned) ( 0.5 + float(nframes) / time_ratio );
+	input_frames *= 2;
+
+	// std::cout << "write space = " << write_space << "input frames = " << input_frames << std::endl;
+
+	// Feed, at most, only the amount of data needed for
+	// one buffer-size of output.  That way our _position
+	// pointer doesn't drift too far from what we get on
+	// the output.
+	if( write_space > input_frames ) {
+	    write_space = input_frames;
+	}
+
+	while( write_space > 0 ) {
+	    feed = unsigned(write_space);
+	    if( looping() && ((_position + feed) >= _loop_b) ) {
+		if( _loop_b >= _position ) {
+		    _position = _loop_a;
+		    if( _loop_a + feed > _loop_b ) {
+			feed = _loop_b - _loop_a;
+		    }
+		} else {
+		    feed = _loop_b - _position;
+		}
 	    }
-	    if( _position + reqd > _left.size() ) {
+	    if( _position + feed > _left.size() ) {
 		feed = _left.size() - _position;
-		zeros = reqd - feed;
+		write_space = feed;
 	    }
-	    rb_buf_in[0] = &_left[_position];
-	    rb_buf_in[1] = &_right[_position];
-	    if( reqd == 0 ) {
-		feed = 0;
-		zeros = 0;
-	    }
-	    _stretcher->process( rb_buf_in, feed, false);
-	    if(reqd && zeros) {
-		float l[zeros], r[zeros];
-		float* z[2] = { l, r };
-		memset(l, 0, zeros * sizeof(float));
-		memset(r, 0, zeros * sizeof(float));
-		_stretcher->process(z, zeros, false);
-	    }
-	    gend = 1;
-	    while( gend && frame < nframes ) {
-		gend = _stretcher->retrieve(rb_buf_out, (nframes-frame));
-		rb_buf_out[0] += gend;
-		rb_buf_out[1] += gend;
-		frame += gend;
-	    }
+	    _stretcher->write_audio( &_left[_position], &_right[_position], feed );
 	    _position += feed;
+	    write_space -= feed;
 	    if( looping() && _position >= _loop_b ) {
 		_position = _loop_a;
 	    }
 	}
 
-	// Apply gain and clip
-	for( frame=0 ; frame<nframes ; ++frame ) {
-	    buf_L[frame] *= _gain;
-	    if(buf_L[frame] > 1.0) buf_L[frame] = 1.0;
-	    if(buf_L[frame] < -1.0) buf_L[frame] = -1.0;
-	    buf_R[frame] *= _gain;
-	    if(buf_R[frame] > 1.0) buf_R[frame] = 1.0;
-	    if(buf_R[frame] < -1.0) buf_R[frame] = -1.0;
+	uint32_t read_space;
+	read_space = _stretcher->available_read();
+	if( read_space >= nframes ) {
+	    _stretcher->read_audio(buf_L, buf_R, nframes);
+
+	    // Apply gain and clip
+	    for( frame=0 ; frame<nframes ; ++frame ) {
+		buf_L[frame] *= _gain;
+		if(buf_L[frame] > 1.0) buf_L[frame] = 1.0;
+		if(buf_L[frame] < -1.0) buf_L[frame] = -1.0;
+		buf_R[frame] *= _gain;
+		if(buf_R[frame] > 1.0) buf_R[frame] = 1.0;
+		if(buf_R[frame] < -1.0) buf_R[frame] = -1.0;
+	    }
+	} else {
+	    // Not generating fast enough... skip.
+	    std::cout << "skip " << nframes << " @ " << _position << std::endl;
+	    _zero_buffers(nframes);
 	}
 
 	if(_position >= _left.size()) {
+	    _hit_end = true;
+	}
+	if( (_hit_end == true) && (read_space == 0) ) {
+	    _hit_end = false;
 	    _playing = false;
 	    _position = 0;
+	    _stretcher->reset();
 	}
     }
 
@@ -314,19 +329,27 @@ namespace StretchPlayer
 
     void Engine::loop_ab()
     {
+	uint32_t pos, lat;
+	lat = 0; // can't figure a way to estimate the latency yet.
+	// lat = (196 * 256) / _stretcher->time_ratio();
+	pos = _position;
+	std::cout << "pos = " << pos << " lat = " << lat << std::endl;
+
+	if(pos > lat) pos -= lat;
+
 	if( _loop_b > _loop_a ) {
 	    _loop_b = 0;
 	    _loop_a = 0;
 	} else if( _loop_a == 0 ) {
-	    _loop_a = _position;
-	    if(_position == 0) {
+	    _loop_a = pos;
+	    if(pos == 0) {
 		_loop_a = 1;
 	    }
 	} else if( _loop_a != 0 ) {
-	    if( _position > _loop_a ) {
-		_loop_b = _position;
+	    if( pos > _loop_a ) {
+		_loop_b = pos;
 	    } else {
-		_loop_a = _position;
+		_loop_a = pos;
 	    }
 	} else {
 	    assert(false);  // invalid state
@@ -347,6 +370,7 @@ namespace StretchPlayer
 	QMutexLocker lk(&_audio_lock);
 	_position = pos;
 	_state_changed = true;
+	_stretcher->reset();
     }
 
     void Engine::_dispatch_message(const Engine::callback_seq_t& seq, const QString& msg) const

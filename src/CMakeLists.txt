@@ -46,6 +46,7 @@ LIST(APPEND sp_cpp
   ThinSlider.cpp
   Marquee.cpp
   JackAudioSystem.cpp
+  RubberBandServer.cpp
   )
 
 LIST(APPEND sp_hpp
@@ -57,6 +58,8 @@ LIST(APPEND sp_hpp
   Marquee.hpp
   AudioSystem.hpp
   JackAudioSystem.hpp
+  RubberBandServer.cpp
+  RingBuffer.hpp
   )
 
 LIST(APPEND sp_moc_hpp

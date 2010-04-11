@@ -26,16 +26,12 @@
 #include <vector>
 #include <set>
 
-namespace RubberBand
-{
-    class RubberBandStretcher;
-}
-
 namespace StretchPlayer
 {
 
 class EngineMessageCallback;
 class AudioSystem;
+class RubberBandServer;
 
 class Engine
 {
@@ -136,6 +132,7 @@ private:
     void _unsubscribe_list(callback_seq_t& seq, EngineMessageCallback* obj);
 
     bool _playing;
+    bool _hit_end;
     bool _state_changed;
     mutable QMutex _audio_lock;
     std::vector<float> _left;
@@ -147,7 +144,7 @@ private:
     float _stretch;
     int _pitch;
     float _gain;
-    std::auto_ptr<RubberBand::RubberBandStretcher> _stretcher;
+    std::auto_ptr<RubberBandServer> _stretcher;
     std::auto_ptr<AudioSystem> _audio_system;
 
     mutable QMutex _callback_lock;
