@@ -64,7 +64,7 @@ public:
     void set_stretch(float str) {
 	if(str > 0.5 && str < 2.0) {
 	    _stretch = str;
-	    _state_changed = true;
+	    //_state_changed = true;
 	}
     }
     int get_pitch() {
@@ -78,7 +78,7 @@ public:
 	} else {
 	    _pitch = pit;
 	}
-	_state_changed = true;
+	//_state_changed = true;
     }
 
     /**
