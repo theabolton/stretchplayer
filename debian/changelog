@@ -1,0 +1,6 @@
+stretchplayer (0.501) unstable; urgency=low
+
+  * Create a Debian package for stretchplayer.
+
+ -- Gabriel M. Beddingfield <gabriel@teuton.org>  Mon, 19 Apr 2010 12:01:58 -0500
+
