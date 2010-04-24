@@ -1,0 +1,9 @@
+files
+stamp-makefile-build
+stamp-makefile-install
+stretchplayer-dbg.debhelper.log
+stretchplayer-dbg.substvars
+stretchplayer-dbg/
+stretchplayer.debhelper.log
+stretchplayer.substvars
+stretchplayer/
