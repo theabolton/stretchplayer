@@ -3,3 +3,4 @@
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/cmake.mk
 
+DEB_DESTDIR = $(CURDIR)/debian/stretchplayer

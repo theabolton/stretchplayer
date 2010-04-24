@@ -1,4 +1,9 @@
+## General ignores
+## ---------------
+*.[oa]
 *~
-Makefile
-Makefile.Debug
-Makefile.Release
+
+## For debian package building
+## ---------------------------
+obj-*-linux-gnu/
+

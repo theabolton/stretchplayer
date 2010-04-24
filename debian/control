@@ -3,7 +3,7 @@ Section: Multimedia
 Priority: optional
 Maintainer: Gabriel Beddingfield <gabriel@teuton.org>
 Build-Depends: 
- debhelper (>= 4.0.0),
+ debhelper (>= 5.0.0),
  libqt4-dev,
  libsndfile1-dev,
  libjack-dev,
@@ -23,3 +23,15 @@ Description: Audio file player with time stretch and pitch shifting
  .
  Warning: this package contains the development version (potentially
  unstable) released for testing purpose only.
+
+Package: stretchplayer-dbg
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Audio file player with time stretch and pitch shifting
+ Stretchplayer will play back an audio file and allow yout to
+ time stretch (without affecting pitch) and/or pitch shift (without
+ affecting the time) the audio, even while you are listening to it.
+ .
+ See http://www.teuton.org/~gabriel/stretchplayer/ for details.
+ .
+ This package contains the debugging symbols for stretchplayer.
