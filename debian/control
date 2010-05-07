@@ -8,7 +8,8 @@ Build-Depends:
  libsndfile1-dev,
  libjack-dev,
  librubberband-dev,
- cmake
+ cmake,
+ cdbs
 Standards-Version: 3.6.2
 
 Package: stretchplayer
