@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=StretchPlayer
+Comment=Ardour Digital Audio Workstation
+Exec=stretchplayer
+Icon=stretchplayer
+Terminal=false
+MimeType=application/x-stretchplayer;
+Type=Application
+Categories=AudioVideo;Audio;X-Sound;X-Jack;
