@@ -14,15 +14,15 @@ endif(COMMAND cmake_policy)
 
 INSTALL(
   FILES stretchplayer-icon.svg
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/icons/stretchplayer.svg
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/stretchplayer.svg
   )
 INSTALL(
   FILES stretchplayer-icon-48x48.png
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/icons/stretchplayer.png
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/stretchplayer.png
   )
 INSTALL(
   FILES stretchplayer-icon-48x48.png
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/pixmaps/stretchplayer.png
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pixmaps/stretchplayer.png
   )
 INSTALL(
   FILES
