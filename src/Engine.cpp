@@ -156,7 +156,7 @@ namespace StretchPlayer
 	_stretcher->setPitchScale( ::pow(2.0, double(_pitch)/12.0) * _sample_rate / srate );
 
 	uint32_t frame;
-	size_t reqd, gend, zeros, feed;
+	uint32_t reqd, gend, zeros, feed;
 
 	frame = 0;
 	while( frame < nframes ) {

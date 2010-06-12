@@ -175,13 +175,13 @@ namespace StretchPlayer
 	return 0;
     }
 
-    size_t JackAudioSystem::output_buffer_size(int /*index*/)
+    uint32_t JackAudioSystem::output_buffer_size(int /*index*/)
     {
 	if( !_client ) return 0;
 	return jack_get_buffer_size(_client);
     }
 
-    size_t JackAudioSystem::sample_rate()
+    uint32_t JackAudioSystem::sample_rate()
     {
 	if( !_client ) return 0;
 	return jack_get_sample_rate(_client);
