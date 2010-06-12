@@ -127,7 +127,7 @@ namespace StretchPlayer
 					     JACK_DEFAULT_AUDIO_TYPE,
 					     JackPortIsInput
 	    );
-	int k, rv;
+	int k, rv = 0;
 	for( k=0 ; ports && ports[k] != 0 ; ++k ) {
 	    if(k==0) {
 		rv = jack_connect( _client,
@@ -156,9 +156,11 @@ namespace StretchPlayer
 
     int JackAudioSystem::deactivate(QString *err_msg)
     {
+	int rv = 0;
 	if(_client) {
-	    jack_deactivate(_client);
+	    rv = jack_deactivate(_client);
 	}
+	return rv;
     }
 
     AudioSystem::sample_t* JackAudioSystem::output_buffer(int index)
