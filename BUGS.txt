@@ -4,9 +4,16 @@ BUGS FOR STRETCHPLAYER
 Here is an unordered list of complaints, shorcomings, wishes, and
 bugs.
 
-* Clicks when changing speed/pitch.
+* On some systems, and when using Jack2 (Debian's 1.9.5~dfsg-13)
+  stretchplayer is /immediately/ disconnected from Jack as soon as you
+  click the file-open dialog.
+  http://lalists.stanford.edu/lau/2010/06/0409.html
 
-* Clicks on A/B Repeat.
+* The GUI is way too active.  On my machine, it get's 280 paint events
+  every second and typically uses 20-30% CPU.
+  http://lalists.stanford.edu/lau/2010/06/0421.html
+
+* Possible clicks on A/B Repeat (no crossfading).
 
 * QFont::setStretch() doesn't work on all fonts.
   Where it doesn't work, they get massively
