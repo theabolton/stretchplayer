@@ -22,5 +22,5 @@ INSTALL(
   )
 INSTALL(
   FILES ${CMAKE_BINARY_DIR}/stretchplayer.desktop
-  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/streatchplayer/"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/stretchplayer/"
   )
