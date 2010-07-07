@@ -38,6 +38,7 @@
 #include <QCoreApplication>
 
 #include <cmath>
+#include "config.h"
 
 namespace StretchPlayer
 {
@@ -67,10 +68,12 @@ namespace StretchPlayer
 			| Qt::FramelessWindowHint
 	    );
 
-#if QT_VERSION >= 0x040500
+#if (QT_VERSION >= 0x040500) && STRETCHPLAYER_USE_COMPOSITING
+#warning "Compositing is enabled"
 	setAttribute( Qt::WA_TranslucentBackground );
 	_compositing = true;
 #else
+#warning "Compositing is dis-abled"
 	_compositing = false;
 #endif
 	setMinimumSize(_sizes.preferred_width()*2/3, _sizes.preferred_height()*2/3);
