@@ -8,10 +8,12 @@ bugs.
   stretchplayer is /immediately/ disconnected from Jack as soon as you
   click the file-open dialog.
   http://lalists.stanford.edu/lau/2010/06/0409.html
+  This was determined to be a bug in Jack2, and has been fixed.
 
 * The GUI is way too active.  On my machine, it get's 280 paint events
   every second and typically uses 20-30% CPU.
   http://lalists.stanford.edu/lau/2010/06/0421.html
+  Fixed in ff4d4ebf4a4f89fd437cae72a44158defadb1b89 (2010-07-06)
 
 * Possible clicks on A/B Repeat (no crossfading).
 
