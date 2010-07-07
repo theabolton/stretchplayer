@@ -4,17 +4,6 @@ BUGS FOR STRETCHPLAYER
 Here is an unordered list of complaints, shorcomings, wishes, and
 bugs.
 
-* On some systems, and when using Jack2 (Debian's 1.9.5~dfsg-13)
-  stretchplayer is /immediately/ disconnected from Jack as soon as you
-  click the file-open dialog.
-  http://lalists.stanford.edu/lau/2010/06/0409.html
-  This was determined to be a bug in Jack2, and has been fixed.
-
-* The GUI is way too active.  On my machine, it get's 280 paint events
-  every second and typically uses 20-30% CPU.
-  http://lalists.stanford.edu/lau/2010/06/0421.html
-  Fixed in ff4d4ebf4a4f89fd437cae72a44158defadb1b89 (2010-07-06)
-
 * Possible clicks on A/B Repeat (no crossfading).
 
 * QFont::setStretch() doesn't work on all fonts.
@@ -41,16 +30,9 @@ bugs.
 
 * Sliders don't match the UI.
 
-* debian package
-
-* stretchplayer.desktop file
-
-* Get the version into the CMake stuff.
+* Get the Git version into the CMake stuff.
 
 * needs a help/version button.
-
-* one user complained that unity gain on the fader is at 85% rather
-  than 100%.
 
 * Faders need a detented spot (stretch fader near 100%, volume fader
   near unity gain).
