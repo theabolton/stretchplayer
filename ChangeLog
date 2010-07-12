@@ -1,0 +1,966 @@
+commit 3cdbbe11c60172d2ee8bf3de8d797d0f4d836b02
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Jul 11 21:08:56 2010 -0500
+
+    PlayerWidget::update_time(): Update _status instead of everything.
+    
+    This reduces Xorg's workload considerably, even when compositing is
+    enabled.  We're only updating internal widgets instead of the entire
+    window.
+
+M	src/PlayerWidget.cpp
+
+commit 449214cbe1720d33923112983c63863d3157cd52
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jul 6 21:50:22 2010 -0500
+
+    Remove several resolved and "won't fix" items from BUGS.txt
+
+M	BUGS.txt
+
+commit 9d8ff14899fd1860c38a9f462baed352ba864504
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jul 6 21:46:48 2010 -0500
+
+    Add some resolutions to the BUGS.txt file:
+    
+    * Immediate jack disconnects: bug in jack 2, solved in
+      SVN.
+    
+    * Over-active GUI fixed in ff4d4ebf4 2010-07-06.
+
+M	BUGS.txt
+
+commit b996adcc85c6e16ffb1149162df7451ddda70bfc
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jul 6 21:33:08 2010 -0500
+
+    Add CMake flag USE_COMPOSITING to en/dis-able compositing.
+    
+    Use of compositing require some overhead with the X-server.  Some
+    users may have systems that enable compositing, but don't want the
+    overhead.  In the future, this should be a run-time configuration
+    setting, but for now it's compile time since there's no run-time
+    configuration infrastructure.
+
+M	CMakeLists.txt
+M	config.h.in
+M	src/PlayerWidget.cpp
+
+commit de798587ccc969a066220a0f168e866902324a54
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jul 6 16:17:37 2010 -0500
+
+    Bump version to 0.502.
+
+M	CMakeLists.txt
+
+commit ff4d4ebf4a4f89fd437cae72a44158defadb1b89
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jul 6 16:09:54 2010 -0500
+
+    Remove several redundant update() calls in GUI.
+    
+    When idle, the GUI is using up to 30% CPU to update its status very
+    often.  It turns out that several of the widgets were getting the
+    update() call when their values changed.  This was thought to be safe,
+    but turns out to be too manu GUI updates.
+    
+    Now, the GUI is totally disconnected from RT events in the audio
+    thread.  The only way the GUI is getting updated is by the timer that
+    is set up in PlayerWidget::_setup_signals_and_slots()... which is
+    currently set to update every 200 ms (5 times/sec).  This results in
+    about 3-5% CPU.
+    
+    However, if compositing is enabled, the X server may still be using
+    20-30% CPU to calculate the compositing features.
+
+M	src/Marquee.cpp
+M	src/StatusWidget.cpp
+
+commit 7487277cf722f89a0b57f13bebdc974d40574bde
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Jun 13 07:36:19 2010 -0500
+
+    Fix typo in share folder install directory.
+
+M	CMakeLists.txt
+
+commit 7424096649fe22fd488ed3132edaccb2c78af94f
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Jun 13 07:06:17 2010 -0500
+
+    Update the BUGS.txt file with two new bugs.
+    
+    * Stretchplayer gets immediately disconnected when you hit the file
+      open button.
+    
+    * The GUI uses up a lot of CPU when idle.
+    
+    Removed a bug:
+    
+    * Clicks whenever a change is made.  (This was fixed in 0.501.)
+
+M	BUGS.txt
+
+commit 20ce4f4a29b9fce454ca09469681e2e4b6fd2ad8
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Jun 12 10:30:48 2010 -0500
+
+    Suppress build errors.
+    
+    * JackAudioSystem::activate() Possible (but unlikely) use of
+      uninitialized 'rv' value.
+    * JackAudioSystem::deactivate() should return int, but does
+      not return anything.
+
+M	src/JackAudioSystem.cpp
+
+commit a47f858223d237b97d92b3e7cec2403f2ca07aa9
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Jun 12 10:25:28 2010 -0500
+
+    Fix 64-bit compile issue:  s/size_t/uint32_t/g
+
+M	src/Engine.cpp
+M	src/JackAudioSystem.cpp
+M	src/JackAudioSystem.hpp
+
+commit 56dd9c9e004157658446657f1efc695d618b95ad
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu May 20 22:56:25 2010 -0500
+
+    Fix installation issues with icon and .desktop files.
+    
+    For some reason, it wasn't finding my icons.  So, i chose to do a hard
+    path.
+
+M	art/CMakeLists.txt
+M	stretchplayer.desktop.in
+
+commit dec4bd0ee7d4ebef998a27bc1b8c813bdb9cecc5
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu May 20 22:34:29 2010 -0500
+
+    Correct icon installation directories.
+    
+    E.g. /usr/share/icons instead of /usr/icons.
+
+M	art/CMakeLists.txt
+
+commit 299d48d3cd31f1ba6d380c5ad5880bab22be217c
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu May 20 22:26:45 2010 -0500
+
+    Add desktop file and icons, and install them.
+
+M	CMakeLists.txt
+A	art/CMakeLists.txt
+A	art/stretchplayer-icon-16x16.png
+A	art/stretchplayer-icon-22x22.png
+A	art/stretchplayer-icon-24x24.png
+A	art/stretchplayer-icon-32x32.png
+A	art/stretchplayer-icon-48x48.png
+A	art/stretchplayer-icon.svg
+A	config.h.in
+M	src/CMakeLists.txt
+M	src/main.cpp
+A	stretchplayer.desktop.in
+
+commit df0bc7e4ebe1928d6286c3003bde5d685a1fed54
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu May 6 23:09:38 2010 -0500
+
+    Add build dependency on CMake and CDBS for Debian.
+
+M	debian/control
+
+commit 4d6c952d3cd91643b03d8e006beb7e2f78ab64f0
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 24 14:59:51 2010 -0500
+
+    Get the -dbg package working.
+    
+    Had to up debhelper (and possibly 'compat') to 5.
+
+M	.gitignore
+A	debian/.gitignore
+M	debian/compat
+M	debian/control
+M	debian/rules
+
+commit b4f18e29907e1d94c82f3d5664822d70de7b3c1a
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Apr 20 17:51:06 2010 -0500
+
+    Add debian packaging.
+
+A	debian/changelog
+A	debian/compat
+A	debian/control
+A	debian/rules
+
+commit dc48bab6ca4476b59960ad8b93e1326f25eeebed
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 11 17:30:29 2010 -0500
+
+    Reduce/remove click when changing speeds/pitch.
+    
+    The parameter change was causing a RubberBandStretcher::reset() to be
+    called, which not only causes a reboot of the audio calculated (time
+    delay) but also deleted whatever audio has already been fed.
+
+M	src/Engine.hpp
+
+commit e5e44be863be1fc8b4b885ea6e51920658beebb9
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Apr 8 12:01:08 2010 -0500
+
+    Add Tritium::RingBuffer<> from Composite... which came from Ardour.
+    
+    File copied from Ardour to Composite to Here.
+
+A	src/RingBuffer.hpp
+
+commit 793b30e69b77e3fb1673409e74db61ad3f62bed7
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Apr 8 11:56:59 2010 -0500
+
+    Abstract audio system to make room for other audio API's.
+
+A	src/AudioSystem.hpp
+M	src/CMakeLists.txt
+M	src/Engine.cpp
+M	src/Engine.hpp
+A	src/JackAudioSystem.cpp
+A	src/JackAudioSystem.hpp
+
+commit a549e1e3363de5d0e2fad3890a21d154cf31d225
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Apr 6 20:49:28 2010 -0500
+
+    Add a BUGS.txt file.
+
+A	BUGS.txt
+
+commit 28a3dc4989ab2cc03aa2b468badfbd73b43480d4
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Apr 6 02:06:40 2010 -0500
+
+    Remove a test string.
+    
+    I had a really long string for testing the scroll.  As it happened,
+    when you started up StretchPlayer... that's the first thing you see.
+    :-)
+
+M	src/StatusWidget.cpp
+
+commit dc103d18b0232884e13bc93a8b29f133c8f30b13
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Apr 6 01:48:55 2010 -0500
+
+    Reverse order of incr/decr pitch buttons.
+
+M	src/PlayerWidget.cpp
+
+commit 0cc8526d08cedf080a739d520936a0e02ee3e7de
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Apr 6 01:05:32 2010 -0500
+
+    Update documentation for [HOME] key and performance issues.
+
+M	INSTALL.txt
+M	README.txt
+
+commit 1a192b70bfac55b58481257a006f485852f1fc35
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Apr 6 00:55:49 2010 -0500
+
+    Add a Marquee widget with scrolling text.
+
+M	src/CMakeLists.txt
+M	src/Engine.cpp
+M	src/Engine.hpp
+A	src/Marquee.cpp
+A	src/Marquee.hpp
+M	src/PlayerWidget.cpp
+M	src/StatusWidget.cpp
+M	src/StatusWidget.hpp
+
+commit f408d7e87e13cb1caafef1c0d2f9cbce6bd468c3
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 22:09:23 2010 -0500
+
+    Add version info and make responsive while song loading.
+
+M	src/Engine.cpp
+M	src/PlayerWidget.cpp
+M	src/main.cpp
+
+commit d1da5cd67d12d0684bf59c268f7d4c30c611a2e8
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 21:53:47 2010 -0500
+
+    Allow for sane rendering when compositing not avail.
+    
+    I.e. Qt 4.4.
+
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit 1dda50c1b2f40666046685b4ca33c8b05922aa09
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 21:30:45 2010 -0500
+
+    Increase the max buffer size for RubberBand.
+
+M	src/Engine.cpp
+
+commit 45134dcdeac0d8ad173873e0e550e8113c014306
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 21:17:50 2010 -0500
+
+    Adjust for memory issues.
+    
+    On some systems, I was getting OOM problems because of the way that
+    the audio file buffer and the PlayerWidget were being allocated.
+
+M	src/Engine.cpp
+M	src/main.cpp
+
+commit 3f0bc984826c83972fe989d8287c1b40d90dab84
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 18:50:18 2010 -0500
+
+    Make the stats text come out bolder.
+
+M	src/StatusWidget.cpp
+
+commit 04152092175b30bb19da670abbb141da8d5dde9d
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 12:50:27 2010 -0500
+
+    Add a README file.
+
+A	README.txt
+
+commit 59edf8ba08436c93b1da417f17e38deb07fc79f1
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 12:37:26 2010 -0500
+
+    Update Qt version requirement.
+
+M	src/CMakeLists.txt
+
+commit 407519cb9ce00923f8fe13aad889a2a1eb20d2b0
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 12:37:10 2010 -0500
+
+    Add installation instructions.
+
+A	INSTALL.txt
+
+commit bf81a0b37ddc7e05b8c96b7a4279f5431cb40c1f
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 12:24:37 2010 -0500
+
+    Add an AUTHORS file.
+
+A	AUTHORS
+
+commit 36fbd236fbd66ecd6b6c306c59c77708c5327355
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 12:24:15 2010 -0500
+
+    Add license files.
+
+A	COPYING
+A	gpl-2.0.txt
+A	gpl-3.0.txt
+
+commit e4c65199a7ed350ac2ce411804c745e85db69b7c
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 12:17:30 2010 -0500
+
+    Add CMake module for finding librubberband.
+
+A	cmake/FindRubberBand.cmake
+M	src/CMakeLists.txt
+
+commit 1f0bb550cf005a25ad1eb8dfa897f142e9e874ba
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 12:08:05 2010 -0500
+
+    Add library status for JACK and LibSndfile.
+
+M	src/CMakeLists.txt
+
+commit 0c780e49d48a7af3d9b253cda222218a9774412a
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 12:04:07 2010 -0500
+
+    Convert to CMake build system (was qmake).
+
+A	CMakeLists.txt
+A	src/CMakeLists.txt
+D	src/stretchplayer.pro
+D	stretchplayer.pro
+
+commit 52d47ecc79eb689fe9b205ab7db3a821453991dc
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 07:53:21 2010 -0500
+
+    Add some CMake modules from Composite.
+
+A	cmake/FindJACK.cmake
+A	cmake/FindLibSndfile.cmake
+A	cmake/TritiumFindPackageHandleStandardArgs.cmake
+A	cmake/TritiumPackageHelper.cmake
+
+commit fd209f932d5e4df1e1c55eb08d9b0d2f59099985
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 07:36:41 2010 -0500
+
+    Watch out for a corner case when looping.
+    
+    Prevent _loop_a == _loop_b.
+
+M	src/Engine.cpp
+
+commit 11d4236132e4d1cdf6a74dd0f6efa9ebd3932716
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 07:34:18 2010 -0500
+
+    Tweak how samples are fed/read from rubberband when looping.
+
+M	src/Engine.cpp
+
+commit a26afcf5335645a874f93398aa8f3897173e2f8c
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 01:43:46 2010 -0500
+
+    Enable threading for RubberBand.
+    
+    I didn't notice much of a performance difference.
+
+M	src/Engine.cpp
+
+commit a375a2f44feb0855f0fef82ece62cdaa2c56dd25
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 01:32:20 2010 -0500
+
+    Avoid buffer overflows with RubberBand engine.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+
+commit f0cc39d947ba8e6fb4abed4e9b1ce564caec15ea
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 00:44:21 2010 -0500
+
+    Reset the rubber band stretcher after a state change.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+
+commit f3cac458f9ac4b142e2a7c603a9c41bb9e08e721
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 00:31:19 2010 -0500
+
+    Add Actions for volume control.
+
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit 4b230092db4d5863a20a317746b6f498e22e1366
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 00:13:36 2010 -0500
+
+    Fix small possible error when setting stretch factors.
+
+M	src/StatusWidget.cpp
+
+commit 23608999663c25ae28ccbf99bbdbd78e80db6f40
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 00:09:50 2010 -0500
+
+    Rename StatusWidget::_status to _message.
+
+M	src/StatusWidget.cpp
+M	src/StatusWidget.hpp
+
+commit 96de48677cf308416c6e5b51bf39c5aa82116377
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Apr 5 00:01:07 2010 -0500
+
+    Tweak fonts on the layout.
+
+M	src/StatusWidget.cpp
+
+commit ddc43384ab49ea5df119affe909a432af5d307a7
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 4 23:51:02 2010 -0500
+
+    Fix a resizing thinko.
+    
+    Was accidentally doing drag resizes on the _which_cursor()
+    results... rather than the actual current cursor.
+
+M	src/PlayerWidget.cpp
+
+commit d791adff59c3659ec9f08a022bec339208dea0af
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 4 23:47:49 2010 -0500
+
+    Add rudimentary window resizing.
+
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit 79647b69bdc727676c8bee7723dcd9c6b40f0c73
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 4 22:01:02 2010 -0500
+
+    Add a little more margin around the status widget.
+
+M	src/PlayerWidget.cpp
+
+commit e87260bd9c27b626b60047bd9fd7259c38195e03
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 4 21:55:49 2010 -0500
+
+    Remove a little extra space from the stats.
+
+M	src/StatusWidget.cpp
+
+commit 8bd9a93794f05e8704e15ac9b1840f65103f8917
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 4 21:49:13 2010 -0500
+
+    Lay out all the status text by hand.
+
+M	src/StatusWidget.cpp
+M	src/StatusWidget.hpp
+M	src/ThinSlider.hpp
+
+commit b6eca4eacf41244f210dfc0b50a6ce778072918e
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 4 13:03:34 2010 -0500
+
+    Update status position line size.
+
+M	src/StatusWidget.cpp
+
+commit ffae6b39eb5093259f92e3ea273ffdb52323935a
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 4 12:52:03 2010 -0500
+
+    Lay out widgets manually.
+    
+    The Layouts were great... but I couldn't get the control that I wanted
+    from them.
+
+M	src/PlayerSizes.cpp
+M	src/PlayerSizes.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+M	src/StatusWidget.cpp
+
+commit 098b90488095b0b8d1605becd20192b3db3fd8d2
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 4 07:37:23 2010 -0500
+
+    Get the widgets to resize when the window resizes.
+
+M	src/PlayerSizes.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+M	src/main.cpp
+
+commit 5105b16961e883775d3e8d46b369b903c8e7868d
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 4 06:47:46 2010 -0500
+
+    Add a text height field for PlayerSizes.
+
+M	src/PlayerSizes.cpp
+M	src/PlayerSizes.hpp
+
+commit 0e38578d52ace22b4a5a53d408b7ac77f23f73fa
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 18:55:06 2010 -0500
+
+    Increase size of icons on widgets.
+
+M	src/PlayerWidget.cpp
+M	src/icons.svg
+M	src/img/ab.png
+M	src/img/help.png
+M	src/img/play.png
+M	src/img/quit.png
+M	src/img/stop.png
+
+commit aa9a8e01bf7bad8d41f3a77a5d347db516252369
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 18:41:43 2010 -0500
+
+    Fix a couple widget layout thinkos.
+
+M	src/PlayerWidget.cpp
+
+commit ea07b81f27061af4f047abdd5b50d921538361c1
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 18:36:36 2010 -0500
+
+    Export icons and use them in the player.
+
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+A	src/img/ab.png
+A	src/img/file.png
+A	src/img/help.png
+A	src/img/minus.png
+A	src/img/play.png
+A	src/img/plus.png
+A	src/img/quit.png
+A	src/img/stop.png
+M	src/stretchplayer.pro
+A	src/stretchplayer.qrc
+
+commit 576a94b6cd00de632c22fa2714f09886acdeeb03
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 17:50:46 2010 -0500
+
+    Add all icons as SVG file.
+
+A	src/icons.svg
+
+commit 484275bd451dcfcf6449d1ce7961c470dbe634e1
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 16:28:38 2010 -0500
+
+    Tweak the fader so that we don't get 10x vol.
+    
+    Also, the volume indicator now scales 0-100%... which will make a lot
+    of people very happy (was 0-200%).
+
+M	src/PlayerWidget.cpp
+M	src/StatusWidget.cpp
+
+commit cbdaf93e918732a76ed4f4ec272c3ba283a9fe09
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 16:18:15 2010 -0500
+
+    Implement volume control.
+    
+    I put in a typical mixer fader... not happy with it.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit 619b39d4ab37e5548a345cc437ee94d63e30b90a
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 14:59:44 2010 -0500
+
+    Implement QActions for major control functions.
+    
+    This implements keyboard shorcuts like P (play/stop), Escape (quit),
+    etc.  It also ties them to buttons visible on the GUI.
+    
+    The setup of all the widgets has been refactored a bit.
+
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit 2d496f1ad413ab8c15be8dd4877209857a29fee2
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 12:30:26 2010 -0500
+
+    Make the ThinSlider work with mouse events.
+
+M	src/Engine.cpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+M	src/StatusWidget.cpp
+M	src/StatusWidget.hpp
+M	src/ThinSlider.cpp
+M	src/ThinSlider.hpp
+
+commit 23614b9d7a81412818eb481673df5e6008659d7d
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 10:50:31 2010 -0500
+
+    Convert color scheme to use QPalette.
+
+D	src/PlayerColors.cpp
+D	src/PlayerColors.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+M	src/StatusWidget.cpp
+M	src/StatusWidget.hpp
+M	src/ThinSlider.cpp
+M	src/ThinSlider.hpp
+M	src/stretchplayer.pro
+
+commit 87d0c2769dfa3972dbd030cdb8ee37ab212a1048
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 09:47:09 2010 -0500
+
+    Add background for status widget.
+
+M	src/StatusWidget.cpp
+M	src/StatusWidget.hpp
+
+commit b7dab288b834e6cdfad75e63175a28414776b53c
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 09:34:27 2010 -0500
+
+    Add a custom progress-bar-like slider, ThinSlider.
+
+M	src/PlayerWidget.cpp
+M	src/StatusWidget.cpp
+M	src/StatusWidget.hpp
+A	src/ThinSlider.cpp
+A	src/ThinSlider.hpp
+M	src/stretchplayer.pro
+
+commit 0ec518c31081f58462b12ff81b855af06576f69d
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 07:42:04 2010 -0500
+
+    Add a color management class.
+
+A	src/PlayerColors.cpp
+A	src/PlayerColors.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+M	src/stretchplayer.pro
+
+commit 8bb97a9913578bdf544a9611182d4026de41d2d9
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 3 07:12:51 2010 -0500
+
+    Autoconnect to output ports.
+
+M	src/Engine.cpp
+
+commit 8b8e6d979bd454e6a4f78de85b19ad51ba49f7df
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Fri Apr 2 19:23:12 2010 -0500
+
+    Divide up the widgets according to the intended design.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+A	src/PlayerSizes.cpp
+A	src/PlayerSizes.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+A	src/StatusWidget.cpp
+A	src/StatusWidget.hpp
+M	src/stretchplayer.pro
+
+commit 8fba7b239db012b3a475d122ce4ff6e489a36d30
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Fri Apr 2 15:34:40 2010 -0500
+
+    Remove window frames etc.
+
+M	src/PlayerWidget.cpp
+
+commit 24845aa38e49505036b4e34de373b7f0e43f0cf1
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Fri Apr 2 15:04:25 2010 -0500
+
+    Paint a yellow background with a black border.
+
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit 81ac7bd316524cd46dd041684a051a282c39dc65
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Fri Apr 2 10:42:10 2010 -0500
+
+    Add a simple UI mock-up.
+
+A	Documentation/ui-mockup.svg
+
+commit 4b639ded0e12ede6aea3b66a9a1ef27c34d3acf3
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Apr 1 23:43:28 2010 -0500
+
+    Get A/B Looping working.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/PlayerWidget.cpp
+
+commit 660523ef829dceedb8f354b16a6ec105ea7495e0
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Apr 1 23:20:10 2010 -0500
+
+    Remove hour from readout.
+
+M	src/PlayerWidget.cpp
+
+commit ff2729da5092aa3581734ad7425251a6d3d9b246
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Apr 1 23:15:50 2010 -0500
+
+    Put error messages on the GUI.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit 6cee0671c672944498ff7b34959431a9774adaa4
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Apr 1 22:11:14 2010 -0500
+
+    Add error handling for file opening.
+
+M	src/Engine.cpp
+
+commit f518661319bcea7eab407026aa17640534532b1b
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Apr 1 21:38:57 2010 -0500
+
+    Add buttons for remaining UI items.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit 7e65fe7bb9f20bc799342b0a45f6500785b587f8
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Apr 1 12:58:27 2010 -0500
+
+    Add top-level .gitignore.
+
+A	.gitignore
+
+commit 555141336a732b2e1c684e2a31d205f64c4a4b71
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Apr 1 12:57:49 2010 -0500
+
+    Add a top-level QMake project file.
+
+A	stretchplayer.pro
+
+commit f381685a16ed280dc346ebd40339bc6cf52c0858
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Apr 1 12:52:12 2010 -0500
+
+    Add a .gitignore for the source folder.
+
+A	src/.gitignore
+
+commit 94b3f38ac2ee25d53997f9208c820f698b2f0685
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Mar 31 22:50:21 2010 -0500
+
+    Update time readout for song.
+
+M	src/PlayerWidget.cpp
+
+commit 6c3c5c25681fa31949eb79a870fc4f4986b53022
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Mar 31 22:37:00 2010 -0500
+
+    Add pitch shifting.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit f848fe7971d6e7970c6301d4a1ac5c785bd201ce
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Mar 31 22:24:37 2010 -0500
+
+    Get time stretching working.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/PlayerWidget.cpp
+
+commit df1094bfe8e7ab2744d5f1983f30f5a2b0c44436
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Mar 31 01:31:55 2010 -0500
+
+    Remove the resampling stuff and connect the stretch slider.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+M	src/stretchplayer.pro
+
+commit c9299460af47ac271a3fbef99253b493a99002dd
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Mar 31 01:12:11 2010 -0500
+
+    Make the song position slider work.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit 4d23ec9aa21ca8da2f85a1ee393c62f7440c5885
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Mar 31 01:04:28 2010 -0500
+
+    Resample data after loading it.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/stretchplayer.pro
+
+commit 31e3552488f712b3622e5133a010117a66b19dae
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Mar 31 00:14:50 2010 -0500
+
+    Get the simple player working.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/PlayerWidget.cpp
+M	src/main.cpp
+M	src/stretchplayer.pro
+
+commit e91b3ec27914486fa915278c3ddfdb15355f41db
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Mar 30 23:19:11 2010 -0500
+
+    Add a simple sound engine.
+
+A	src/Engine.cpp
+A	src/Engine.hpp
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+M	src/stretchplayer.pro
+
+commit eb394fe232409844af82561914b068c5ffd8e960
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Mar 30 22:14:17 2010 -0500
+
+    Tweak look and add stretch slider.
+
+M	src/PlayerWidget.cpp
+M	src/PlayerWidget.hpp
+
+commit c34add9271ec293c315414a92d23812255f41f35
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Mar 30 21:56:53 2010 -0500
+
+    Add base UI for a player.
+
+A	src/PlayerWidget.cpp
+A	src/PlayerWidget.hpp
+A	src/main.cpp
+A	src/stretchplayer.pro
