@@ -1,5 +1,5 @@
 Source: stretchplayer
-Section: Multimedia
+Section: sound
 Priority: optional
 Maintainer: Gabriel Beddingfield <gabriel@teuton.org>
 Build-Depends: 
@@ -26,6 +26,8 @@ Description: Audio file player with time stretch and pitch shifting
  unstable) released for testing purpose only.
 
 Package: stretchplayer-dbg
+Section: debug
+Priority: extra
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Audio file player with time stretch and pitch shifting
