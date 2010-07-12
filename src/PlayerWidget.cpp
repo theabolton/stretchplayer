@@ -273,7 +273,7 @@ namespace StretchPlayer
 	_status->volume( _volume->value() / 1000.0 );
 
 	_stretch->setValue( (sch-0.5) * 1000 );
-	update();
+	_status->update();
     }
 
     void PlayerWidget::resizeEvent(QResizeEvent * /*event*/)
