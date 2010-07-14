@@ -35,7 +35,8 @@ bugs.
 * needs a help/version button.
 
 * Faders need a detented spot (stretch fader near 100%, volume fader
-  near unity gain).
+  near unity gain).  Dragan Noveski also suggested that a right-click
+  moves the fader to the default spot.
 
 * Using arrow keys will not get the stretch fader to go to the extreme
   position.
