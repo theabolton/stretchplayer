@@ -27,6 +27,15 @@ ENDIF(ENABLE_COMPOSITING)
 CONFIGURE_FILE(config.h.in config.h)
 
 CONFIGURE_FILE(stretchplayer.desktop.in stretchplayer.desktop)
+
+ADD_CUSTOM_TARGET(dist
+  git archive --format=tar --prefix=stretchplayer-${VERSION}/ HEAD
+     | gzip -9
+     > ${CMAKE_BINARY_DIR}/stretchplayer_${VERSION}.tar.gz
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Making stretchplayer_${VERSION}.tar.gz"
+  )
+
 INSTALL(
   FILES ${CMAKE_BINARY_DIR}/stretchplayer.desktop
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications"
