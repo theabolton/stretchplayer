@@ -1,16 +1,16 @@
 Source: stretchplayer
 Section: sound
 Priority: optional
-Maintainer: Gabriel Beddingfield <gabriel@teuton.org>
+Maintainer: Gabriel M. Beddingfield <gabriel@teuton.org>
 Build-Depends: 
- debhelper (>= 5.0.0),
+ debhelper (>= 7.0.0),
  libqt4-dev,
  libsndfile1-dev,
  libjack-dev,
  librubberband-dev,
  cmake,
  cdbs
-Standards-Version: 3.6.2
+Standards-Version: 3.8.3
 
 Package: stretchplayer
 Architecture: any
