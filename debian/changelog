@@ -1,3 +1,9 @@
+stretchplayer (0.503) unstable; urgency=low
+
+  * Remove Debian packaging from release tarballs.
+
+ -- Gabriel M. Beddingfield <gabriel@teuton.org>  Sat, 17 Jul 2010 23:02:54 -0500
+
 stretchplayer (0.502) unstable; urgency=low
 
   * New release.
