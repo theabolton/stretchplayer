@@ -31,9 +31,9 @@ CONFIGURE_FILE(stretchplayer.desktop.in stretchplayer.desktop)
 ADD_CUSTOM_TARGET(dist
   git archive --format=tar --prefix=stretchplayer-${VERSION}/ HEAD
      | gzip -9
-     > ${CMAKE_BINARY_DIR}/stretchplayer_${VERSION}.tar.gz
+     > ${CMAKE_BINARY_DIR}/stretchplayer_${VERSION}.orig.tar.gz
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  COMMENT "Making stretchplayer_${VERSION}.tar.gz"
+  COMMENT "Making stretchplayer_${VERSION}.orig.tar.gz"
   )
 
 INSTALL(
