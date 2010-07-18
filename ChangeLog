@@ -1,3 +1,79 @@
+commit e5deafdb3d6e846270107d42704ccaa00a448b38
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Jul 17 23:05:41 2010 -0500
+
+    Bump version to 0.503.
+
+M	CMakeLists.txt
+M	debian/changelog
+
+commit 2ea0c23fe9cffeb16bde844e93cfbdf22ee99ad6
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Jul 14 01:00:12 2010 -0500
+
+    Add a 'make dist' target.
+    
+    Note that it packages Git HEAD rather than the files in the current
+    working copy.
+
+M	CMakeLists.txt
+
+commit e09f375d119991e826217959fe4b03ee3e73c548
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Jul 14 01:04:22 2010 -0500
+
+    Exclude debian/ folder from tarball export.
+    
+    Removed based on advice from Erik de Castro Lopo, that
+    shipping the debian/ folder in the tarball makes things
+    more difficult for downstream packagers.  He recommended
+    that it stay in the SCM, but not the source distribution.
+    His discussion was on LAU on 2010-07-14.
+
+A	.gitattributes
+
+commit d5d0ec035235cd5ca188eb27f2a9102686c46d46
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Jul 14 00:38:47 2010 -0500
+
+    Add idea to move faders to default spot with right-click.
+    
+    Thanks to Dragan Noveski for the idea.
+
+M	BUGS.txt
+
+commit 88b3eae99e8c5591eff0747c0b7ea11e78005da7
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Jul 11 22:01:31 2010 -0500
+
+    Fix minor errors in debian/control file.
+
+M	debian/control
+
+commit aaa965ed1e22792ec2ed02d47d743d601cda2308
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Jul 11 21:46:12 2010 -0500
+
+    Update debian changelog.
+
+M	debian/changelog
+
+commit 0d09cb29f15faba209462fd041e0f38b0278b966
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Jul 11 21:38:34 2010 -0500
+
+    Add a docs file.
+
+A	debian/docs
+
+commit b29f23033623766a855150c3c75778ba7174056f
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Jul 11 21:32:08 2010 -0500
+
+    Add ChangeLog from Git log.
+
+A	ChangeLog
+
 commit 3cdbbe11c60172d2ee8bf3de8d797d0f4d836b02
 Author: Gabriel M. Beddingfield <gabriel@teuton.org>
 Date:   Sun Jul 11 21:08:56 2010 -0500
