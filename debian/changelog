@@ -1,4 +1,4 @@
-stretchplayer (0.503) unstable; urgency=low
+stretchplayer (0.503-0) unstable; urgency=low
 
   * Remove Debian packaging from release tarballs.
 
