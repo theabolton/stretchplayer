@@ -29,7 +29,8 @@ Package: stretchplayer-dbg
 Section: debug
 Priority: extra
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ stretchplayer (=${binary:Version})
 Description: Audio file player with time stretch and pitch shifting
  Stretchplayer will play back an audio file and allow yout to
  time stretch (without affecting pitch) and/or pitch shift (without
