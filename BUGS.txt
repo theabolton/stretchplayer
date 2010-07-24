@@ -40,3 +40,12 @@ bugs.
 
 * Using arrow keys will not get the stretch fader to go to the extreme
   position.
+
+* Add ability to make marks/cues in the timeline for quick
+  return/access. (Ivan Tarozzi)
+
+* Ability to repeat between marks. (Ivan Tarozzi)
+
+* Add ability to loop the entire song (Ivan Tarozzi)
+
+* Add ability to edit the A/B repeat without having to "perform" it.
