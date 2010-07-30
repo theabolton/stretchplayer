@@ -70,6 +70,7 @@ namespace StretchPlayer
 		)
 	    );
 	_stretcher->setMaxProcessSize(16384);
+	_stretcher->reset();
 
 	if( _audio_system->activate(&err) )
 	    throw std::runtime_error(err.toLocal8Bit().data());
