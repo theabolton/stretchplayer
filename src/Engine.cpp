@@ -141,6 +141,8 @@ namespace StretchPlayer
 	return 0;
     }
 
+    static void apply_gain_to_buffer(float *buf, uint32_t frames, float gain);
+
     void Engine::_process_playing(uint32_t nframes)
     {
 	// MUTEX MUST ALREADY BE LOCKED
@@ -202,10 +204,16 @@ namespace StretchPlayer
 	    }
 	}
 
-	// Apply gain and clip
-	for( frame=0 ; frame<nframes ; ++frame ) {
-	    buf_L[frame] *= _gain;
-	    buf_R[frame] *= _gain;
+	// Apply gain... unroll loop manually so GCC will use SSE
+	if(nframes & 0xf) {  // nframes < 16
+	    unsigned f = nframes;
+	    while(f--) {
+		(*buf_L++) *= _gain;
+		(*buf_R++) *= _gain;
+	    }
+	} else {
+	    apply_gain_to_buffer(buf_L, nframes, _gain);
+	    apply_gain_to_buffer(buf_R, nframes, _gain);
 	}
 
 	if(_position >= _left.size()) {
@@ -374,6 +382,58 @@ namespace StretchPlayer
     float Engine::get_cpu_load()
     {
 	return _audio_system->dsp_load();
+    }
+
+    /* SIMD code for optimizing the gain application.
+     *
+     * Below is vectorized (SSE, SIMD) code for applying
+     * the gain.  If you enable >= SSE2 optimization, then
+     * this will calculate 4 floats at a time.  If you do
+     * not, then it will still work.
+     *
+     * This syntax is a GCC extension, but more portable
+     * than writing x86 assembly.
+     */
+
+    typedef float __vf4 __attribute__((vector_size(16)));
+    typedef union {
+	float f[4];
+	__vf4 v;
+    } vf4;
+
+    static void apply_gain_to_buffer(float *buf, uint32_t nframes, float gain)
+    {
+	vf4* opt;
+	vf4 gg = {gain, gain, gain, gain};
+	int alignment;
+	unsigned ctr = nframes/4;
+
+	alignment = (((int)buf)%16);
+
+	switch(alignment) {
+	case 4: (*buf++) *= gain;
+	case 8: (*buf++) *= gain;
+	case 12:(*buf++) *= gain;
+	    --ctr;
+	case 0:
+	    break;
+	default:
+	    assert(false);
+	}
+
+	assert( (((int)buf)&0xf) == 0 );
+	opt = (vf4*) buf;
+	while(ctr--) {
+	    opt->v *= gg.v; ++opt;
+	}
+
+	buf = (float*) opt;
+	switch(alignment) {
+	case 12: (*buf++) *= gain;
+	case 8:  (*buf++) *= gain;
+	case 4:  (*buf++) *= gain;
+	}
+
     }
 
 } // namespace StretchPlayer
