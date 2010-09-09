@@ -29,7 +29,8 @@
 #include <iostream>
 #include <QFileInfo>
 #include <AudioSystem.hpp>
-#include <JackAudioSystem.hpp>
+//#include <JackAudioSystem.hpp>
+#include <AlsaAudioSystem.hpp>
 #include <QString>
 
 using RubberBand::RubberBandStretcher;
@@ -51,7 +52,8 @@ namespace StretchPlayer
 	QString err;
 	QMutexLocker lk(&_audio_lock);
 
-	_audio_system.reset( new JackAudioSystem );
+	//_audio_system.reset( new JackAudioSystem );
+	_audio_system.reset( new AlsaAudioSystem );
 	QString app_name("StretchPlayer");
 	_audio_system->init( &app_name, &err);
 	_audio_system->set_process_callback(Engine::static_process_callback, this);
