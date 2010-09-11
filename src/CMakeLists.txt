@@ -42,6 +42,7 @@ SET(LIBS ${LIBS} ${RubberBand_LIBRARIES})
 
 LIST(APPEND sp_cpp
   main.cpp
+  Configuration.cpp
   PlayerWidget.cpp
   Engine.cpp
   StatusWidget.cpp
@@ -56,6 +57,7 @@ LIST(APPEND sp_cpp
   )
 
 LIST(APPEND sp_hpp
+  Configuration.hpp
   PlayerWidget.hpp
   Engine.hpp
   StatusWidget.hpp

@@ -21,6 +21,7 @@
 
 #include <QApplication>
 
+#include "Configuration.hpp"
 #include "PlayerWidget.hpp"
 #include <iostream>
 #include <QPlastiqueStyle>
@@ -29,14 +30,19 @@
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
+    StretchPlayer::Configuration config(argc, argv);
+
+    if(config.help() || ( !config.ok() )) {
+	config.usage();
+	if( !config.ok() ) return -1;
+	return 0;
+    }
+
+    if( !config.quiet() ) {
+	config.copyright();
+    }
+
     std::auto_ptr<StretchPlayer::PlayerWidget> pw;
-
-    std::cout << "StretchPlayer version " STRETCHPLAYER_VERSION ", Copyright 2010 Gabriel M. Beddingfield\n"
-	      << "StretchPlayer comes with ABSOLUTELY NO WARRANTY;\n"
-	      << "This is free software, and you are welcome to redistribute it\n"
-	      << "under terms of the GNU Public License (ver. 2 or later)\n"
-	      << std::endl;	
-
     pw.reset(new StretchPlayer::PlayerWidget);
 
     app.setStyle( new QPlastiqueStyle );
