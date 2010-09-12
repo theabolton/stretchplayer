@@ -221,6 +221,15 @@ namespace StretchPlayer
 		case 'n':
 		    periods_per_buffer( atoi(optarg) );
 		    break;
+		case 'x':
+		    autoconnect(false);
+		    break;
+		case 'c':
+		    compositing(true);
+		    break;
+		case 'C':
+		    compositing(false);
+		    break;
 		case 'q':
 		    quiet(true);
 		    break;
