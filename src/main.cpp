@@ -27,6 +27,7 @@
 #include <QPlastiqueStyle>
 #include <memory>
 #include <stdexcept>
+#include <QtGui/QMessageBox>
 
 int main(int argc, char* argv[])
 {
@@ -61,8 +62,16 @@ int main(int argc, char* argv[])
 	app.exec();
     } catch (std::runtime_error& e) {
 	std::cerr << "Exception caught: " << e.what() << std::endl;
+	QMessageBox::critical( 0,
+			       "Runtime Exception",
+			       QString("StretchPlayer Exception: %2").arg(e.what())
+	    );
     } catch (...) {
 	std::cerr << "Unhandled exception... aborting." << std::endl;
+	QMessageBox::critical( 0,
+			       "Unhandled Exception",
+			       "StretchPlayer Exception: There was an unhandled exception... aborting"
+	    );
     }
 
     return 0;
