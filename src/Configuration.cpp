@@ -33,7 +33,7 @@ using namespace std;
 namespace StretchPlayer
 {
 
-    static const char optstring[] = "JAd:r:p:n:qh";
+    static const char optstring[] = "JAd:r:p:n:xcCqh";
 
     static const struct option longopts[] = {
 	// const char *name, int has_arg, int *flag, int val
@@ -43,6 +43,9 @@ namespace StretchPlayer
 	{"sample-rate", 1, 0, 'r'},
 	{"period-size", 1, 0, 'p'},
 	{"periods", 1, 0, 'n'},
+	{"no-autoconnect", 0, 0, 'x'},
+	{"compositing", 0, 0, 'c'},
+	{"no-compositing", 0, 0, 'C'},
 	{"quiet", 0, 0, 'q'},
 	{"help", 0, 0, 'h'},
 	{0, 0, 0, 0}
@@ -55,6 +58,9 @@ namespace StretchPlayer
 	DEFAULT_SAMPLE_RATE, // --sample-rate
 	DEFAULT_PERIOD_SIZE, // --period-size
 	DEFAULT_PERIODS_PER_BUFFER, // --periods
+	"off", // --no-autoconnect
+	"on", // --compositing
+	"off", // --no-compositing
 	"off", // --quiet
 	"off", // --help
 	0
@@ -67,6 +73,9 @@ namespace StretchPlayer
 	"sample rate to use for ALSA", // --sample-rate
 	"period size to use for ALSA", // --period-size
 	"periods per buffer for ALSA", // --periods
+	"disable auto-connection ot ouputs", // --no-autoconnect
+	"enable desktop compositing (if supported by Qt/X11)", // --compositing
+	"disable desktop compositing", // --no-compositing
 	"suppress most output to console", // --quiet
 	"show help/usage and exit", // --help
 	0
@@ -145,6 +154,8 @@ namespace StretchPlayer
 	period_size( atoi(DEFAULT_PERIOD_SIZE) );
 	periods_per_buffer( atoi(DEFAULT_PERIODS_PER_BUFFER) );
 	startup_file( QString() );
+	autoconnect(true);
+	compositing(true);
 	quiet(false);
 	help(false);
 

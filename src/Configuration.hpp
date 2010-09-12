@@ -91,6 +91,8 @@ public:
     Property<unsigned> period_size;
     Property<unsigned> periods_per_buffer;
     Property<QString>  startup_file;
+    Property<bool>     autoconnect; // Automatically connect to first 2 outputs
+    Property<bool>     compositing;
     Property<bool>     quiet;
     Property<bool>     help;
 
