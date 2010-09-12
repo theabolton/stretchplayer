@@ -92,6 +92,37 @@ namespace StretchPlayer
 
     static const char version[] = STRETCHPLAYER_VERSION;
 
+    static void check_options_validity()
+    {
+	const char *str = optstring;
+	const option *opts = longopts;
+	const char **def = opt_defaults;
+	const char **doc = opt_doc;
+
+	assert(str);
+	assert(opts);
+	assert(def);
+	assert(doc);
+	int pos = 0;
+	while( opts->name != 0 ) {
+	    assert( str[pos] );
+	    assert( opts->val == str[pos] );
+	    assert( *def );
+	    assert( *doc );
+
+	    ++pos;
+	    if( (str[pos] != 0) && (str[pos] == ':') ) {
+		assert(opts->has_arg != 0);
+		++pos;
+	    } else {
+		assert(opts->has_arg == 0);
+	    }
+	    ++opts;
+	    ++def;
+	    ++doc;
+	}
+    }
+
     Configuration::Configuration(int argc, char* argv[]) :
 	version(this, STRETCHPLAYER_VERSION),
 	ok(this, false),
@@ -101,6 +132,7 @@ namespace StretchPlayer
 	periods_per_buffer(0),
 	startup_file()
     {
+	check_options_validity();
 	init(argc, argv);
     }
 
