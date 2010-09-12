@@ -58,6 +58,7 @@ namespace StretchPlayer
     private:
 	jack_client_t *_client;
 	jack_port_t* _port[2];
+	Configuration* _config;
     };
 
 } // namespace StretchPlayer

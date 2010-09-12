@@ -18,6 +18,7 @@
  */
 
 #include "JackAudioSystem.hpp"
+#include "Configuration.hpp"
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
@@ -27,7 +28,8 @@
 namespace StretchPlayer
 {
     JackAudioSystem::JackAudioSystem() :
-	_client(0)
+	_client(0),
+	_config(0)
     {
 	_port[0] = 0;
 	_port[1] = 0;
@@ -38,9 +40,15 @@ namespace StretchPlayer
 	cleanup();
     }
 
-    int JackAudioSystem::init(QString * app_name, Configuration * /*config*/, QString *err_msg)
+    int JackAudioSystem::init(QString * app_name, Configuration *config, QString *err_msg)
     {
 	QString name("StretchPlayer"), err;
+
+	if(config == 0) {
+	    err = "The JackAudioSystem::init() function must have a non-null config parameter.";
+	    goto init_bail;
+	}
+	_config = config;
 
 	if(app_name) {
 	    name = *app_name;
@@ -131,38 +139,41 @@ namespace StretchPlayer
 	assert(_client);
 	assert(_port[0]);
 	assert(_port[1]);
+	int rv = 0;
 
 	jack_activate(_client);
 
-	// Autoconnection to first two ports we find.
-	const char** ports = jack_get_ports( _client,
-					     0,
-					     JACK_DEFAULT_AUDIO_TYPE,
-					     JackPortIsInput
-	    );
-	int k, rv = 0;
-	for( k=0 ; ports && ports[k] != 0 ; ++k ) {
-	    if(k==0) {
-		rv = jack_connect( _client,
-				   jack_port_name(_port[0]),
-				   ports[k] );
-	    } else if (k==1) {
-		rv = jack_connect( _client,
-				   jack_port_name(_port[1]),
-				   ports[k] );
-	    } else {
-		break;
+	if( _config->autoconnect() ) {
+	    // Autoconnection to first two ports we find.
+	    const char** ports = jack_get_ports( _client,
+						 0,
+						 JACK_DEFAULT_AUDIO_TYPE,
+						 JackPortIsInput
+		);
+	    int k;
+	    for( k=0 ; ports && ports[k] != 0 ; ++k ) {
+		if(k==0) {
+		    rv = jack_connect( _client,
+				       jack_port_name(_port[0]),
+				       ports[k] );
+		} else if (k==1) {
+		    rv = jack_connect( _client,
+				       jack_port_name(_port[1]),
+				       ports[k] );
+		} else {
+		    break;
+		}
+		if( rv && err_msg ) {
+		    *err_msg = "Could not connect output ports";
+		}
 	    }
-	    if( rv && err_msg ) {
-		*err_msg = "Could not connect output ports";
+	    if(k==0 && err_msg) {
+		*err_msg = "There were no output ports to connect to.";
+		rv = 1;
 	    }
-	}
-	if(k==0 && err_msg) {
-	    *err_msg = "There were no output ports to connect to.";
-	    rv = 1;
-	}
-	if(ports) {
-	    free(ports);
+	    if(ports) {
+		free(ports);
+	    }
 	}
 	return rv;
     }
