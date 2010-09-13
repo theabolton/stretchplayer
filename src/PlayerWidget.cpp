@@ -333,8 +333,15 @@ namespace StretchPlayer
 
     void PlayerWidget::mousePressEvent(QMouseEvent *event)
     {
+	Qt::CursorShape loc = _which_cursor(event->pos());
+	Qt::CursorShape cur = cursor().shape();
+	if( cur != loc ) {
+	    QCursor new_cur(loc);
+	    setCursor(new_cur);
+	    cur = loc;
+	    assert( cur == cursor().shape() );
+	}
 	if(event->button() & Qt::LeftButton) {
-	    Qt::CursorShape cur = cursor().shape();
 	    switch(cur) {
 	    case Qt::SizeAllCursor:
 		_anchor = event->globalPos();
