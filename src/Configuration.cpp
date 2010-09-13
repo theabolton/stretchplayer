@@ -30,86 +30,92 @@ using namespace std;
 #define DEFAULT_PERIODS_PER_BUFFER "2"
 #define DEFAULT_ALSA_DEVICE "hw:0"
 
-#ifdef AUDIO_SUPPORT_JACK
-#define JACK_LETTER "J"
-#define JACK_DEFAULT "on",
-#else
-#define JACK_LETTER
-#define JACK_DEFAULT
-#endif
-
-#ifdef AUDIO_SUPPORT_ALSA
-#define ALSA_LETTER "Ad:r:p:n:"
-#ifdef AUDIO_SUPPORT_JACK
-#define ALSA_DEFAULT "off",
-#else
-#define ALSA_DEFAULT "on",
-#endif
-#else
-#define ALSA_LETTER
-#define ALSA_DEFAULT
-#endif
-
 namespace StretchPlayer
 {
+    typedef struct _stretchplayer_options_t
+    {
+	const char *optstring;
+	struct option longopts; // {const char *name, int has_arg, int *flag, int val}
+	const char *defaults;
+	const char *doc;
+    } stretchplayer_options_t;
 
-    static const char optstring[] = JACK_LETTER ALSA_LETTER "xcCqh";
+    /* CAREFUL: Because defaults and doc are adjacent "const char*" fields,
+     * a missing comma between them will concatenate the strings... and
+     * everything in the structure after it will be misaligned (corrupt).
+     */
 
-    static const struct option longopts[] = {
-	// const char *name, int has_arg, int *flag, int val
+    static const stretchplayer_options_t sp_opts[] = {
 #ifdef AUDIO_SUPPORT_JACK
-	{"jack", 0, 0, 'J'},
+	{ "J",
+	  {"jack", 0, 0, 'J'},
+	  "on",
+	  "use JACK for audio" },
 #endif
 #ifdef AUDIO_SUPPORT_ALSA
-	{"alsa", 0, 0, 'A'},
-	{"device", 1, 0, 'd'},
-	{"sample-rate", 1, 0, 'r'},
-	{"period-size", 1, 0, 'p'},
-	{"periods", 1, 0, 'n'},
-#endif
-	{"no-autoconnect", 0, 0, 'x'},
-	{"compositing", 0, 0, 'c'},
-	{"no-compositing", 0, 0, 'C'},
-	{"quiet", 0, 0, 'q'},
-	{"help", 0, 0, 'h'},
-	{0, 0, 0, 0}
-    };
-
-    static const char* opt_defaults[] = {
-	JACK_DEFAULT
-	ALSA_DEFAULT
-#ifdef AUDIO_SUPPORT_ALSA
-	DEFAULT_ALSA_DEVICE, // --device
-	DEFAULT_SAMPLE_RATE, // --sample-rate
-	DEFAULT_PERIOD_SIZE, // --period-size
-	DEFAULT_PERIODS_PER_BUFFER, // --periods
-#endif
-	"off", // --no-autoconnect
-	"on", // --compositing
-	"off", // --no-compositing
-	"off", // --quiet
-	"off", // --help
-	0
-    };
-
-    static const char* opt_doc[] = {
+	{ "A",
+	  {"alsa", 0, 0, 'A'},
 #ifdef AUDIO_SUPPORT_JACK
-	"use JACK for audio", // --jack
+	  "off",
+#else
+	  "on",
 #endif
-#ifdef AUDIO_SUPPORT_ALSA
-	"use ALSA for audio", // --alsa
-	"device to use for ALSA", // --device
-	"sample rate to use for ALSA", // --sample-rate
-	"period size to use for ALSA", // --period-size
-	"periods per buffer for ALSA", // --periods
+	  "use ALSA for audio" },
+
+	{ "d:",
+	  {"device", 1, 0, 'd'},
+	  DEFAULT_ALSA_DEVICE,
+	  "device to use for ALSA" },
+
+	{ "r:",
+	  {"sample-rate", 1, 0, 'r'},
+	  DEFAULT_SAMPLE_RATE,
+	  "sample rate to use for ALSA" },
+
+	{ "p:",
+	  {"period-size", 1, 0, 'p'},
+	  DEFAULT_PERIOD_SIZE,
+	  "period size to use for ALSA" },
+
+	{ "n:",
+	  {"periods", 1, 0, 'n'},
+	  DEFAULT_PERIODS_PER_BUFFER,
+	  "periods per buffer for ALSA" },
 #endif
-	"disable auto-connection ot ouputs", // --no-autoconnect
-	"enable desktop compositing (if supported by Qt/X11)", // --compositing
-	"disable desktop compositing", // --no-compositing
-	"suppress most output to console", // --quiet
-	"show help/usage and exit", // --help
-	0
+
+	{ "x",
+	  {"no-autoconnect", 0, 0, 'x'},
+	  "off",
+	  "disable auto-connection ot ouputs" },
+
+	{ "c",
+	  {"compositing", 0, 0, 'c'},
+	  "on",
+	  "enable desktop compositing (if supported by Qt/X11)" },
+
+	{ "C",
+	  {"no-compositing", 0, 0, 'C'},
+	  "off",
+	  "disable desktop compositing" },
+
+	{ "q",
+	  {"quiet", 0, 0, 'q'},
+	  "off",
+	  "suppress most output to console" },
+
+	{ "h",
+	  {"help", 0, 0, 'h'},
+	  "off",
+	  "show help/usage and exit" }, // --help
+
+	{ 0,
+	  {0, 0, 0, 0},
+	  0,
+	  0 }
     };
+
+    static char optstring[256];
+    static struct option longopts[128];
 
     static const char usage_line[] = 
 	"usage: stretchplayer [options] [audio_file_name]";
@@ -122,23 +128,39 @@ namespace StretchPlayer
 
     static const char version[] = STRETCHPLAYER_VERSION;
 
+    static void setup_options()
+    {
+	int os_pos = 0;
+	int lo_pos = 0;
+	const stretchplayer_options_t *it;
+
+	memset(optstring, 0, sizeof(optstring));
+	memset(longopts, 0, sizeof(longopts));
+
+	for( it=sp_opts ; it->optstring != 0 ; ++it ) {
+	    assert(os_pos < 256);
+	    assert(lo_pos < 128);
+
+	    assert( strnlen(it->optstring, 16) < 16 );
+	    strncpy( &optstring[os_pos], it->optstring, strnlen(it->optstring, 16) );
+	    os_pos += strnlen(it->optstring, 16);
+
+	    memcpy( &longopts[lo_pos], &(it->longopts), sizeof(struct option) );
+	    ++lo_pos;
+	}
+    }
+
     static void check_options_validity()
     {
 	const char *str = optstring;
 	const option *opts = longopts;
-	const char **def = opt_defaults;
-	const char **doc = opt_doc;
 
 	assert(str);
 	assert(opts);
-	assert(def);
-	assert(doc);
 	int pos = 0;
 	while( opts->name != 0 ) {
 	    assert( str[pos] );
 	    assert( opts->val == str[pos] );
-	    assert( *def );
-	    assert( *doc );
 
 	    ++pos;
 	    if( (str[pos] != 0) && (str[pos] == ':') ) {
@@ -148,8 +170,6 @@ namespace StretchPlayer
 		assert(opts->has_arg == 0);
 	    }
 	    ++opts;
-	    ++def;
-	    ++doc;
 	}
     }
 
@@ -162,6 +182,7 @@ namespace StretchPlayer
 	periods_per_buffer(0),
 	startup_file()
     {
+	setup_options();
 	check_options_validity();
 	init(argc, argv);
     }
@@ -181,15 +202,18 @@ namespace StretchPlayer
 	copyright();
 	cout << usage_line << endl;
 
-	const struct option *opt = longopts;
-	const char **def = opt_defaults;
-	const char **doc = opt_doc;
+	const stretchplayer_options_t *it;
+	const option *opts;
+
+	it = sp_opts;
+
 	int align = 14, size;
-	while(opt->name != 0) {
-	    cout << "  -" << ((char)opt->val)
-		 << " --" << opt->name;
-	    size = strlen(opt->name);
-	    if(opt->has_arg) {
+	for( it=sp_opts ; it->optstring != 0 ; ++it ) {
+	    opts = &(it->longopts);
+	    cout << "  -" << ((char)opts->val)
+		 << " --" << opts->name;
+	    size = strnlen(opts->name, 32);
+	    if(opts->has_arg) {
 		cout << "=X";
 		size += 2;
 	    }
@@ -197,13 +221,9 @@ namespace StretchPlayer
 		cout << " ";
 		++size;
 	    }
-	    cout << " " << (*doc)
-		 << " (default: " << (*def) << ")"
+	    cout << " " << (it->doc)
+		 << " (default: " << (it->defaults) << ")"
 		 << endl;
-
-	    ++opt;
-	    ++def;
-	    ++doc;
 	}
 	cout << endl;
     }
@@ -217,12 +237,10 @@ namespace StretchPlayer
 #else
 #error "Must have support for at least ONE audio API"
 #endif
-#if defined( AUDIO_SUPPORT_ALSA )
 	audio_device( DEFAULT_ALSA_DEVICE );
 	sample_rate( atoi(DEFAULT_SAMPLE_RATE) );
 	period_size( atoi(DEFAULT_PERIOD_SIZE) );
 	periods_per_buffer( atoi(DEFAULT_PERIODS_PER_BUFFER) );
-#endif
 	startup_file( QString() );
 	autoconnect(true);
 	compositing(true);
