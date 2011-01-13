@@ -67,7 +67,6 @@ namespace StretchPlayer
     void StatusWidget::position(float pos)
     {
 	_position->setValue( pos * 1000.0 );
-	_position->update();
     }
 
     void StatusWidget::time(float time)
@@ -236,7 +235,6 @@ namespace StretchPlayer
 	stat.moveTo( stat.x(), stat.bottom() );
 	painter.drawText(stat, _volume);
 
-	_message->update();
 	//painter.setFont(_message_font);
 	//painter.drawText(_message_zone, _message);
     }

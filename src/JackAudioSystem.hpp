@@ -45,8 +45,8 @@ namespace StretchPlayer
 	virtual int activate(QString *err_msg = 0);
 	virtual int deactivate(QString *err_msg = 0);
 	virtual sample_t* output_buffer(int index);
-	virtual size_t output_buffer_size(int index);
-	virtual size_t sample_rate();
+	virtual uint32_t output_buffer_size(int index);
+	virtual uint32_t sample_rate();
 	virtual float dsp_load();
 
     private:

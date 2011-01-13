@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=StretchPlayer
+Comment=Audio file player with time stretch
+Exec=stretchplayer
+Icon=@CMAKE_INSTALL_PREFIX@/share/stretchplayer/icons/stretchplayer-icon-48x48.png
+Terminal=false
+MimeType=application/x-stretchplayer;
+Type=Application
+Categories=AudioVideo;Audio;X-Sound;X-Jack;

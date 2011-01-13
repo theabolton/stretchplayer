@@ -72,7 +72,6 @@ namespace Widgets
 	_permanent = txt;
 	if(_show_temporary == 0) {
 	    _draw_text(txt);
-	    update();
 	}
     }
 
@@ -84,14 +83,12 @@ namespace Widgets
 	    _pos = 0;
 	    _wait_timer.start(1500);
 	}
-	update();
     }
 
     void Marquee::_wait_over()
     {
 	if( _show_temporary == 1 ) {
 	    _draw_text(_permanent);
-	    update();
 	    _pos = 0;
 	    _show_temporary = 0;
 	} else if( _show_temporary > 0 ) {
@@ -101,7 +98,6 @@ namespace Widgets
 	    _draw_text(_permanent);
 	    _pos = 0;
 	    _show_temporary = 0;
-	    update();
 	    return;
 	} else {
 	    _scroll_timer.start();

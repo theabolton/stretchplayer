@@ -1,3 +1,19 @@
+stretchplayer (0.503-0) unstable; urgency=low
+
+  * Remove Debian packaging from release tarballs.
+
+ -- Gabriel M. Beddingfield <gabriel@teuton.org>  Sat, 17 Jul 2010 23:02:54 -0500
+
+stretchplayer (0.502) unstable; urgency=low
+
+  * New release.
+  * Reduce unnecessary Xorg calculations.
+  * Add CMake USE_COMPOSITING option.
+  * Fix 64-bit build errors with integer types.
+  * Suppress build warnings.
+
+ -- Gabriel M. Beddingfield <gabriel@teuton.org>  Sun, 11 Jul 2010 21:45:52 -0500
+
 stretchplayer (0.501) unstable; urgency=low
 
   * Create a Debian package for stretchplayer.
