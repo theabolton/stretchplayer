@@ -424,6 +424,18 @@ namespace StretchPlayer
 	__vf4 v;
     } vf4;
 
+    /**
+     * \brief Multiply each element in a buffer by a scalar.
+     *
+     * For each element in buf[0..nframes-1], buf[i] *= gain.
+     *
+     * This function detects the buffer alignment, and if it's 4-byte
+     * aligned and SSE optimization is enabled, it will use the
+     * optimized code-path.  However, it will still work with 1-byte
+     * aligned buffers.
+     *
+     * \param buf - Pointer to a buffer of floats.
+     */
     static void apply_gain_to_buffer(float *buf, uint32_t nframes, float gain)
     {
 	vf4* opt;
@@ -441,7 +453,7 @@ namespace StretchPlayer
 	case 0:
 	    break;
 	default:
-	    assert(false);
+	  goto LAME;
 	}
 
 	assert( (((int)buf)&0xf) == 0 );
@@ -457,6 +469,14 @@ namespace StretchPlayer
 	case 4:  (*buf++) *= gain;
 	}
 
+	return;
+
+    LAME:
+	// If it's not even 4-byte aligned
+	// then this is is the un-optimized code.
+	while(nframes--) {
+	  (*buf++) *= gain;
+	}
     }
 
 } // namespace StretchPlayer
