@@ -61,6 +61,7 @@ namespace StretchPlayer
 	void go_active();
 
 	uint32_t latency() const;
+	uint32_t written();
 	uint32_t available_write();
 	uint32_t write_audio(float* left, float* right, uint32_t count);
 	uint32_t available_read();

@@ -122,8 +122,16 @@ namespace StretchPlayer
     {
 	uint32_t l, r;
 	l = _inputs[0]->write_space();
-	r = _inputs[1] ->write_space();
+	r = _inputs[1]->write_space();
 	return (l < r) ? l : r;
+    }
+
+    uint32_t RubberBandServer::written()
+    {
+	uint32_t l, r;
+	l = _inputs[0]->read_space();
+	r = _inputs[1]->read_space();
+	return (l > r) ? l : r;
     }
 
     uint32_t RubberBandServer::write_audio(float* left, float* right, uint32_t count)
@@ -176,13 +184,20 @@ namespace StretchPlayer
 	pitch_scale = _pitch_scale_param;
 	lock.unlock();
 
+	size_t samples_required;
+	int samples_available;
 	while(_running) {
 	    read_l = _inputs[0]->read_space();
 	    read_r = _inputs[1]->read_space();
 	    nget = (read_l < read_r) ? read_l : read_r;
+	    samples_required = _stretcher->getSamplesRequired();
+	    samples_available = _stretcher->available();
 	    if(nget > BUFSIZE) nget = BUFSIZE;
-	    if(nget > _stretcher->getSamplesRequired()) nget = _stretcher->getSamplesRequired();
-	    if(_stretcher->available() > 0) nget = 0;
+	    if(nget > samples_required) nget = samples_required;
+	    if(samples_available > 0) nget = 0;
+	    if( (samples_available == 0) && (samples_required == 0) ) {
+		nget = 16;
+	    }
 	    if(nget) {
 		tmp = _inputs[0]->read(left, nget);
 		assert( tmp == nget );

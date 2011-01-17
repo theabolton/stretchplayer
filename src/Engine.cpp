@@ -37,6 +37,8 @@
 using RubberBand::RubberBandStretcher;
 using namespace std;
 
+static const unsigned STRETCHER_FEED_BLOCK = 512;
+
 namespace StretchPlayer
 {
     Engine::Engine()
@@ -163,24 +165,18 @@ namespace StretchPlayer
 
 	assert( _stretcher->is_running() );
 
-	int32_t write_space;
+	int32_t write_space, written, input_frames;
 	write_space = _stretcher->available_write();
-	int32_t input_frames;
-	input_frames = (unsigned) ( 0.5 + float(nframes) / time_ratio );
-	input_frames *= 2;
-
-	// std::cout << "write space = " << write_space << "input frames = " << input_frames << std::endl;
-
-	// Feed, at most, only the amount of data needed for
-	// one buffer-size of output.  That way our _position
-	// pointer doesn't drift too far from what we get on
-	// the output.
-	if( write_space > input_frames ) {
-	    write_space = input_frames;
+	written = _stretcher->written();
+	if(written <= STRETCHER_FEED_BLOCK) {
+	  assert(write_space >= STRETCHER_FEED_BLOCK);
+	  input_frames = STRETCHER_FEED_BLOCK;
+	} else {
+	  input_frames = 0;
 	}
 
-	while( write_space > 0 ) {
-	    feed = unsigned(write_space);
+	while( input_frames > 0 ) {
+	    feed = input_frames;
 	    if( looping() && ((_position + feed) >= _loop_b) ) {
 		if( _loop_b >= _position ) {
 		    _position = _loop_a;
@@ -193,14 +189,20 @@ namespace StretchPlayer
 	    }
 	    if( _position + feed > _left.size() ) {
 		feed = _left.size() - _position;
-		write_space = feed;
+		input_frames = feed;
 	    }
 	    _stretcher->write_audio( &_left[_position], &_right[_position], feed );
 	    _position += feed;
-	    write_space -= feed;
+	    input_frames -= feed;
 	    if( looping() && _position >= _loop_b ) {
 		_position = _loop_a;
 	    }
+	}
+
+	written = _stretcher->written();
+	if( written > 2048 ) {
+	    std::cout << "written = " << written << std::endl;
+	    assert( _stretcher->written() <= 2048 );
 	}
 
 	uint32_t read_space;
@@ -209,7 +211,10 @@ namespace StretchPlayer
 	    _stretcher->read_audio(buf_L, buf_R, nframes);
 	} else {
 	    // Not generating fast enough... skip.
-	    std::cout << "skip " << nframes << " @ " << _position << std::endl;
+	    std::cout << "skip " << nframes << " @ " << _position 
+		      << " written=" << _stretcher->written()
+		      << " read_space=" << read_space
+		      << std::endl;
 	    _zero_buffers(nframes);
 	}
 
