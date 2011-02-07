@@ -23,6 +23,7 @@
 #include <memory>
 #include <QString>
 #include <QMutex>
+#include <QAtomicInt>
 #include <vector>
 #include <set>
 
@@ -118,6 +119,7 @@ private:
 
     void _zero_buffers(uint32_t nframes);
     void _process_playing(uint32_t nframes);
+    void _handle_loop_ab();
 
     typedef std::set<EngineMessageCallback*> callback_seq_t;
 
@@ -140,6 +142,7 @@ private:
     unsigned long _position;
     unsigned long _loop_a;
     unsigned long _loop_b;
+    QAtomicInt _loop_ab_pressed;
     float _sample_rate;
     float _stretch;
     int _pitch;

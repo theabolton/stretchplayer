@@ -117,6 +117,10 @@ namespace StretchPlayer
     {
 	bool locked = false;
 
+	if( _loop_ab_pressed > 0 ) {
+	    _handle_loop_ab();
+	}
+
 	try {
 	    locked = _audio_lock.tryLock();
 	    if(_state_changed) {
@@ -338,30 +342,38 @@ namespace StretchPlayer
 
     void Engine::loop_ab()
     {
-	uint32_t pos, lat;
-	lat = 0; // can't figure a way to estimate the latency yet.
-	// lat = (196 * 256) / _stretcher->time_ratio();
-	pos = _position;
-	std::cout << "pos = " << pos << " lat = " << lat << std::endl;
+	_loop_ab_pressed.fetchAndAddRelaxed(1);
+    }
 
-	if(pos > lat) pos -= lat;
+    void Engine::_handle_loop_ab()
+    {
+	while( _loop_ab_pressed > 0 ) {
+	    uint32_t pos, lat;
+	    lat = 0; // can't figure a way to estimate the latency yet.
+	    // lat = (196 * 256) / _stretcher->time_ratio();
+	    pos = _position;
+	    std::cout << "pos = " << pos << " lat = " << lat << std::endl;
 
-	if( _loop_b > _loop_a ) {
-	    _loop_b = 0;
-	    _loop_a = 0;
-	} else if( _loop_a == 0 ) {
-	    _loop_a = pos;
-	    if(pos == 0) {
-		_loop_a = 1;
-	    }
-	} else if( _loop_a != 0 ) {
-	    if( pos > _loop_a ) {
-		_loop_b = pos;
-	    } else {
+	    if(pos > lat) pos -= lat;
+
+	    if( _loop_b > _loop_a ) {
+		_loop_b = 0;
+		_loop_a = 0;
+	    } else if( _loop_a == 0 ) {
 		_loop_a = pos;
+		if(pos == 0) {
+		    _loop_a = 1;
+		}
+	    } else if( _loop_a != 0 ) {
+		if( pos > _loop_a ) {
+		    _loop_b = pos;
+		} else {
+		    _loop_a = pos;
+		}
+	    } else {
+		assert(false);  // invalid state
 	    }
-	} else {
-	    assert(false);  // invalid state
+	    _loop_ab_pressed.fetchAndAddOrdered(-1);
 	}
     }
 
