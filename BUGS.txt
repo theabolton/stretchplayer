@@ -4,6 +4,9 @@ BUGS FOR STRETCHPLAYER
 Here is an unordered list of complaints, shorcomings, wishes, and
 bugs.
 
+* Add error checking -- especially in startup (e.g. if
+  jackd is not installed).
+
 * Possible clicks on A/B Repeat (no crossfading).
 
 * QFont::setStretch() doesn't work on all fonts.
