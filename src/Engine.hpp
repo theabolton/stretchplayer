@@ -150,6 +150,11 @@ private:
     std::auto_ptr<RubberBandServer> _stretcher;
     std::auto_ptr<AudioSystem> _audio_system;
 
+    /* Latency tracking */
+    unsigned long _output_position;
+    unsigned long _elapsed_since_last_write[2];
+    float _last_write_factor[2];
+
     mutable QMutex _callback_lock;
     callback_seq_t _error_callbacks;
     callback_seq_t _message_callbacks;

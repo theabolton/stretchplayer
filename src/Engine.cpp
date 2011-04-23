@@ -51,9 +51,14 @@ namespace StretchPlayer
 	  _sample_rate(48000.0),
 	  _stretch(1.0),
 	  _pitch(0),
-	  _gain(1.0)
+	  _gain(1.0),
+	  _output_position(0)
     {
 	QString err;
+	memset(_elapsed_since_last_write, 0, sizeof(_elapsed_since_last_write));
+	_last_write_factor[0] = 1.0;
+	_last_write_factor[1] = 1.0;
+
 	QMutexLocker lk(&_audio_lock);
 
 	_audio_system.reset( new JackAudioSystem );
@@ -175,6 +180,10 @@ namespace StretchPlayer
 	if(written <= STRETCHER_FEED_BLOCK) {
 	  assert(write_space >= STRETCHER_FEED_BLOCK);
 	  input_frames = STRETCHER_FEED_BLOCK;
+	  _elapsed_since_last_write[0] = _elapsed_since_last_write[1];
+	  _last_write_factor[0] = _last_write_factor[1];
+	  _elapsed_since_last_write[1] = 0;
+	  _last_write_factor[1] = time_ratio;
 	} else {
 	  input_frames = 0;
 	}
@@ -182,12 +191,14 @@ namespace StretchPlayer
 	while( input_frames > 0 ) {
 	    feed = input_frames;
 	    if( looping() && ((_position + feed) >= _loop_b) ) {
-		if( _loop_b >= _position ) {
+		if( _position >= _loop_b ) {
 		    _position = _loop_a;
 		    if( _loop_a + feed > _loop_b ) {
+			assert(_loop_b > _loop_a );
 			feed = _loop_b - _loop_a;
 		    }
 		} else {
+		    assert( _loop_b >= _position );
 		    feed = _loop_b - _position;
 		}
 	    }
@@ -197,6 +208,10 @@ namespace StretchPlayer
 	    }
 	    _stretcher->write_audio( &_left[_position], &_right[_position], feed );
 	    _position += feed;
+	    if( feed > input_frames ) {
+	      std::cout << "feed = " << feed << " input_frames = " << std::endl;
+	    }
+	    assert( input_frames >= feed );
 	    input_frames -= feed;
 	    if( looping() && _position >= _loop_b ) {
 		_position = _loop_a;
@@ -211,8 +226,16 @@ namespace StretchPlayer
 
 	uint32_t read_space;
 	read_space = _stretcher->available_read();
+	_output_position = ::round(float(_position) - float(_elapsed_since_last_write[0])/float(_last_write_factor[0]));
+
+	std::cout << _position << " " << _output_position << std::endl;
+	assert( (_output_position > _position) ? (_output_position - _position) <= 2048 : true );
+	assert( (_output_position < _position) ? (_position - _output_position) <= 2048 : true );
+
 	if( read_space >= nframes ) {
 	    _stretcher->read_audio(buf_L, buf_R, nframes);
+	    _elapsed_since_last_write[0] += nframes;
+	    _elapsed_since_last_write[1] += nframes;
 	} else {
 	    // Not generating fast enough... skip.
 	    std::cout << "skip " << nframes << " @ " << _position 
@@ -335,7 +358,7 @@ namespace StretchPlayer
     float Engine::get_position()
     {
 	if(_left.size() > 0) {
-	    return float(_position) / _sample_rate;
+	    return float(_output_position) / _sample_rate;
 	}
 	return 0;
     }
@@ -349,9 +372,9 @@ namespace StretchPlayer
     {
 	while( _loop_ab_pressed > 0 ) {
 	    uint32_t pos, lat;
-	    lat = 0; // can't figure a way to estimate the latency yet.
+	    lat = 64*16 / _stretcher->time_ratio(); // can't figure a way to estimate the latency yet.
 	    // lat = (196 * 256) / _stretcher->time_ratio();
-	    pos = _position;
+	    pos = _output_position;
 	    std::cout << "pos = " << pos << " lat = " << lat << std::endl;
 
 	    if(pos > lat) pos -= lat;
@@ -389,7 +412,7 @@ namespace StretchPlayer
     {
 	unsigned long pos = secs * _sample_rate;
 	QMutexLocker lk(&_audio_lock);
-	_position = pos;
+	_output_position = _position = pos;
 	_state_changed = true;
 	_stretcher->reset();
     }
