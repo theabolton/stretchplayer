@@ -195,4 +195,16 @@ namespace StretchPlayer
 	return jack_cpu_load(_client)/100.0;
     }
 
+    uint32_t JackAudioSystem::time_stamp()
+    {
+	if( !_client ) return 0;
+	return jack_frame_time(_client);
+    }
+
+    uint32_t JackAudioSystem::segment_start_time_stamp()
+    {
+	if( !_client ) return 0;
+	return jack_last_frame_time(_client);
+    }
+
 } // namespace StretchPlayer

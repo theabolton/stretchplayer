@@ -118,6 +118,21 @@ namespace StretchPlayer
 	 * support this feature.
 	 */
 	virtual float dsp_load() = 0;
+
+	/**
+	 * Returns a timestamp of the current output, in audio frames.
+	 *
+	 * \return Approximate frame of current audio output.
+	 */
+	virtual uint32_t time_stamp() = 0;
+
+	/**
+	 * Return a timestamp of the start frame of the current audio segment.
+	 *
+	 * \return Timestamp for the current callback processing segement.
+	 */
+	virtual uint32_t segment_start_time_stamp() = 0;
+
     };
 
 } // namespace StretchPlayer

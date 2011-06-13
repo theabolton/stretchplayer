@@ -48,6 +48,8 @@ namespace StretchPlayer
 	virtual uint32_t output_buffer_size(int index);
 	virtual uint32_t sample_rate();
 	virtual float dsp_load();
+	virtual uint32_t time_stamp();
+	virtual uint32_t segment_start_time_stamp();
 
     private:
 	jack_client_t *_client;
