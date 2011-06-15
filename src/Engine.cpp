@@ -28,14 +28,11 @@
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
-#include <iostream>
 #include <QFileInfo>
 #include <QString>
 
-#include <iostream>
 
 using RubberBand::RubberBandStretcher;
-using namespace std;
 
 namespace StretchPlayer
 {
@@ -131,7 +128,6 @@ namespace StretchPlayer
 		    _stretcher->read_audio(left, right, 64);
 		assert( 0 == _stretcher->available_read() );
 		_position = _output_position;
-		cout << "state changed stuff called" << endl;
 	    }
 	    if(locked) {
 		if(_playing) {
@@ -205,9 +201,6 @@ namespace StretchPlayer
 	    }
 	    _stretcher->write_audio( &_left[_position], &_right[_position], feed );
 	    _position += feed;
-	    if( feed > input_frames ) {
-	      std::cout << "feed = " << feed << " input_frames = " << std::endl;
-	    }
 	    assert( input_frames >= feed );
 	    input_frames -= feed;
 	    if( looping() && _position >= _loop_b ) {
@@ -227,11 +220,6 @@ namespace StretchPlayer
 	    _stretcher->read_audio(buf_L, buf_R, read_space);
 	} else {
 	    _zero_buffers(nframes);
-	    // Not generating fast enough... skip.
-	    std::cout << "skip " << nframes << " @ " << _position 
-		      << " written=" << _stretcher->written()
-		      << " read_space=" << read_space
-		      << std::endl;
 	}
 
 	unsigned n_feed_buf = _stretcher->latency();
