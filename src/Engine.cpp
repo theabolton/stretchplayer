@@ -430,7 +430,15 @@ namespace StretchPlayer
 
     float Engine::get_cpu_load()
     {
-	return _audio_system->dsp_load();
+	float audio_load, worker_load;
+
+	audio_load = _audio_system->dsp_load();
+	if(_playing) {
+	    worker_load = _stretcher->cpu_load();
+	} else {
+	    worker_load = 0.0;
+	}
+	return  audio_load + worker_load;
     }
 
     /* SIMD code for optimizing the gain application.

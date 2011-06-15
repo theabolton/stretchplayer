@@ -25,6 +25,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QThread>
+#include <vector>
 
 namespace RubberBand
 {
@@ -68,10 +69,12 @@ namespace StretchPlayer
 	uint32_t write_audio(float* left, float* right, uint32_t count);
 	uint32_t available_read();
 	uint32_t read_audio(float* left, float* right, uint32_t count);
+	float cpu_load() const;
 
     private:
 	virtual void run();
 	void _process();
+	void _update_cpu_load();
 
     private:
 	bool _running;
@@ -81,6 +84,10 @@ namespace StretchPlayer
 
 	mutable QWaitCondition _wait_cond;
 	mutable QMutex _wait_mutex;
+
+	std::vector<uint32_t> _proc_time; // usecs
+	std::vector<uint32_t> _idle_time; // usecs
+	float _cpu_load; // [0.0, 1.0]
 
 	mutable QMutex _param_mutex; // Must be locked for these params:
 	float _time_ratio_param;

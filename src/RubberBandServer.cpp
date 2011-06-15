@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <cassert>
 #include <pthread.h>
+#include <sys/time.h>
 
 using RubberBand::RubberBandStretcher;
 
@@ -31,6 +32,7 @@ namespace StretchPlayer
 {
     RubberBandServer::RubberBandServer(uint32_t sample_rate) :
 	_running(true),
+	_cpu_load(0.0),
 	_time_ratio_param(1.0),
 	_pitch_scale_param(1.0),
 	_reset_param(true)
@@ -52,6 +54,8 @@ namespace StretchPlayer
 	_outputs[0].reset( new ringbuffer_t(MAXBUF) );
 	_outputs[1].reset( new ringbuffer_t(MAXBUF) );
 
+	_proc_time.insert( _proc_time.end(), 64, 0 );
+	_idle_time.insert( _idle_time.end(), 64, 0 );
     }
 
     RubberBandServer::~RubberBandServer()
@@ -83,6 +87,10 @@ namespace StretchPlayer
     {
 	QMutexLocker lk(&_param_mutex);
 	_reset_param = true;
+	for(size_t k=0 ; k < _proc_time.size() ; ++k) {
+	    _proc_time[k] = 0;
+	    _idle_time[k] = 0;
+	}
     }
 
     void RubberBandServer::time_ratio(float val)
@@ -180,6 +188,29 @@ namespace StretchPlayer
 	return l;
     }
 
+    float RubberBandServer::cpu_load() const
+    {
+	return _cpu_load;
+    }
+
+    void RubberBandServer::_update_cpu_load()
+    {
+	assert( _proc_time.size() == _idle_time.size() );
+	uint32_t proc = 0, idle = 0;
+	float ans;
+	size_t k;
+	for(k=0 ; k<_proc_time.size() ; ++k ) {
+	    proc += _proc_time[k];
+	    idle += _idle_time[k];
+	}
+	if( proc && idle ) {
+	    ans = float(proc) / float(proc + idle);
+	} else {
+	    ans = 0.0;
+	}
+	_cpu_load = ans;
+    }
+
     void RubberBandServer::run()
     {
 	uint32_t read_l, read_r, nget;
@@ -191,7 +222,8 @@ namespace StretchPlayer
 	float time_ratio, pitch_scale;
 	bool reset;
 	bool proc_output;
-	unsigned _temp_get_ctr = 0;
+	int cpu_load_pos = 0;
+	timeval a, b, c;
 
 	bufs[0] = left;
 	bufs[1] = right;
@@ -209,6 +241,7 @@ namespace StretchPlayer
 	size_t samples_required;
 	int samples_available;
 	while(_running) {
+	    gettimeofday(&a, 0);
 	    read_l = _inputs[0]->read_space();
 	    read_r = _inputs[1]->read_space();
 	    nget = (read_l < read_r) ? read_l : read_r;
@@ -259,9 +292,20 @@ namespace StretchPlayer
 		    _outputs[1]->write(right, tmp);
 		}
 	    }
+	    gettimeofday(&b, 0);
+	    _proc_time[cpu_load_pos] = (b.tv_sec - a.tv_sec) * 1000000 + b.tv_usec - a.tv_usec;
 	    if( (nget == 0) && (! proc_output) ) {
+		a = b;
 		_wait_cond.wait(&_wait_mutex);
+		gettimeofday(&b, 0);
+		_idle_time[cpu_load_pos] = (b.tv_sec - a.tv_sec) * 1000000 + b.tv_usec - a.tv_usec;
+	    } else {
+		_idle_time[cpu_load_pos] = 0;
 	    }
+	    ++cpu_load_pos;
+	    if(cpu_load_pos >= _proc_time.size())
+		cpu_load_pos = 0;
+	    _update_cpu_load();
 	}
     }
 
