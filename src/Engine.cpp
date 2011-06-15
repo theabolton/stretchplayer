@@ -222,6 +222,9 @@ namespace StretchPlayer
 
 	if( read_space >= nframes ) {
 	    _stretcher->read_audio(buf_L, buf_R, nframes);
+	} else if ( (read_space > 0) && _hit_end ) {
+	    _zero_buffers(nframes);
+	    _stretcher->read_audio(buf_L, buf_R, read_space);
 	} else {
 	    _zero_buffers(nframes);
 	    // Not generating fast enough... skip.
