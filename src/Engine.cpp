@@ -53,7 +53,7 @@ namespace StretchPlayer
 	  _pitch(0),
 	  _gain(1.0),
 	  _output_position(0),
-	  _n_feed_segs(0)
+	  _n_feed_segs(2)
     {
 	QString err;
 
@@ -133,7 +133,6 @@ namespace StretchPlayer
 		while( _stretcher->available_read() > 0 )
 		    _stretcher->read_audio(left, right, 64);
 		assert( 0 == _stretcher->available_read() );
-		_n_feed_segs = 0;
 		_position = _output_position;
 		cout << "state changed stuff called" << endl;
 	    }
@@ -184,7 +183,7 @@ namespace StretchPlayer
 	written = _stretcher->written();
 	if(written <= STRETCHER_FEED_BLOCK) {
 	  assert(write_space >= STRETCHER_FEED_BLOCK);
-	  input_frames = STRETCHER_FEED_BLOCK;
+	  input_frames = _n_feed_segs * STRETCHER_FEED_BLOCK;
 	} else {
 	  input_frames = 0;
 	}
@@ -228,7 +227,6 @@ namespace StretchPlayer
 	    _stretcher->read_audio(buf_L, buf_R, nframes);
 	} else {
 	    _zero_buffers(nframes);
-	    ++_n_feed_segs;
 	    // Not generating fast enough... skip.
 	    std::cout << "skip " << nframes << " @ " << _position 
 		      << " written=" << _stretcher->written()
@@ -415,7 +413,6 @@ namespace StretchPlayer
 	QMutexLocker lk(&_audio_lock);
 	_output_position = _position = pos;
 	_state_changed = true;
-	_n_feed_segs = 0;
 	_stretcher->reset();
     }
 
