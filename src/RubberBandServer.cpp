@@ -175,6 +175,7 @@ namespace StretchPlayer
 	float time_ratio, pitch_scale;
 	bool reset;
 	bool proc_output;
+	unsigned _temp_get_ctr = 0;
 
 	bufs[0] = left;
 	bufs[1] = right;
@@ -192,11 +193,17 @@ namespace StretchPlayer
 	    nget = (read_l < read_r) ? read_l : read_r;
 	    samples_required = _stretcher->getSamplesRequired();
 	    samples_available = _stretcher->available();
+	    samples_available += available_read();
 	    if(nget > BUFSIZE) nget = BUFSIZE;
 	    if(nget > samples_required) nget = samples_required;
-	    if(samples_available > 0) nget = 0;
-	    if( (samples_available == 0) && (samples_required == 0) ) {
+	    if(samples_available > 2*BUFSIZE) nget = 0;
+	    if( (samples_available < BUFSIZE) && (samples_required == 0) ) {
 		nget = 16;
+	    }
+	    if(nget) {
+		_temp_get_ctr = 0;
+	    } else {
+		++_temp_get_ctr;
 	    }
 	    if(nget) {
 		tmp = _inputs[0]->read(left, nget);

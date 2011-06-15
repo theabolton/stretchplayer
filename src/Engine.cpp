@@ -52,12 +52,10 @@ namespace StretchPlayer
 	  _stretch(1.0),
 	  _pitch(0),
 	  _gain(1.0),
-	  _output_position(0)
+	  _output_position(0),
+	  _n_feed_segs(0)
     {
 	QString err;
-	memset(_elapsed_since_last_write, 0, sizeof(_elapsed_since_last_write));
-	_last_write_factor[0] = 1.0;
-	_last_write_factor[1] = 1.0;
 
 	QMutexLocker lk(&_audio_lock);
 
@@ -131,6 +129,13 @@ namespace StretchPlayer
 	    if(_state_changed) {
 		_state_changed = false;
 		_stretcher->reset();
+		float left[64], right[64];
+		while( _stretcher->available_read() > 0 )
+		    _stretcher->read_audio(left, right, 64);
+		assert( 0 == _stretcher->available_read() );
+		_n_feed_segs = 0;
+		_position = _output_position;
+		cout << "state changed stuff called" << endl;
 	    }
 	    if(locked) {
 		if(_playing) {
@@ -180,10 +185,6 @@ namespace StretchPlayer
 	if(written <= STRETCHER_FEED_BLOCK) {
 	  assert(write_space >= STRETCHER_FEED_BLOCK);
 	  input_frames = STRETCHER_FEED_BLOCK;
-	  _elapsed_since_last_write[0] = _elapsed_since_last_write[1];
-	  _last_write_factor[0] = _last_write_factor[1];
-	  _elapsed_since_last_write[1] = 0;
-	  _last_write_factor[1] = time_ratio;
 	} else {
 	  input_frames = 0;
 	}
@@ -219,32 +220,32 @@ namespace StretchPlayer
 	}
 
 	written = _stretcher->written();
-	if( written > 2048 ) {
-	    std::cout << "written = " << written << std::endl;
-	    assert( _stretcher->written() <= 2048 );
-	}
 
 	uint32_t read_space;
 	read_space = _stretcher->available_read();
-	_output_position = ::round(float(_position) - float(_elapsed_since_last_write[0])/float(_last_write_factor[0]));
-
-	std::cout << _position << " " << _output_position << std::endl;
-	assert( (_output_position > _position) ? (_output_position - _position) <= 2048 : true );
-	assert( (_output_position < _position) ? (_position - _output_position) <= 2048 : true );
 
 	if( read_space >= nframes ) {
 	    _stretcher->read_audio(buf_L, buf_R, nframes);
-	    _elapsed_since_last_write[0] += nframes;
-	    _elapsed_since_last_write[1] += nframes;
 	} else {
+	    _zero_buffers(nframes);
+	    ++_n_feed_segs;
 	    // Not generating fast enough... skip.
 	    std::cout << "skip " << nframes << " @ " << _position 
 		      << " written=" << _stretcher->written()
 		      << " read_space=" << read_space
+		      << " _n_feed_segs=" << _n_feed_segs
 		      << std::endl;
-	    _zero_buffers(nframes);
 	}
 
+	unsigned n_feed_buf = _n_feed_segs * STRETCHER_FEED_BLOCK;
+	if(_position > n_feed_buf) {
+	    _output_position = _position - n_feed_buf;
+	} else {
+	    _output_position = 0;
+	}
+
+	assert( (_output_position > _position) ? (_output_position - _position) <= n_feed_buf : true );
+	assert( (_output_position < _position) ? (_position - _output_position) <= n_feed_buf : true );
 	// Apply gain... unroll loop manually so GCC will use SSE
 	if(nframes & 0xf) {  // nframes < 16
 	    unsigned f = nframes;
@@ -372,10 +373,10 @@ namespace StretchPlayer
     {
 	while( _loop_ab_pressed > 0 ) {
 	    uint32_t pos, lat;
-	    lat = 64*16 / _stretcher->time_ratio(); // can't figure a way to estimate the latency yet.
-	    // lat = (196 * 256) / _stretcher->time_ratio();
+	    uint32_t pressed_frame, seg_frame;
+
+	    assert( _stretcher->time_ratio() > 0 );
 	    pos = _output_position;
-	    std::cout << "pos = " << pos << " lat = " << lat << std::endl;
 
 	    if(pos > lat) pos -= lat;
 
@@ -414,6 +415,7 @@ namespace StretchPlayer
 	QMutexLocker lk(&_audio_lock);
 	_output_position = _position = pos;
 	_state_changed = true;
+	_n_feed_segs = 0;
 	_stretcher->reset();
     }
 
