@@ -152,7 +152,6 @@ private:
 
     /* Latency tracking */
     unsigned long _output_position;
-    unsigned _n_feed_segs;
 
     mutable QMutex _callback_lock;
     callback_seq_t _error_callbacks;

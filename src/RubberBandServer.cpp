@@ -24,6 +24,8 @@
 
 using RubberBand::RubberBandStretcher;
 
+#define STRETCHER_FEED_BLOCK 512
+
 namespace StretchPlayer
 {
     RubberBandServer::RubberBandServer(uint32_t sample_rate) :
@@ -113,6 +115,16 @@ namespace StretchPlayer
 	setPriority(QThread::TimeCriticalPriority);
     }
 
+    uint32_t RubberBandServer::feed_block_min() const
+    {
+	return STRETCHER_FEED_BLOCK;
+    }
+
+    uint32_t RubberBandServer::feed_block_max() const
+    {
+	return 2 * STRETCHER_FEED_BLOCK;
+    }
+
     uint32_t RubberBandServer::latency() const
     {
 	return _stretcher->getLatency();
@@ -169,7 +181,7 @@ namespace StretchPlayer
 	uint32_t read_l, read_r, nget;
 	uint32_t write_l, write_r, nput;
 	uint32_t tmp;
-	const unsigned BUFSIZE = 512;
+	const unsigned BUFSIZE = STRETCHER_FEED_BLOCK;
 	float* bufs[2];
 	float left[BUFSIZE], right[BUFSIZE];
 	float time_ratio, pitch_scale;

@@ -60,6 +60,8 @@ namespace StretchPlayer
 	void go_idle();
 	void go_active();
 
+	uint32_t feed_block_min() const;
+	uint32_t feed_block_max() const;
 	uint32_t latency() const;
 	uint32_t written();
 	uint32_t available_write();

@@ -37,8 +37,6 @@
 using RubberBand::RubberBandStretcher;
 using namespace std;
 
-static const unsigned STRETCHER_FEED_BLOCK = 512;
-
 namespace StretchPlayer
 {
     Engine::Engine()
@@ -52,8 +50,7 @@ namespace StretchPlayer
 	  _stretch(1.0),
 	  _pitch(0),
 	  _gain(1.0),
-	  _output_position(0),
-	  _n_feed_segs(2)
+	  _output_position(0)
     {
 	QString err;
 
@@ -181,9 +178,9 @@ namespace StretchPlayer
 	int32_t write_space, written, input_frames;
 	write_space = _stretcher->available_write();
 	written = _stretcher->written();
-	if(written <= STRETCHER_FEED_BLOCK) {
-	  assert(write_space >= STRETCHER_FEED_BLOCK);
-	  input_frames = _n_feed_segs * STRETCHER_FEED_BLOCK;
+	if(written <= _stretcher->feed_block_min() ) {
+	    assert(write_space >= _stretcher->feed_block_max() );
+	    input_frames = _stretcher->feed_block_max();
 	} else {
 	  input_frames = 0;
 	}
@@ -231,11 +228,10 @@ namespace StretchPlayer
 	    std::cout << "skip " << nframes << " @ " << _position 
 		      << " written=" << _stretcher->written()
 		      << " read_space=" << read_space
-		      << " _n_feed_segs=" << _n_feed_segs
 		      << std::endl;
 	}
 
-	unsigned n_feed_buf = _n_feed_segs * STRETCHER_FEED_BLOCK;
+	unsigned n_feed_buf = _stretcher->latency();
 	if(_position > n_feed_buf) {
 	    _output_position = _position - n_feed_buf;
 	} else {
