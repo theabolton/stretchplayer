@@ -21,6 +21,7 @@
 #include <rubberband/RubberBandStretcher.h>
 #include <unistd.h>
 #include <cassert>
+#include <pthread.h>
 
 using RubberBand::RubberBandStretcher;
 
@@ -65,6 +66,7 @@ namespace StretchPlayer
     void RubberBandServer::shutdown()
     {
 	_running = false;
+	_wait_cond.wakeOne();
     }
 
     bool RubberBandServer::is_running()
@@ -152,6 +154,7 @@ namespace StretchPlayer
 	if( count > max ) count = max;
 	l = _inputs[0]->write(left, count);
 	r = _inputs[1]->write(right, count);
+	_wait_cond.wakeOne();
 	// _have_new_data.wakeAll();
 	assert( l == r );
 	return l;
@@ -171,6 +174,7 @@ namespace StretchPlayer
 	if( count > max ) count = max;
 	l = _outputs[0]->read(left, count);
 	r = _outputs[1]->read(right, count);
+	_wait_cond.wakeOne();
 	// _room_for_output.wakeAll();
 	assert( l == r );
 	return l;
@@ -197,6 +201,11 @@ namespace StretchPlayer
 	pitch_scale = _pitch_scale_param;
 	lock.unlock();
 
+	// Set realtime scheduling
+	sched_param thread_sched_param;
+	thread_sched_param.sched_priority = 75;
+	pthread_setschedparam( pthread_self(), SCHED_RR, &thread_sched_param );
+
 	size_t samples_required;
 	int samples_available;
 	while(_running) {
@@ -211,11 +220,6 @@ namespace StretchPlayer
 	    if(samples_available > 2*BUFSIZE) nget = 0;
 	    if( (samples_available < BUFSIZE) && (samples_required == 0) ) {
 		nget = 16;
-	    }
-	    if(nget) {
-		_temp_get_ctr = 0;
-	    } else {
-		++_temp_get_ctr;
 	    }
 	    if(nget) {
 		tmp = _inputs[0]->read(left, nget);
@@ -256,7 +260,7 @@ namespace StretchPlayer
 		}
 	    }
 	    if( (nget == 0) && (! proc_output) ) {
-		usleep(100);
+		_wait_cond.wait(&_wait_mutex);
 	    }
 	}
     }

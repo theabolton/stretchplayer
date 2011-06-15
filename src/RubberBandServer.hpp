@@ -78,11 +78,9 @@ namespace StretchPlayer
 	std::auto_ptr< RubberBand::RubberBandStretcher > _stretcher;
 	std::auto_ptr< ringbuffer_t > _inputs[2];
 	std::auto_ptr< ringbuffer_t > _outputs[2];
-	/*
-	mutable QWaitCondition _have_new_data;
-	mutable QWaitCondition _room_for_output;
-	mutable QMutex _process_mutex;
-	*/
+
+	mutable QWaitCondition _wait_cond;
+	mutable QMutex _wait_mutex;
 
 	mutable QMutex _param_mutex; // Must be locked for these params:
 	float _time_ratio_param;
