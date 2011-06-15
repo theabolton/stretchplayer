@@ -113,6 +113,19 @@ namespace StretchPlayer
 	return rv;
     }
 
+    int JackAudioSystem::set_segment_size_callback(segment_size_callback_t cb, void* arg, QString* err_msg)
+    {
+	assert(_client);
+
+	int rv = jack_set_buffer_size_callback( _client,
+						cb,
+						arg );
+	if(rv && err_msg) {
+	    *err_msg = "Could not set up jack callback.";
+	}
+	return rv;
+    }
+
     int JackAudioSystem::activate(QString *err_msg)
     {
 	assert(_client);
@@ -205,6 +218,12 @@ namespace StretchPlayer
     {
 	if( !_client ) return 0;
 	return jack_last_frame_time(_client);
+    }
+
+    uint32_t JackAudioSystem::current_segment_size()
+    {
+	if( !_client ) return 0;
+	return jack_get_buffer_size(_client);
     }
 
 } // namespace StretchPlayer

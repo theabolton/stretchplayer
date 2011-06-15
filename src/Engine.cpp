@@ -31,7 +31,6 @@
 #include <QFileInfo>
 #include <QString>
 
-
 using RubberBand::RubberBandStretcher;
 
 namespace StretchPlayer
@@ -57,6 +56,7 @@ namespace StretchPlayer
 	QString app_name("StretchPlayer");
 	_audio_system->init( &app_name, &err);
 	_audio_system->set_process_callback(Engine::static_process_callback, this);
+	_audio_system->set_segment_size_callback(Engine::static_segment_size_callback, this);
 
 	if( ! err.isNull() )
 	    throw std::runtime_error(err.toLocal8Bit().data());
@@ -65,6 +65,7 @@ namespace StretchPlayer
 	uint32_t sample_rate = _audio_system->sample_rate();
 
 	_stretcher.reset( new RubberBandServer(sample_rate) );
+	_stretcher->set_segment_size( _audio_system->current_segment_size() );
 	_stretcher->start();
 
 	if( _audio_system->activate(&err) )
@@ -108,6 +109,11 @@ namespace StretchPlayer
 	if(buf_R) {
 	    memset(buf_R, 0, nframes * sizeof(float));
 	}
+    }
+
+    int Engine::segment_size_callback(uint32_t nframes)
+    {
+	_stretcher->set_segment_size(nframes);
     }
 
     int Engine::process_callback(uint32_t nframes)
@@ -174,11 +180,11 @@ namespace StretchPlayer
 	int32_t write_space, written, input_frames;
 	write_space = _stretcher->available_write();
 	written = _stretcher->written();
-	if(written <= _stretcher->feed_block_min() ) {
+	if(written < _stretcher->feed_block_min() ) {
 	    assert(write_space >= _stretcher->feed_block_max() );
 	    input_frames = _stretcher->feed_block_max();
 	} else {
-	  input_frames = 0;
+	    input_frames = 0;
 	}
 
 	while( input_frames > 0 ) {
@@ -252,6 +258,9 @@ namespace StretchPlayer
 	    _position = 0;
 	    _stretcher->reset();
 	}
+
+	// Wake up, lazybones!
+	_stretcher->nudge();
     }
 
     /**
@@ -266,6 +275,8 @@ namespace StretchPlayer
 	_left.clear();
 	_right.clear();
 	_position = 0;
+	_output_position = 0;
+	_stretcher->reset();
 
 	SNDFILE *sf = 0;
 	SF_INFO sf_info;

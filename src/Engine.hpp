@@ -114,8 +114,13 @@ private:
 	Engine *e = static_cast<Engine*>(arg);
 	return e->process_callback(nframes);
     }
+    static int static_segment_size_callback(uint32_t nframes, void* arg) {
+	Engine *e = static_cast<Engine*>(arg);
+	return e->segment_size_callback(nframes);
+    }
 
     int process_callback(uint32_t nframes);
+    int segment_size_callback(uint32_t nframes);
 
     void _zero_buffers(uint32_t nframes);
     void _process_playing(uint32_t nframes);

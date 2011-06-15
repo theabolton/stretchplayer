@@ -26,12 +26,11 @@
 
 using RubberBand::RubberBandStretcher;
 
-#define STRETCHER_FEED_BLOCK 512
-
 namespace StretchPlayer
 {
     RubberBandServer::RubberBandServer(uint32_t sample_rate) :
 	_running(true),
+	_stretcher_feed_block(512),
 	_cpu_load(0.0),
 	_time_ratio_param(1.0),
 	_pitch_scale_param(1.0),
@@ -45,14 +44,14 @@ namespace StretchPlayer
 		)
 	    );
 
-	const uint32_t MAXBUF = 1 << 14; // 16384
+	const uint32_t MAXBUF = 8196L; // 2x the highest typical value
 
-	_stretcher->setMaxProcessSize(MAXBUF); // 16384
+	_stretcher->setMaxProcessSize(MAXBUF*4);
 
-	_inputs[0].reset( new ringbuffer_t(MAXBUF) );
-	_inputs[1].reset( new ringbuffer_t(MAXBUF) );
-	_outputs[0].reset( new ringbuffer_t(MAXBUF) );
-	_outputs[1].reset( new ringbuffer_t(MAXBUF) );
+	_inputs[0].reset( new ringbuffer_t(MAXBUF*4) );
+	_inputs[1].reset( new ringbuffer_t(MAXBUF*4) );
+	_outputs[0].reset( new ringbuffer_t(MAXBUF*4) );
+	_outputs[1].reset( new ringbuffer_t(MAXBUF*4) );
 
 	_proc_time.insert( _proc_time.end(), 64, 0 );
 	_idle_time.insert( _idle_time.end(), 64, 0 );
@@ -91,6 +90,7 @@ namespace StretchPlayer
 	    _proc_time[k] = 0;
 	    _idle_time[k] = 0;
 	}
+	_wait_cond.wakeOne();
     }
 
     void RubberBandServer::time_ratio(float val)
@@ -125,14 +125,45 @@ namespace StretchPlayer
 	setPriority(QThread::TimeCriticalPriority);
     }
 
+    void RubberBandServer::set_segment_size(unsigned long nframes)
+    {
+	if(nframes == _stretcher_feed_block)
+	    return;
+
+	if( nframes <= 512 ) {
+	    _stretcher_feed_block = 512;
+	    return;
+	}
+	// Round up to next power of 2
+	if( (nframes - 1) & nframes ) {
+	    unsigned long p2 = 1;
+	    while( p2 < nframes )
+		p2 <<= 1;
+	    nframes = p2;
+	}
+	// Max... see constructor.
+	if( nframes > (1L<<14) ) {
+	    nframes = (1L<<14);
+	}
+	_stretcher_feed_block = nframes;	
+
+	reset();
+	_stretcher->setMaxProcessSize(nframes * 4);
+	_inputs[0].reset( new ringbuffer_t(nframes * 4) );
+	_inputs[1].reset( new ringbuffer_t(nframes * 4) );
+	_outputs[0].reset( new ringbuffer_t(nframes * 4) );
+	_outputs[1].reset( new ringbuffer_t(nframes * 4) );
+
+    }
+
     uint32_t RubberBandServer::feed_block_min() const
     {
-	return STRETCHER_FEED_BLOCK;
+	return _stretcher_feed_block;
     }
 
     uint32_t RubberBandServer::feed_block_max() const
     {
-	return 2 * STRETCHER_FEED_BLOCK;
+	return 2 * _stretcher_feed_block;
     }
 
     uint32_t RubberBandServer::latency() const
@@ -188,6 +219,11 @@ namespace StretchPlayer
 	return l;
     }
 
+    void RubberBandServer::nudge()
+    {
+	_wait_cond.wakeOne();
+    }
+
     float RubberBandServer::cpu_load() const
     {
 	return _cpu_load;
@@ -216,7 +252,7 @@ namespace StretchPlayer
 	uint32_t read_l, read_r, nget;
 	uint32_t write_l, write_r, nput;
 	uint32_t tmp;
-	const unsigned BUFSIZE = STRETCHER_FEED_BLOCK;
+	const unsigned BUFSIZE = (1L<<15);
 	float* bufs[2];
 	float left[BUFSIZE], right[BUFSIZE];
 	float time_ratio, pitch_scale;
@@ -248,11 +284,13 @@ namespace StretchPlayer
 	    samples_required = _stretcher->getSamplesRequired();
 	    samples_available = _stretcher->available();
 	    samples_available += available_read();
-	    if(nget > BUFSIZE) nget = BUFSIZE;
-	    if(nget > samples_required) nget = samples_required;
-	    if(samples_available > 2*BUFSIZE) nget = 0;
-	    if( (samples_available < BUFSIZE) && (samples_required == 0) ) {
-		nget = 16;
+	    if(nget) {
+		if(nget > feed_block_min()) nget = feed_block_min();
+		if(nget > samples_required) nget = samples_required;
+		if(samples_available > feed_block_max()) nget = 0;
+		if( samples_available && (samples_available < feed_block_min()) && (samples_required == 0) ) {
+		    nget = 16;
+		}
 	    }
 	    if(nget) {
 		tmp = _inputs[0]->read(left, nget);
@@ -286,7 +324,7 @@ namespace StretchPlayer
 		nput = (write_l < write_r) ? write_l : write_r;
 		if(nput) {
 		    proc_output = true;
-		    if(nput > BUFSIZE) nput = BUFSIZE;
+		    if(nput > feed_block_max()) nput = feed_block_max();
 		    tmp = _stretcher->retrieve(bufs, nput);
 		    _outputs[0]->write(left, tmp);
 		    _outputs[1]->write(right, tmp);
@@ -296,7 +334,7 @@ namespace StretchPlayer
 	    _proc_time[cpu_load_pos] = (b.tv_sec - a.tv_sec) * 1000000 + b.tv_usec - a.tv_usec;
 	    if( (nget == 0) && (! proc_output) ) {
 		a = b;
-		_wait_cond.wait(&_wait_mutex);
+		_wait_cond.wait(&_wait_mutex, 20 /* ms */);
 		gettimeofday(&b, 0);
 		_idle_time[cpu_load_pos] = (b.tv_sec - a.tv_sec) * 1000000 + b.tv_usec - a.tv_usec;
 	    } else {

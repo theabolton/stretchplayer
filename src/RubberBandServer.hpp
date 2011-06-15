@@ -61,8 +61,10 @@ namespace StretchPlayer
 	void go_idle();
 	void go_active();
 
+	void set_segment_size(unsigned long nframes);
 	uint32_t feed_block_min() const;
 	uint32_t feed_block_max() const;
+	void nudge(); // Wake up thread in case it's sleeping.
 	uint32_t latency() const;
 	uint32_t written();
 	uint32_t available_write();
@@ -81,6 +83,7 @@ namespace StretchPlayer
 	std::auto_ptr< RubberBand::RubberBandStretcher > _stretcher;
 	std::auto_ptr< ringbuffer_t > _inputs[2];
 	std::auto_ptr< ringbuffer_t > _outputs[2];
+	unsigned long _stretcher_feed_block;
 
 	mutable QWaitCondition _wait_cond;
 	mutable QMutex _wait_mutex;
