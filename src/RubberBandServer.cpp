@@ -289,7 +289,7 @@ namespace StretchPlayer
 		if(nget > samples_required) nget = samples_required;
 		if(samples_available > feed_block_max()) nget = 0;
 		if( samples_available && (samples_available < feed_block_min()) && (samples_required == 0) ) {
-		    nget = 16;
+		    nget = 0;
 		}
 	    }
 	    if(nget) {
@@ -297,25 +297,25 @@ namespace StretchPlayer
 		assert( tmp == nget );
 		tmp = _inputs[1]->read(right, nget);
 		assert( tmp == nget );
-		lock.relock();
-		time_ratio = _time_ratio_param;
-		pitch_scale = _pitch_scale_param;
-		reset = _reset_param;
-		_reset_param = false;
-		lock.unlock();
-		if(reset) {
-		    #warning "Hmmmm... this isn't thread safe.  How can we make it so?"
-		    // std::cout << "reset()" << std::endl;
-		    _stretcher->reset();
-		    _inputs[0]->reset();
-		    _inputs[1]->reset();
-		    _outputs[0]->reset();
-		    _outputs[1]->reset();
-		}
-		_stretcher->setTimeRatio(time_ratio);
-		_stretcher->setPitchScale(pitch_scale);
-		_stretcher->process(bufs, nget, false);
 	    }
+	    lock.relock();
+	    time_ratio = _time_ratio_param;
+	    pitch_scale = _pitch_scale_param;
+	    reset = _reset_param;
+	    _reset_param = false;
+	    lock.unlock();
+	    if(reset) {
+                #warning "Hmmmm... this isn't thread safe.  How can we make it so?"
+		// std::cout << "reset()" << std::endl;
+		_stretcher->reset();
+		_inputs[0]->reset();
+		_inputs[1]->reset();
+		_outputs[0]->reset();
+		_outputs[1]->reset();
+	    }
+	    _stretcher->setTimeRatio(time_ratio);
+	    _stretcher->setPitchScale(pitch_scale);
+	    _stretcher->process(bufs, nget, false);
 	    proc_output = false;
 	    nput = 1;
 	    while(_stretcher->available() > 0 && nput) {
