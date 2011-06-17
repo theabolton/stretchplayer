@@ -282,11 +282,6 @@ namespace StretchPlayer
 	pitch_scale = _pitch_scale_param;
 	lock.unlock();
 
-	// Set realtime scheduling
-	sched_param thread_sched_param;
-	thread_sched_param.sched_priority = 75;
-	pthread_setschedparam( pthread_self(), SCHED_RR, &thread_sched_param );
-
 	size_t samples_required;
 	int samples_available;
 	while(_running) {
