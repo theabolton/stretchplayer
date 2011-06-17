@@ -177,6 +177,7 @@ namespace StretchPlayer
 
 	assert( _stretcher->is_running() );
 
+	// Determine how much data to push into the stretcher
 	int32_t write_space, written, input_frames;
 	write_space = _stretcher->available_write();
 	written = _stretcher->written();
@@ -187,6 +188,7 @@ namespace StretchPlayer
 	    input_frames = 0;
 	}
 
+	// Push data into the stretcher, observing A/B loop points
 	while( input_frames > 0 ) {
 	    feed = input_frames;
 	    if( looping() && ((_position + feed) >= _loop_b) ) {
@@ -214,8 +216,7 @@ namespace StretchPlayer
 	    }
 	}
 
-	written = _stretcher->written();
-
+	// Pull generated data off the stretcher
 	uint32_t read_space;
 	read_space = _stretcher->available_read();
 
@@ -228,15 +229,16 @@ namespace StretchPlayer
 	    _zero_buffers(nframes);
 	}
 
+	// Update our estimation of the output position.
 	unsigned n_feed_buf = _stretcher->latency();
 	if(_position > n_feed_buf) {
 	    _output_position = _position - n_feed_buf;
 	} else {
 	    _output_position = 0;
 	}
-
 	assert( (_output_position > _position) ? (_output_position - _position) <= n_feed_buf : true );
 	assert( (_output_position < _position) ? (_position - _output_position) <= n_feed_buf : true );
+
 	// Apply gain... unroll loop manually so GCC will use SSE
 	if(nframes & 0xf) {  // nframes < 16
 	    unsigned f = nframes;
