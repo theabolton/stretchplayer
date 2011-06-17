@@ -1,3 +1,10 @@
+stretchplayer (0.504-0) unstable; urgency=low
+
+  * New release.
+  * Stretching now real-time safe for segments <512 samples
+
+ -- Gabriel Beddingfield <gabriel@teuton.org>  Thu, 16 Jun 2011 23:21:27 -0500
+
 stretchplayer (0.503-0) unstable; urgency=low
 
   * Remove Debian packaging from release tarballs.
