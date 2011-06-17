@@ -291,6 +291,25 @@ namespace StretchPlayer
 	int samples_available;
 	while(_running) {
 	    gettimeofday(&a, 0);
+
+	    // Update stretcher parameters
+	    lock.relock();
+	    time_ratio = _time_ratio_param;
+	    pitch_scale = _pitch_scale_param;
+	    reset = _reset_param;
+	    if(reset) {
+		_stretcher->reset();
+		_inputs[0]->reset();
+		_inputs[1]->reset();
+		_outputs[0]->reset();
+		_outputs[1]->reset();
+	    }
+	    _reset_param = false;
+	    lock.unlock();
+	    _stretcher->setTimeRatio(time_ratio);
+	    _stretcher->setPitchScale(pitch_scale);
+
+	    // Get input audio and put them into the stretcher
 	    read_l = _inputs[0]->read_space();
 	    read_r = _inputs[1]->read_space();
 	    nget = (read_l < read_r) ? read_l : read_r;
@@ -311,22 +330,9 @@ namespace StretchPlayer
 		tmp = _inputs[1]->read(right, nget);
 		assert( tmp == nget );
 	    }
-	    lock.relock();
-	    time_ratio = _time_ratio_param;
-	    pitch_scale = _pitch_scale_param;
-	    reset = _reset_param;
-	    if(reset) {
-		_stretcher->reset();
-		_inputs[0]->reset();
-		_inputs[1]->reset();
-		_outputs[0]->reset();
-		_outputs[1]->reset();
-	    }
-	    _reset_param = false;
-	    lock.unlock();
-	    _stretcher->setTimeRatio(time_ratio);
-	    _stretcher->setPitchScale(pitch_scale);
-	    _stretcher->process(bufs, nget, false);
+	    _stretcher->process(bufs, nget, false); // Must call even if nget == 0
+
+	    // Take output audio from stretcher and put on output buffers
 	    proc_output = false;
 	    nput = 1;
 	    while(_stretcher->available() > 0 && nput) {
@@ -341,9 +347,11 @@ namespace StretchPlayer
 		    _outputs[1]->write(right, tmp);
 		}
 	    }
+
+	    // Update statistics
 	    gettimeofday(&b, 0);
 	    _proc_time[cpu_load_pos] = (b.tv_sec - a.tv_sec) * 1000000 + b.tv_usec - a.tv_usec;
-	    if( (nget == 0) && (! proc_output) ) {
+	    if( (nget == 0) && (! proc_output) && _stretcher->getSamplesRequired()) {
 		a = b;
 		_wait_cond.wait(&_wait_mutex, 100 /* ms */);
 		gettimeofday(&b, 0);
