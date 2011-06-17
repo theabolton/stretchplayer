@@ -34,7 +34,7 @@ namespace StretchPlayer
 	_cpu_load(0.0),
 	_time_ratio_param(1.0),
 	_pitch_scale_param(1.0),
-	_reset_param(true)
+	_reset_param(false)
     {
 	_stretcher.reset(
 	    new RubberBandStretcher( sample_rate,
@@ -127,6 +127,9 @@ namespace StretchPlayer
 
     void RubberBandServer::set_segment_size(unsigned long nframes)
     {
+	while(_reset_param)
+	    usleep(100);
+
 	if(nframes == _stretcher_feed_block)
 	    return;
 
@@ -173,6 +176,8 @@ namespace StretchPlayer
 
     uint32_t RubberBandServer::available_write()
     {
+	if(_reset_param)
+	    return 0;
 	uint32_t l, r;
 	l = _inputs[0]->write_space();
 	r = _inputs[1]->write_space();
@@ -181,6 +186,8 @@ namespace StretchPlayer
 
     uint32_t RubberBandServer::written()
     {
+	if(_reset_param)
+	    return 0;
 	uint32_t l, r;
 	l = _inputs[0]->read_space();
 	r = _inputs[1]->read_space();
@@ -189,6 +196,8 @@ namespace StretchPlayer
 
     uint32_t RubberBandServer::write_audio(float* left, float* right, uint32_t count)
     {
+	if(_reset_param)
+	    return 0;
 	unsigned l, r, max = available_write();
 	if( count > max ) count = max;
 	l = _inputs[0]->write(left, count);
@@ -201,6 +210,8 @@ namespace StretchPlayer
 
     uint32_t RubberBandServer::available_read()
     {
+	if(_reset_param)
+	    return 0;
 	unsigned l, r;
 	l = _outputs[0]->read_space();
 	r = _outputs[1]->read_space();
@@ -209,6 +220,8 @@ namespace StretchPlayer
 
     uint32_t RubberBandServer::read_audio(float* left, float* right, uint32_t count)
     {
+	if(_reset_param)
+	    return 0;
 	unsigned l, r, max = available_read();
 	if( count > max ) count = max;
 	l = _outputs[0]->read(left, count);
@@ -302,17 +315,15 @@ namespace StretchPlayer
 	    time_ratio = _time_ratio_param;
 	    pitch_scale = _pitch_scale_param;
 	    reset = _reset_param;
-	    _reset_param = false;
-	    lock.unlock();
 	    if(reset) {
-                #warning "Hmmmm... this isn't thread safe.  How can we make it so?"
-		// std::cout << "reset()" << std::endl;
 		_stretcher->reset();
 		_inputs[0]->reset();
 		_inputs[1]->reset();
 		_outputs[0]->reset();
 		_outputs[1]->reset();
 	    }
+	    _reset_param = false;
+	    lock.unlock();
 	    _stretcher->setTimeRatio(time_ratio);
 	    _stretcher->setPitchScale(pitch_scale);
 	    _stretcher->process(bufs, nget, false);
@@ -334,7 +345,7 @@ namespace StretchPlayer
 	    _proc_time[cpu_load_pos] = (b.tv_sec - a.tv_sec) * 1000000 + b.tv_usec - a.tv_usec;
 	    if( (nget == 0) && (! proc_output) ) {
 		a = b;
-		_wait_cond.wait(&_wait_mutex, 20 /* ms */);
+		_wait_cond.wait(&_wait_mutex, 100 /* ms */);
 		gettimeofday(&b, 0);
 		_idle_time[cpu_load_pos] = (b.tv_sec - a.tv_sec) * 1000000 + b.tv_usec - a.tv_usec;
 	    } else {

@@ -180,8 +180,8 @@ namespace StretchPlayer
 	int32_t write_space, written, input_frames;
 	write_space = _stretcher->available_write();
 	written = _stretcher->written();
-	if(written < _stretcher->feed_block_min() ) {
-	    assert(write_space >= _stretcher->feed_block_max() );
+	if(written < _stretcher->feed_block_min()
+	   && write_space >= _stretcher->feed_block_max() ) {
 	    input_frames = _stretcher->feed_block_max();
 	} else {
 	    input_frames = 0;
