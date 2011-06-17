@@ -37,6 +37,7 @@ namespace StretchPlayer
     public:
 	typedef float sample_t;
 	typedef int (*process_callback_t)(uint32_t nframes, void *arg);
+	typedef int (*segment_size_callback_t)(uint32_t nframes, void *arg);
 
 	virtual ~AudioSystem() {}
 
@@ -80,6 +81,11 @@ namespace StretchPlayer
 
 
 	/**
+	 * Set the segment size change callback function
+	 */
+	virtual int set_segment_size_callback(segment_size_callback_t cb, void* arg, QString* err_msg = 0) = 0;
+
+	/**
 	 * Activate the driver (may start processing audio).
 	 *
 	 * \returns 0 on success, nonzero on error.
@@ -118,6 +124,26 @@ namespace StretchPlayer
 	 * support this feature.
 	 */
 	virtual float dsp_load() = 0;
+
+	/**
+	 * Returns a timestamp of the current output, in audio frames.
+	 *
+	 * \return Approximate frame of current audio output.
+	 */
+	virtual uint32_t time_stamp() = 0;
+
+	/**
+	 * Return a timestamp of the start frame of the current audio segment.
+	 *
+	 * \return Timestamp for the current callback processing segement.
+	 */
+	virtual uint32_t segment_start_time_stamp() = 0;
+
+	/**
+	 * Return the current size of a segment (nframes)
+	 *
+	 */
+	virtual uint32_t current_segment_size() = 0;
     };
 
 } // namespace StretchPlayer

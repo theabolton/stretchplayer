@@ -23,19 +23,16 @@
 #include <memory>
 #include <QString>
 #include <QMutex>
+#include <QAtomicInt>
 #include <vector>
 #include <set>
-
-namespace RubberBand
-{
-    class RubberBandStretcher;
-}
 
 namespace StretchPlayer
 {
 
 class EngineMessageCallback;
 class AudioSystem;
+class RubberBandServer;
 
 class Engine
 {
@@ -117,11 +114,17 @@ private:
 	Engine *e = static_cast<Engine*>(arg);
 	return e->process_callback(nframes);
     }
+    static int static_segment_size_callback(uint32_t nframes, void* arg) {
+	Engine *e = static_cast<Engine*>(arg);
+	return e->segment_size_callback(nframes);
+    }
 
     int process_callback(uint32_t nframes);
+    int segment_size_callback(uint32_t nframes);
 
     void _zero_buffers(uint32_t nframes);
     void _process_playing(uint32_t nframes);
+    void _handle_loop_ab();
 
     typedef std::set<EngineMessageCallback*> callback_seq_t;
 
@@ -136,6 +139,7 @@ private:
     void _unsubscribe_list(callback_seq_t& seq, EngineMessageCallback* obj);
 
     bool _playing;
+    bool _hit_end;
     bool _state_changed;
     mutable QMutex _audio_lock;
     std::vector<float> _left;
@@ -143,12 +147,16 @@ private:
     unsigned long _position;
     unsigned long _loop_a;
     unsigned long _loop_b;
+    QAtomicInt _loop_ab_pressed;
     float _sample_rate;
     float _stretch;
     int _pitch;
     float _gain;
-    std::auto_ptr<RubberBand::RubberBandStretcher> _stretcher;
+    std::auto_ptr<RubberBandServer> _stretcher;
     std::auto_ptr<AudioSystem> _audio_system;
+
+    /* Latency tracking */
+    unsigned long _output_position;
 
     mutable QMutex _callback_lock;
     callback_seq_t _error_callbacks;

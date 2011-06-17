@@ -1,0 +1,131 @@
+POSITION MATH
+=============
+
+Gabriel M. Beddingfield
+2011-01-13
+
+ABSTRACT
+--------
+
+When moving the time-streatch calculations to an off-line thread, the
+first implementation used an "input" ring buffer and an "output" ring
+buffer.  This makes it difficult to track what is the current position
+of the /output/ audio.
+
+Before abandoning this separation between the audio code and the
+stretcher code, this abstract tries to reason out a way to manage it
+and be accurate with a single period.
+
+BACKGROUND
+----------
+
+The RubberBand library, in "real-time mode" will calculate a fixed,
+minimum number of frames at a time.  (As of this writing, it's 512.)
+These are /input/ frames, not output frames.  Because of this, if you
+are running with frames per period (fpp) < 512, then the stretcher
+will not do calculations every period.  This is the reason why the
+worker thread is necessary to be RT-safe with jack.
+
+However, the time code between input frames and output frames is not
+1:1.  For example, if the stretch ratio is 2.0 (1/2 speed), then 512
+input frames will yield 1024 output frames.  Likewise at 0.5 (2x
+speed) 512 input frames yields 256 frames of output.
+
+ANALYSIS
+--------
+
+Problem statement: When buffering audio data to the worker thread, how
+can I map the output frame back to the input frame... even when
+looping.
+
+Note that the calculation requires knowledge of the song position
+frame, the output position frame, stretch ratios, pitch ratios, and
+when the changes in these control values occurred in the output
+stream.  Since some of this data is owned by the client and some by
+the server in the current implementation... that suggests some manner
+of distributed algorithm.
+
+That in itself is almost enough to abandon the implementation!!  :-)
+
+Graphically, we have this:
+
+SONG    [=================================]
+POS:              A      |    B
+
+OUTPUT: ..............A.....|.BA......BA..B...
+
+Suppose all the ratios are 1.0, feeding 512 at a time and reading 128
+at a time, and no control changes:
+
+    ITER SONG POS WRITE  READ OUT FRAME SONG POS 
+    ---- -------- ----- ----- --------- --------
+      0       0    512     0     n/a     n/a
+      1     512    512   128       0       0
+      2    1024      0   128     128     128
+      3    1024      0   128     256     256
+      4    1024      0   128     384     384
+      5    1024    512   128     512     512
+      6    1536      0   128     630     630
+     ...etc
+
+At the beginning, we loaded up two chunks.  Then waited for the first
+chunk to bleed off until it was gone, and we added another chunk.
+However, in this example the calculation is easy... since the output
+frame corresponds to the song position.
+
+Now suppose the same situation at 1/2 speed.
+
+    ITER SONG POS WRITE  READ OUT FRAME SONG POS 
+    ---- -------- ----- ----- --------- --------
+      0       0    512     0     n/a     n/a
+      1     512    512   128       0       0
+      2    1024      0   128     128      64
+      3    1024      0   128     256     128
+      4    1024      0   128     384     192
+      5    1024      0   128     512     256
+     ...etc
+
+Here, the song position is 1/2 the output frame.
+
+In a test program with 128 fpp and 2.0 ratio, I got this fragment
+
+INPOS WRI REA  BUF OUTPT OTPOS
+----- --- ---  --- ----- -----
+ 4608   0 128  768  7680  3840
+ 4608   0 128  704  7808  3904
+ 4608   0 128  640  7936  3968
+ 4608   0 128  576  8064  4032
+ 4608 512 128  512  8192  4096
+ 5120   0 128  960  8320  4160
+ 5120   0 128  896  8448  4224
+ 5120   0 128  832  8576  4288
+ 5120   0 128  768  8704  4352
+ 5120   0 128  704  8832  4416
+ 5120   0 128  640  8960  4480
+ 5120   0 128  576  9088  4544
+ 5120 512 128  512  9216  4608
+ 5632   0 128  960  9344  4672
+ 5632   0 128  896  9472  4736
+ 5632   0 128  832  9600  4800
+ 5632   0 128  768  9728  4864
+ 
+Notice that every time we write a block of 512, the output position is
+SONG_POSITION - 512.  The fact that we're metering the input to be
+>512 and <=1024 creates these sync. points.
+
+Furthermore, whenever the audio is rendered, the input block is all
+renedered with the same settings.  This makes a semi-stable platform
+for the output position calculation.  That is, for a brief window...
+
+    OUT_SONG_POS = IN_SONG_POS - (1024 - frames_elapsed_since_write/ratio)
+
+If doing A/B looping and OUT_SONG_POS is > POS_B, then the time can be
+wrapped around.
+
+So... the first idea is to track it all on the client side, and meter
+what is sent to the server.
+
+How does a speed change between the two writes affect this formula?
+Well, it's actually the values for the write-before-last... not the
+last write.  So we have to keep track of the frame position of the
+last two writes, and the stretch/pitch ratio from those writes.

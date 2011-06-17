@@ -18,27 +18,26 @@
  */
 
 #include "Engine.hpp"
+#include "AudioSystem.hpp"
+#include "JackAudioSystem.hpp"
+#include "RubberBandServer.hpp"
 #include <sndfile.h>
-#include <rubberband/RubberBandStretcher.h>
 #include <stdexcept>
 #include <cassert>
 #include <cstring>
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
-#include <iostream>
 #include <QFileInfo>
-#include <AudioSystem.hpp>
-#include <JackAudioSystem.hpp>
 #include <QString>
 
 using RubberBand::RubberBandStretcher;
-using namespace std;
 
 namespace StretchPlayer
 {
     Engine::Engine()
 	: _playing(false),
+	  _hit_end(false),
 	  _state_changed(false),
 	  _position(0),
 	  _loop_a(0),
@@ -46,15 +45,18 @@ namespace StretchPlayer
 	  _sample_rate(48000.0),
 	  _stretch(1.0),
 	  _pitch(0),
-	  _gain(1.0)
+	  _gain(1.0),
+	  _output_position(0)
     {
 	QString err;
+
 	QMutexLocker lk(&_audio_lock);
 
 	_audio_system.reset( new JackAudioSystem );
 	QString app_name("StretchPlayer");
 	_audio_system->init( &app_name, &err);
 	_audio_system->set_process_callback(Engine::static_process_callback, this);
+	_audio_system->set_segment_size_callback(Engine::static_segment_size_callback, this);
 
 	if( ! err.isNull() )
 	    throw std::runtime_error(err.toLocal8Bit().data());
@@ -62,15 +64,9 @@ namespace StretchPlayer
 
 	uint32_t sample_rate = _audio_system->sample_rate();
 
-	_stretcher.reset(
-	    new RubberBandStretcher( sample_rate,
-				     2,
-				     RubberBandStretcher::OptionProcessRealTime
-				     | RubberBandStretcher::OptionThreadingAuto
-		)
-	    );
-	_stretcher->setMaxProcessSize(16384);
-	_stretcher->reset();
+	_stretcher.reset( new RubberBandServer(sample_rate) );
+	_stretcher->set_segment_size( _audio_system->current_segment_size() );
+	_stretcher->start();
 
 	if( _audio_system->activate(&err) )
 	    throw std::runtime_error(err.toLocal8Bit().data());
@@ -80,6 +76,9 @@ namespace StretchPlayer
     Engine::~Engine()
     {
 	QMutexLocker lk(&_audio_lock);
+
+	_stretcher->go_idle();
+	_stretcher->shutdown();
 
 	_audio_system->deactivate();
 	_audio_system->cleanup();
@@ -92,6 +91,8 @@ namespace StretchPlayer
 	for( it=_message_callbacks.begin() ; it!=_message_callbacks.end() ; ++it ) {
 	    (*it)->_parent = 0;
 	}
+
+	_stretcher->wait();
     }
 
     void Engine::_zero_buffers(uint32_t nframes)
@@ -110,15 +111,29 @@ namespace StretchPlayer
 	}
     }
 
+    int Engine::segment_size_callback(uint32_t nframes)
+    {
+	_stretcher->set_segment_size(nframes);
+    }
+
     int Engine::process_callback(uint32_t nframes)
     {
 	bool locked = false;
+
+	if( _loop_ab_pressed > 0 ) {
+	    _handle_loop_ab();
+	}
 
 	try {
 	    locked = _audio_lock.tryLock();
 	    if(_state_changed) {
 		_state_changed = false;
 		_stretcher->reset();
+		float left[64], right[64];
+		while( _stretcher->available_read() > 0 )
+		    _stretcher->read_audio(left, right, 64);
+		assert( 0 == _stretcher->available_read() );
+		_position = _output_position;
 	    }
 	    if(locked) {
 		if(_playing) {
@@ -150,59 +165,79 @@ namespace StretchPlayer
 
 	buf_L = _audio_system->output_buffer(0);
 	buf_R = _audio_system->output_buffer(1);
-	float* rb_buf_in[2];
-	float* rb_buf_out[2] = { buf_L, buf_R };
 
 	uint32_t srate = _audio_system->sample_rate();
+	float time_ratio = srate / _sample_rate / _stretch;
 
-	_stretcher->setTimeRatio( srate / _sample_rate / _stretch );
-	_stretcher->setPitchScale( ::pow(2.0, double(_pitch)/12.0) * _sample_rate / srate );
+	_stretcher->time_ratio( time_ratio );
+	_stretcher->pitch_scale( ::pow(2.0, double(_pitch)/12.0) * _sample_rate / srate );
 
 	uint32_t frame;
 	uint32_t reqd, gend, zeros, feed;
 
-	frame = 0;
-	while( frame < nframes ) {
-	    reqd = _stretcher->getSamplesRequired();
-	    int avail = _stretcher->available();
-	    if( avail <= 0 ) avail = 0;
-	    if( unsigned(avail) >= nframes ) reqd = 0;
-	    zeros = 0;
-	    feed = reqd;
-	    if( looping() && ((_position + reqd) >=_loop_b) ) {
-		assert( _loop_b >= _position );
-		reqd = _loop_b - _position;
+	assert( _stretcher->is_running() );
+
+	// Determine how much data to push into the stretcher
+	int32_t write_space, written, input_frames;
+	write_space = _stretcher->available_write();
+	written = _stretcher->written();
+	if(written < _stretcher->feed_block_min()
+	   && write_space >= _stretcher->feed_block_max() ) {
+	    input_frames = _stretcher->feed_block_max();
+	} else {
+	    input_frames = 0;
+	}
+
+	// Push data into the stretcher, observing A/B loop points
+	while( input_frames > 0 ) {
+	    feed = input_frames;
+	    if( looping() && ((_position + feed) >= _loop_b) ) {
+		if( _position >= _loop_b ) {
+		    _position = _loop_a;
+		    if( _loop_a + feed > _loop_b ) {
+			assert(_loop_b > _loop_a );
+			feed = _loop_b - _loop_a;
+		    }
+		} else {
+		    assert( _loop_b >= _position );
+		    feed = _loop_b - _position;
+		}
 	    }
-	    if( _position + reqd > _left.size() ) {
+	    if( _position + feed > _left.size() ) {
 		feed = _left.size() - _position;
-		zeros = reqd - feed;
+		input_frames = feed;
 	    }
-	    rb_buf_in[0] = &_left[_position];
-	    rb_buf_in[1] = &_right[_position];
-	    if( reqd == 0 ) {
-		feed = 0;
-		zeros = 0;
-	    }
-	    _stretcher->process( rb_buf_in, feed, false);
-	    if(reqd && zeros) {
-		float l[zeros], r[zeros];
-		float* z[2] = { l, r };
-		memset(l, 0, zeros * sizeof(float));
-		memset(r, 0, zeros * sizeof(float));
-		_stretcher->process(z, zeros, false);
-	    }
-	    gend = 1;
-	    while( gend && frame < nframes ) {
-		gend = _stretcher->retrieve(rb_buf_out, (nframes-frame));
-		rb_buf_out[0] += gend;
-		rb_buf_out[1] += gend;
-		frame += gend;
-	    }
+	    _stretcher->write_audio( &_left[_position], &_right[_position], feed );
 	    _position += feed;
+	    assert( input_frames >= feed );
+	    input_frames -= feed;
 	    if( looping() && _position >= _loop_b ) {
 		_position = _loop_a;
 	    }
 	}
+
+	// Pull generated data off the stretcher
+	uint32_t read_space;
+	read_space = _stretcher->available_read();
+
+	if( read_space >= nframes ) {
+	    _stretcher->read_audio(buf_L, buf_R, nframes);
+	} else if ( (read_space > 0) && _hit_end ) {
+	    _zero_buffers(nframes);
+	    _stretcher->read_audio(buf_L, buf_R, read_space);
+	} else {
+	    _zero_buffers(nframes);
+	}
+
+	// Update our estimation of the output position.
+	unsigned n_feed_buf = _stretcher->latency();
+	if(_position > n_feed_buf) {
+	    _output_position = _position - n_feed_buf;
+	} else {
+	    _output_position = 0;
+	}
+	assert( (_output_position > _position) ? (_output_position - _position) <= n_feed_buf : true );
+	assert( (_output_position < _position) ? (_position - _output_position) <= n_feed_buf : true );
 
 	// Apply gain... unroll loop manually so GCC will use SSE
 	if(nframes & 0xf) {  // nframes < 16
@@ -217,9 +252,17 @@ namespace StretchPlayer
 	}
 
 	if(_position >= _left.size()) {
+	    _hit_end = true;
+	}
+	if( (_hit_end == true) && (read_space == 0) ) {
+	    _hit_end = false;
 	    _playing = false;
 	    _position = 0;
+	    _stretcher->reset();
 	}
+
+	// Wake up, lazybones!
+	_stretcher->nudge();
     }
 
     /**
@@ -234,6 +277,8 @@ namespace StretchPlayer
 	_left.clear();
 	_right.clear();
 	_position = 0;
+	_output_position = 0;
+	_stretcher->reset();
 
 	SNDFILE *sf = 0;
 	SF_INFO sf_info;
@@ -312,29 +357,45 @@ namespace StretchPlayer
     float Engine::get_position()
     {
 	if(_left.size() > 0) {
-	    return float(_position) / _sample_rate;
+	    return float(_output_position) / _sample_rate;
 	}
 	return 0;
     }
 
     void Engine::loop_ab()
     {
-	if( _loop_b > _loop_a ) {
-	    _loop_b = 0;
-	    _loop_a = 0;
-	} else if( _loop_a == 0 ) {
-	    _loop_a = _position;
-	    if(_position == 0) {
-		_loop_a = 1;
-	    }
-	} else if( _loop_a != 0 ) {
-	    if( _position > _loop_a ) {
-		_loop_b = _position;
+	_loop_ab_pressed.fetchAndAddRelaxed(1);
+    }
+
+    void Engine::_handle_loop_ab()
+    {
+	while( _loop_ab_pressed > 0 ) {
+	    uint32_t pos, lat;
+	    uint32_t pressed_frame, seg_frame;
+
+	    assert( _stretcher->time_ratio() > 0 );
+	    pos = _output_position;
+
+	    if(pos > lat) pos -= lat;
+
+	    if( _loop_b > _loop_a ) {
+		_loop_b = 0;
+		_loop_a = 0;
+	    } else if( _loop_a == 0 ) {
+		_loop_a = pos;
+		if(pos == 0) {
+		    _loop_a = 1;
+		}
+	    } else if( _loop_a != 0 ) {
+		if( pos > _loop_a ) {
+		    _loop_b = pos;
+		} else {
+		    _loop_a = pos;
+		}
 	    } else {
-		_loop_a = _position;
+		assert(false);  // invalid state
 	    }
-	} else {
-	    assert(false);  // invalid state
+	    _loop_ab_pressed.fetchAndAddOrdered(-1);
 	}
     }
 
@@ -350,8 +411,9 @@ namespace StretchPlayer
     {
 	unsigned long pos = secs * _sample_rate;
 	QMutexLocker lk(&_audio_lock);
-	_position = pos;
+	_output_position = _position = pos;
 	_state_changed = true;
+	_stretcher->reset();
     }
 
     void Engine::_dispatch_message(const Engine::callback_seq_t& seq, const QString& msg) const
@@ -381,7 +443,15 @@ namespace StretchPlayer
 
     float Engine::get_cpu_load()
     {
-	return _audio_system->dsp_load();
+	float audio_load, worker_load;
+
+	audio_load = _audio_system->dsp_load();
+	if(_playing) {
+	    worker_load = _stretcher->cpu_load();
+	} else {
+	    worker_load = 0.0;
+	}
+	return  audio_load + worker_load;
     }
 
     /* SIMD code for optimizing the gain application.
@@ -401,6 +471,18 @@ namespace StretchPlayer
 	__vf4 v;
     } vf4;
 
+    /**
+     * \brief Multiply each element in a buffer by a scalar.
+     *
+     * For each element in buf[0..nframes-1], buf[i] *= gain.
+     *
+     * This function detects the buffer alignment, and if it's 4-byte
+     * aligned and SSE optimization is enabled, it will use the
+     * optimized code-path.  However, it will still work with 1-byte
+     * aligned buffers.
+     *
+     * \param buf - Pointer to a buffer of floats.
+     */
     static void apply_gain_to_buffer(float *buf, uint32_t nframes, float gain)
     {
 	vf4* opt;
@@ -418,7 +500,7 @@ namespace StretchPlayer
 	case 0:
 	    break;
 	default:
-	    assert(false);
+	  goto LAME;
 	}
 
 	assert( (((int)buf)&0xf) == 0 );
@@ -434,6 +516,14 @@ namespace StretchPlayer
 	case 4:  (*buf++) *= gain;
 	}
 
+	return;
+
+    LAME:
+	// If it's not even 4-byte aligned
+	// then this is is the un-optimized code.
+	while(nframes--) {
+	  (*buf++) *= gain;
+	}
     }
 
 } // namespace StretchPlayer
