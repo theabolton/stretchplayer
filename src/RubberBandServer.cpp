@@ -317,9 +317,12 @@ namespace StretchPlayer
 	    samples_available = _stretcher->available();
 	    samples_available += available_read();
 	    if(nget) {
-		if(nget > feed_block_min()) nget = feed_block_min();
-		if(nget > samples_required) nget = samples_required;
-		if(samples_available > feed_block_max()) nget = 0;
+		if(nget > feed_block_min())
+		    nget = feed_block_min();
+		if(nget > samples_required)
+		    nget = samples_required;
+		if(samples_available > feed_block_max())
+		    nget = 0;
 		if( samples_available && (samples_available < feed_block_min()) && (samples_required == 0) ) {
 		    nget = 0;
 		}
