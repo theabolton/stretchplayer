@@ -179,6 +179,19 @@ namespace StretchPlayer
 	    assert(false);
 	}
 
+	unsigned nfrags = 3;
+	if((err = snd_pcm_hw_params_set_periods_near(_playback_handle, hw_params, &nfrags, 0)) < 0) {
+	    cerr << "cannot set the period count"
+		 << " (" << snd_strerror(err) << ")" << endl;
+	    assert(false);
+	}
+
+	if((err = snd_pcm_hw_params_set_buffer_size(_playback_handle, hw_params, _period_nframes * nfrags)) < 0) {
+	    cerr << "cannot set the buffer size to " << nfrags << " x " << _period_nframes
+		 << " (" << snd_strerror(err) << ")" << endl;
+	    assert(false);
+	}
+
 	if((err = snd_pcm_hw_params(_playback_handle, hw_params)) < 0) {
 	    cerr << "cannot set parameters"
 		 << " (" << snd_strerror(err) << ")" << endl;
