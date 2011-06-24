@@ -32,7 +32,7 @@
 #include <limits.h>
 #include <endian.h>
 
-#include <jack/memops.h>
+#include "jack_memops.h"
 
 /* Notes about these *_SCALING values.
 

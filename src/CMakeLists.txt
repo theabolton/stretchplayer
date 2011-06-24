@@ -50,6 +50,8 @@ LIST(APPEND sp_cpp
   Marquee.cpp
   JackAudioSystem.cpp
   AlsaAudioSystem.cpp
+  jack_memops.c
+  bams_format.c
   )
 
 LIST(APPEND sp_hpp
@@ -63,6 +65,8 @@ LIST(APPEND sp_hpp
   JackAudioSystem.hpp
   AlsaAudioSystem.hpp
   AlsaAudioSystemPrivate.hpp
+  jack_memops.h
+  bams_format.h
   )
 
 LIST(APPEND sp_moc_hpp

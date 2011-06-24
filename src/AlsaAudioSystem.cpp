@@ -32,6 +32,8 @@
 #include <QString>
 #include <alsa/asoundlib.h>
 
+#include "bams_format.h"
+
 #include <iostream>
 using namespace std;
 
@@ -419,12 +421,46 @@ namespace StretchPlayer
 
     void AlsaAudioSystem::_convert_to_output_int(uint32_t nframes)
     {
-	assert(false);
+	switch(_bits) {
+	case 16: {
+	    bams_sample_s16le_t *dst = (bams_sample_s16le_t*)_buf;
+	    //memset(dst, 0, 2 * nframes * sizeof(bams_sample_s16le_t));
+	    if(_little_endian) {
+		bams_copy_s16le_floatle(dst, 2, &_left[0], 1, nframes);
+		bams_copy_s16le_floatle(dst+1, 2, &_right[0], 1, nframes);
+	    } else {
+		bams_copy_s16be_floatle(dst, 2, &_left[0], 1, nframes);
+		//bams_copy_s16be_floatle(dst+1, 2, &_right[0], 1, nframes);
+	    }
+	    break;
+	    }
+	case 8:
+	case 24:
+	case 32:
+	default:
+	    assert(false);
+	}
     }
 
     void AlsaAudioSystem::_convert_to_output_uint(uint32_t nframes)
     {
-	assert(false);
+	switch(_bits) {
+	case 16: {
+	    bams_sample_u16le_t *dst = (bams_sample_u16le_t*)_buf;
+	    if(_little_endian) {
+		bams_copy_u16le_floatle(dst, 2, &_left[0], 1, nframes);
+		bams_copy_u16le_floatle(dst+1, 2, &_right[0], 1, nframes);
+	    } else {
+		bams_copy_u16be_floatle(dst, 2, &_left[0], 1, nframes);
+		bams_copy_u16be_floatle(dst+1, 2, &_right[0], 1, nframes);
+	    }
+	}   break;
+	case 8:
+	case 24:
+	case 32:
+	default:
+	    assert(false);
+	}
     }
 
     void AlsaAudioSystem::_convert_to_output_float(uint32_t nframes)

@@ -21,6 +21,7 @@
 #define __jack_memops_h__
 
 #include <jack/types.h>
+#include <string.h>
 
 typedef	enum  {
 	None,
