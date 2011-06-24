@@ -33,9 +33,33 @@
 #include <alsa/asoundlib.h>
 
 #include "bams_format.h"
+#include <endian.h>
 
 #include <iostream>
 using namespace std;
+
+/* Formats supported by this class, in order or preference
+ */
+static const snd_pcm_format_t aas_supported_formats[] = {
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    SND_PCM_FORMAT_FLOAT_LE,
+    SND_PCM_FORMAT_S16_LE,
+    SND_PCM_FORMAT_FLOAT_BE,
+    SND_PCM_FORMAT_S16_BE,
+    SND_PCM_FORMAT_U16_LE,
+    SND_PCM_FORMAT_U16_BE,
+#elif __BYTE_ORDER == __BIG_ENDIAN
+    SND_PCM_FORMAT_FLOAT_BE,
+    SND_PCM_FORMAT_S16_BE,
+    SND_PCM_FORMAT_FLOAT_LE,
+    SND_PCM_FORMAT_S16_LE,
+    SND_PCM_FORMAT_U16_BE,
+    SND_PCM_FORMAT_U16_LE,
+#else
+#error Unsupport byte order.
+#endif
+    SND_PCM_FORMAT_UNKNOWN
+};
 
 namespace StretchPlayer
 {
@@ -114,52 +138,52 @@ namespace StretchPlayer
 	    assert(false);
 	}
 
-	enum _snd_pcm_format format = SND_PCM_FORMAT_S16_LE;
+	snd_pcm_format_t format = SND_PCM_FORMAT_UNKNOWN;
+	int k;
+	for(k = 0 ; aas_supported_formats[k] != SND_PCM_FORMAT_UNKNOWN ; ++k) {
+	    format = aas_supported_formats[k];
+	    if(snd_pcm_hw_params_test_format(_playback_handle, hw_params, format)) {
+		format = SND_PCM_FORMAT_UNKNOWN;
+	    } else {
+		break;
+	    }
+	}
 
-	if(_type == INT) {
-	    switch(_bits) {
-	    case 8:
-		format = SND_PCM_FORMAT_S8;
-		break;
-	    case 16:
-		format = _little_endian ? SND_PCM_FORMAT_S16_LE : SND_PCM_FORMAT_S16_BE;
-		break;
-	    case 24:
-		format = _little_endian ? SND_PCM_FORMAT_S24_LE : SND_PCM_FORMAT_S24_BE;
-		break;
-	    case 32:
-		format = _little_endian ? SND_PCM_FORMAT_S32_LE : SND_PCM_FORMAT_S32_BE;
-		break;
-	    default:
-		assert(false);
-	    }
-	} else if (_type == UINT) {
-	    switch(_bits) {
-	    case 8:
-		format = SND_PCM_FORMAT_U8;
-		break;
-	    case 16:
-		format = _little_endian ? SND_PCM_FORMAT_U16_LE : SND_PCM_FORMAT_U16_BE;
-		break;
-	    case 24:
-		format = _little_endian ? SND_PCM_FORMAT_U24_LE : SND_PCM_FORMAT_U24_BE;
-		break;
-	    case 32:
-		format = _little_endian ? SND_PCM_FORMAT_U32_LE : SND_PCM_FORMAT_U32_BE;
-		break;
-	    default:
-		assert(false);
-	    }
-	} else if (_type == FLOAT) {
-	    switch(_bits) {
-	    case 32:
-		format = _little_endian ? SND_PCM_FORMAT_FLOAT_LE : SND_PCM_FORMAT_FLOAT_BE;
-		break;
-	    default:
-		assert(false);
-	    }
-
-	} else {
+	switch(format) {
+	case SND_PCM_FORMAT_FLOAT_LE:
+	    _type = FLOAT;
+	    _bits = 32;
+	    _little_endian = true;
+	    break;
+	case SND_PCM_FORMAT_S16_LE:
+	    _type = INT;
+	    _bits = 16;
+	    _little_endian = true;
+	    break;
+	case SND_PCM_FORMAT_FLOAT_BE:
+	    _type = FLOAT;
+	    _bits = 32;
+	    _little_endian = false;
+	    break;
+	case SND_PCM_FORMAT_S16_BE:
+	    _type = INT;
+	    _bits = 16;
+	    _little_endian = false;
+	    break;
+	case SND_PCM_FORMAT_U16_LE:
+	    _type = UINT;
+	    _bits = 32;
+	    _little_endian = true;
+	    break;
+	case SND_PCM_FORMAT_U16_BE:
+	    _type = UINT;
+	    _bits = 32;
+	    _little_endian = false;
+	    break;
+	case SND_PCM_FORMAT_UNKNOWN:
+	    cerr << "The audio card does not support any PCM audio formats that StretchPlayer supports" << endl;
+	    break;
+	default:
 	    assert(false);
 	}
 
