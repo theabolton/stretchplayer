@@ -101,7 +101,11 @@ namespace StretchPlayer
     int AlsaAudioSystem::init(QString * app_name, QString *err_msg)
     {
 	QString name("StretchPlayer");
+	QString emsg;
+	unsigned nfrags = 3;
 	int err;
+	snd_pcm_format_t format = SND_PCM_FORMAT_UNKNOWN;
+	int k;
 
 	if(app_name) {
 	    name = *app_name;
@@ -113,33 +117,31 @@ namespace StretchPlayer
 	struct pollfd *pfds;
 
 	if((err = snd_pcm_open(&_playback_handle, "default", SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
-	    cerr << "cannot open default ALSA audio device"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot open default ALSA audio device (%1)")
+		.arg(snd_strerror(err));
+	    goto init_bail;
 	}
 	assert(_playback_handle);
 
 	if((err = snd_pcm_hw_params_malloc(&hw_params)) < 0) {
-	    cerr << "cannot allocate hardware parameter structure"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot allocate hardware parameter structure (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	if((err = snd_pcm_hw_params_any(_playback_handle, hw_params)) < 0) {
-	    cerr << "cannot initialize hardware parameter structure"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot initialize hardware parameter structure (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	if((err = snd_pcm_hw_params_set_access(_playback_handle, hw_params,
 					       SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
-	    cerr << "cannot set access type"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot set access type (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
-	snd_pcm_format_t format = SND_PCM_FORMAT_UNKNOWN;
-	int k;
 	for(k = 0 ; aas_supported_formats[k] != SND_PCM_FORMAT_UNKNOWN ; ++k) {
 	    format = aas_supported_formats[k];
 	    if(snd_pcm_hw_params_test_format(_playback_handle, hw_params, format)) {
@@ -181,47 +183,50 @@ namespace StretchPlayer
 	    _little_endian = false;
 	    break;
 	case SND_PCM_FORMAT_UNKNOWN:
-	    cerr << "The audio card does not support any PCM audio formats that StretchPlayer supports" << endl;
+	    emsg = QString("The audio card does not support any PCM audio formats"
+			   " that StretchPlayer supports");
+	    goto init_bail;
 	    break;
 	default:
 	    assert(false);
 	}
 
 	if((err = snd_pcm_hw_params_set_format(_playback_handle, hw_params, format)) < 0) {
-	    cerr << "cannot set sample format"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot set sample format (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	if((err = snd_pcm_hw_params_set_rate_near(_playback_handle, hw_params, &_sample_rate, 0)) < 0) {
-	    cerr << "cannot set sample rate"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot set sample rate (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	if((err = snd_pcm_hw_params_set_channels(_playback_handle, hw_params, 2)) < 0) {
-	    cerr << "cannot set channel count"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot set channel count (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
-	unsigned nfrags = 3;
 	if((err = snd_pcm_hw_params_set_periods_near(_playback_handle, hw_params, &nfrags, 0)) < 0) {
-	    cerr << "cannot set the period count"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot set the period count (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	if((err = snd_pcm_hw_params_set_buffer_size(_playback_handle, hw_params, _period_nframes * nfrags)) < 0) {
-	    cerr << "cannot set the buffer size to " << nfrags << " x " << _period_nframes
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot set the buffer size to %1 x %2 (%3)")
+		.arg( nfrags )
+		.arg( _period_nframes )
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	if((err = snd_pcm_hw_params(_playback_handle, hw_params)) < 0) {
-	    cerr << "cannot set parameters"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot set parameters (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	snd_pcm_hw_params_free(hw_params);
@@ -232,32 +237,32 @@ namespace StretchPlayer
 	 */
 
 	if((err = snd_pcm_sw_params_malloc(&sw_params)) < 0) {
-	    cerr << "cannot allocate software parameters structure"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot allocate software parameters structure (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	if((err = snd_pcm_sw_params_current(_playback_handle, sw_params)) < 0) {
-	    cerr << "cannot initialize software parameters structure"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot initialize software parameters structure (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	if((err = snd_pcm_sw_params_set_avail_min(_playback_handle, sw_params, _period_nframes)) < 0) {
-	    cerr << "cannot set minimum available count"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot set minimum available count (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	if((err = snd_pcm_sw_params_set_start_threshold(_playback_handle, sw_params, 0U)) < 0) {
-	    cerr << "cannot set start mode"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot set start mode (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 	if((err = snd_pcm_sw_params(_playback_handle, sw_params)) < 0) {
-	    cerr << "cannot set software parameters"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    emsg = QString("cannot set software parameters (%1)")
+		.arg( snd_strerror(err) );
+	    goto init_bail;
 	}
 
 	size_t data_size;
@@ -286,7 +291,7 @@ namespace StretchPlayer
 
     init_bail:
 	if(err_msg) {
-	    *err_msg = err;
+	    *err_msg = emsg;
 	}
 	return 0xDEADBEEF;
     }
