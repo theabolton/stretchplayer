@@ -414,7 +414,6 @@ namespace StretchPlayer
 
 	    frames_to_deliver = frames_to_deliver > _period_nframes ? _period_nframes : frames_to_deliver;
 
-	    cout << frames_to_deliver << endl;
 	    assert( 0 == ((frames_to_deliver-1)&frames_to_deliver) );  // is power of 2.
 
 	    if( _callback(frames_to_deliver, _callback_arg) != 0 ) {
