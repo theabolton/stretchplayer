@@ -21,6 +21,7 @@
 
 #include <AudioSystem.hpp>
 #include <alsa/asoundlib.h>
+#include <sys/time.h>
 
 namespace StretchPlayer
 {
@@ -58,6 +59,11 @@ namespace StretchPlayer
 	void _convert_to_output_uint(uint32_t nframes);
 	void _convert_to_output_float(uint32_t nframes);
 
+	void _stopwatch_init();
+	void _stopwatch_start_idle();
+	void _stopwatch_start_work();
+	void _dsp_load_update();
+
     private:
 	// Configuration variables:
 	unsigned _channels;
@@ -76,6 +82,14 @@ namespace StretchPlayer
 
 	process_callback_t _callback;
 	void *_callback_arg;
+
+	// DSP Load estimation
+	enum { DSP_AVG_SIZE = 32 };
+	int _dsp_load_pos;
+	timeval _dsp_a, _dsp_b;
+	unsigned long _dsp_idle_time[DSP_AVG_SIZE];
+	unsigned long _dsp_work_time[DSP_AVG_SIZE];
+	float _dsp_load;
 
 	// Private object
 	AlsaAudioSystemPrivate *_d;

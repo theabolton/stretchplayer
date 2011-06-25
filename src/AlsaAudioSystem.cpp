@@ -32,6 +32,8 @@
 #include <cstdio> // For snprintf
 #include <QString>
 #include <alsa/asoundlib.h>
+#include <sys/time.h>
+#include <cmath>
 
 #include "bams_format.h"
 #include <endian.h>
@@ -85,8 +87,15 @@ namespace StretchPlayer
 	_right(0),
 	_callback(0),
 	_callback_arg(0),
+	_dsp_load_pos(0),
+	_dsp_load(0.0f),
 	_d(0)
     {
+	memset(&_dsp_a, 0, sizeof(timeval));
+	memset(&_dsp_b, 0, sizeof(timeval));
+	memset(_dsp_idle_time, 0, sizeof(_dsp_idle_time));
+	memset(_dsp_work_time, 0, sizeof(_dsp_work_time));
+
 	_d = new AlsaAudioSystemPrivate();
 	_d->parent(this);
 	_d->run_callback( AlsaAudioSystem::run );
@@ -372,7 +381,59 @@ namespace StretchPlayer
 
     float AlsaAudioSystem::dsp_load()
     {
-	return -1;
+	return _dsp_load;
+    }
+
+    static inline unsigned long calc_elapsed(const timeval& a, const timeval& b)
+    {
+	unsigned long ans;
+	if(b.tv_sec < a.tv_sec)
+	    return 0;
+	ans = (b.tv_sec - a.tv_sec) * 100000 + b.tv_usec;
+	if(ans >= a.tv_usec)
+	    ans -= a.tv_usec;
+	return ans;
+    }
+
+    void AlsaAudioSystem::_stopwatch_init()
+    {
+	gettimeofday(&_dsp_a, 0);
+    }
+
+    void AlsaAudioSystem::_stopwatch_start_idle()
+    {
+	gettimeofday(&_dsp_b, 0);
+	_dsp_work_time[_dsp_load_pos] = calc_elapsed(_dsp_a, _dsp_b);
+	_dsp_load_update();
+	_dsp_a = _dsp_b;
+	++_dsp_load_pos;
+	if(_dsp_load_pos > DSP_AVG_SIZE)
+	    _dsp_load_pos = 0;
+    }
+
+    void AlsaAudioSystem::_stopwatch_start_work()
+    {
+	gettimeofday(&_dsp_b, 0);
+	_dsp_idle_time[_dsp_load_pos] = calc_elapsed(_dsp_a, _dsp_b);
+	_dsp_a = _dsp_b;
+    }
+
+    void AlsaAudioSystem::_dsp_load_update()
+    {
+	int k = DSP_AVG_SIZE;
+	unsigned long work = 0, idle = 0, tot;
+	while(k--) {
+	    idle += _dsp_idle_time[k];
+	    work += _dsp_work_time[k];
+	}
+	tot = work + idle;
+	if(tot)
+	    _dsp_load = float(work) / float(tot);
+	else
+	    _dsp_load = 0.0f;
+	assert(_dsp_load <= 1.0f);
+	assert(_dsp_load >= 0.0f);
+	assert( !isnan(_dsp_load) );
     }
 
     void AlsaAudioSystem::_run()
@@ -383,6 +444,7 @@ namespace StretchPlayer
 	const char *err_msg, *str_err;
 	const int misc_msg_size = 256;
 	char misc_msg[misc_msg_size] = "";
+
 	assert(_active);
 
 	// Set RT priority
@@ -402,15 +464,18 @@ namespace StretchPlayer
 	    goto run_bail;
 	}
 
+	_stopwatch_init();
 	while(_active) {
 	    assert(_callback);
 
+	    _stopwatch_start_idle();
 	    if((err = snd_pcm_wait(_playback_handle, 1000)) < 0) {
 		err_msg = "Audio poll failed [snd_pcm_wait()].";
 		str_err = strerror(errno);
 		goto run_bail;
 	    }
 
+	    _stopwatch_start_work();
 	    if((frames_to_deliver = snd_pcm_avail_update(_playback_handle)) < 0) {
 		if(frames_to_deliver == -EPIPE) {
 		    /* An XRUN Occurred.  Ignoring. */
