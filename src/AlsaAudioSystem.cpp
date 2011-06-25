@@ -452,16 +452,24 @@ namespace StretchPlayer
 	switch(_bits) {
 	case 16: {
 	    bams_sample_s16le_t *dst = (bams_sample_s16le_t*)_buf;
-	    //memset(dst, 0, 2 * nframes * sizeof(bams_sample_s16le_t));
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 	    if(_little_endian) {
 		bams_copy_s16le_floatle(dst, 2, &_left[0], 1, nframes);
 		bams_copy_s16le_floatle(dst+1, 2, &_right[0], 1, nframes);
 	    } else {
 		bams_copy_s16be_floatle(dst, 2, &_left[0], 1, nframes);
-		//bams_copy_s16be_floatle(dst+1, 2, &_right[0], 1, nframes);
+		bams_copy_s16be_floatle(dst+1, 2, &_right[0], 1, nframes);
 	    }
-	    break;
+#else
+	    if(_little_endian) {
+		bams_copy_s16le_floatbe(dst, 2, &_left[0], 1, nframes);
+		bams_copy_s16le_floatbe(dst+1, 2, &_right[0], 1, nframes);
+	    } else {
+		bams_copy_s16be_floatbe(dst, 2, &_left[0], 1, nframes);
+		bams_copy_s16be_floatbe(dst+1, 2, &_right[0], 1, nframes);
 	    }
+#endif
+	}   break;
 	case 8:
 	case 24:
 	case 32:
@@ -475,6 +483,7 @@ namespace StretchPlayer
 	switch(_bits) {
 	case 16: {
 	    bams_sample_u16le_t *dst = (bams_sample_u16le_t*)_buf;
+#if __BYTE_ORDER == __LITTLE_ENDIAN
 	    if(_little_endian) {
 		bams_copy_u16le_floatle(dst, 2, &_left[0], 1, nframes);
 		bams_copy_u16le_floatle(dst+1, 2, &_right[0], 1, nframes);
@@ -482,6 +491,15 @@ namespace StretchPlayer
 		bams_copy_u16be_floatle(dst, 2, &_left[0], 1, nframes);
 		bams_copy_u16be_floatle(dst+1, 2, &_right[0], 1, nframes);
 	    }
+#else
+	    if(_little_endian) {
+		bams_copy_u16le_floatbe(dst, 2, &_left[0], 1, nframes);
+		bams_copy_u16le_floatbe(dst+1, 2, &_right[0], 1, nframes);
+	    } else {
+		bams_copy_u16be_floatbe(dst, 2, &_left[0], 1, nframes);
+		bams_copy_u16be_floatbe(dst+1, 2, &_right[0], 1, nframes);
+	    }
+#endif
 	}   break;
 	case 8:
 	case 24:
@@ -501,7 +519,17 @@ namespace StretchPlayer
 	for(f=0 ; f<nframes ; ++f) {
 	    (*out++) = _left[f];
 	    (*out++) = _right[f];
+	}
+	/* Check for non-native byte ordering */
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	if(!_little_endian) {
+	    bams_byte_reorder_in_place(_buf, 4, 1, 2*nframes);
+	}
+#else
+	if(_little_endian) {
+	    bams_byte_reorder_in_place(_buf, 4, 1, 2*nframes);
 	}	    
+#endif
     }
 
 } // namespace StretchPlayer
