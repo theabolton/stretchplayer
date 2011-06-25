@@ -9,6 +9,14 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 ######################################################################
+### CHECK FOR SANE OPTIONS                                         ###
+######################################################################
+
+IF( NOT ( AUDIO_SUPPORT_JACK OR AUDIO_SUPPORT_ALSA ) )
+  MESSAGE(FATAL_ERROR "Must enable support for at least ONE API")
+ENDIF( NOT ( AUDIO_SUPPORT_JACK OR AUDIO_SUPPORT_ALSA ) )
+
+######################################################################
 ### REQUIRED LIBRARIES                                             ###
 ######################################################################
 
@@ -20,13 +28,17 @@ FIND_PACKAGE(Qt4 4.5.0 REQUIRED)
 INCLUDE(${QT_USE_FILE})
 SET(LIBS ${QT_LIBRARIES})
 
-FIND_PACKAGE(JACK REQUIRED)
-INCLUDE_DIRECTORIES(${JACK_INCLUDE_DIRS})
-SET(LIBS ${LIBS} ${JACK_LIBRARIES})
+IF( AUDIO_SUPPORT_JACK )
+  FIND_PACKAGE(JACK REQUIRED)
+  INCLUDE_DIRECTORIES(${JACK_INCLUDE_DIRS})
+  SET(LIBS ${LIBS} ${JACK_LIBRARIES})
+ENDIF( AUDIO_SUPPORT_JACK )
 
-FIND_PACKAGE(ALSA REQUIRED)
-INCLUDE_DIRECTORIES(${ALSA_INCLUDE_DIRS})
-SET(LIBS ${LIBS} ${ALSA_LIBRARIES})
+IF( AUDIO_SUPPORT_ALSA )
+  FIND_PACKAGE(ALSA REQUIRED)
+  INCLUDE_DIRECTORIES(${ALSA_INCLUDE_DIRS})
+  SET(LIBS ${LIBS} ${ALSA_LIBRARIES})
+ENDIF( AUDIO_SUPPORT_ALSA )
 
 FIND_PACKAGE(LibSndfile REQUIRED)
 INCLUDE_DIRECTORIES(${LibSndfile_INCLUDE_DIRS})
@@ -49,8 +61,6 @@ LIST(APPEND sp_cpp
   PlayerSizes.cpp
   ThinSlider.cpp
   Marquee.cpp
-  JackAudioSystem.cpp
-  AlsaAudioSystem.cpp
   jack_memops.c
   bams_format.c
   RubberBandServer.cpp
@@ -65,9 +75,6 @@ LIST(APPEND sp_hpp
   ThinSlider.hpp
   Marquee.hpp
   AudioSystem.hpp
-  JackAudioSystem.hpp
-  AlsaAudioSystem.hpp
-  AlsaAudioSystemPrivate.hpp
   jack_memops.h
   bams_format.h
   RubberBandServer.cpp
@@ -79,6 +86,19 @@ LIST(APPEND sp_moc_hpp
   StatusWidget.hpp
   Marquee.hpp
   )
+
+# Add files for audio API's:
+
+IF( JACK_FOUND )
+  LIST(APPEND sp_cpp JackAudioSystem.cpp)
+  LIST(APPEND sp_hpp JackAudioSystem.hpp)
+ENDIF( JACK_FOUND )
+
+IF( ALSA_FOUND )
+  LIST(APPEND sp_cpp AlsaAudioSystem.cpp)
+  LIST(APPEND sp_hpp AlsaAudioSystem.hpp)
+  LIST(APPEND sp_hpp AlsaAudioSystemPrivate.hpp)
+ENDIF( ALSA_FOUND )
 
 QT4_WRAP_CPP(sp_moc ${sp_moc_hpp}) 
 QT4_ADD_RESOURCES(sp_qrc stretchplayer.qrc)

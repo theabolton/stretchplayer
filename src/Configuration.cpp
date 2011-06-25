@@ -30,19 +30,43 @@ using namespace std;
 #define DEFAULT_PERIODS_PER_BUFFER "2"
 #define DEFAULT_ALSA_DEVICE "hw:0"
 
+#ifdef AUDIO_SUPPORT_JACK
+#define JACK_LETTER "J"
+#define JACK_DEFAULT "on",
+#else
+#define JACK_LETTER
+#define JACK_DEFAULT
+#endif
+
+#ifdef AUDIO_SUPPORT_ALSA
+#define ALSA_LETTER "Ad:r:p:n:"
+#ifdef AUDIO_SUPPORT_JACK
+#define ALSA_DEFAULT "off",
+#else
+#define ALSA_DEFAULT "on",
+#endif
+#else
+#define ALSA_LETTER
+#define ALSA_DEFAULT
+#endif
+
 namespace StretchPlayer
 {
 
-    static const char optstring[] = "JAd:r:p:n:xcCqh";
+    static const char optstring[] = JACK_LETTER ALSA_LETTER "xcCqh";
 
     static const struct option longopts[] = {
 	// const char *name, int has_arg, int *flag, int val
+#ifdef AUDIO_SUPPORT_JACK
 	{"jack", 0, 0, 'J'},
+#endif
+#ifdef AUDIO_SUPPORT_ALSA
 	{"alsa", 0, 0, 'A'},
 	{"device", 1, 0, 'd'},
 	{"sample-rate", 1, 0, 'r'},
 	{"period-size", 1, 0, 'p'},
 	{"periods", 1, 0, 'n'},
+#endif
 	{"no-autoconnect", 0, 0, 'x'},
 	{"compositing", 0, 0, 'c'},
 	{"no-compositing", 0, 0, 'C'},
@@ -52,12 +76,14 @@ namespace StretchPlayer
     };
 
     static const char* opt_defaults[] = {
-	"on", // --jack
-	"off", // --alsa
+	JACK_DEFAULT
+	ALSA_DEFAULT
+#ifdef AUDIO_SUPPORT_ALSA
 	DEFAULT_ALSA_DEVICE, // --device
 	DEFAULT_SAMPLE_RATE, // --sample-rate
 	DEFAULT_PERIOD_SIZE, // --period-size
 	DEFAULT_PERIODS_PER_BUFFER, // --periods
+#endif
 	"off", // --no-autoconnect
 	"on", // --compositing
 	"off", // --no-compositing
@@ -67,12 +93,16 @@ namespace StretchPlayer
     };
 
     static const char* opt_doc[] = {
+#ifdef AUDIO_SUPPORT_JACK
 	"use JACK for audio", // --jack
+#endif
+#ifdef AUDIO_SUPPORT_ALSA
 	"use ALSA for audio", // --alsa
 	"device to use for ALSA", // --device
 	"sample rate to use for ALSA", // --sample-rate
 	"period size to use for ALSA", // --period-size
 	"periods per buffer for ALSA", // --periods
+#endif
 	"disable auto-connection ot ouputs", // --no-autoconnect
 	"enable desktop compositing (if supported by Qt/X11)", // --compositing
 	"disable desktop compositing", // --no-compositing
@@ -180,11 +210,19 @@ namespace StretchPlayer
 
     void Configuration::init(int argc, char* argv[])
     {
+#if defined( AUDIO_SUPPORT_JACK )
 	driver = JackDriver;
+#elif defined( AUDIO_SUPPORT_ALSA )
+	driver = AlsaDriver;
+#else
+#error "Must have support for at least ONE audio API"
+#endif
+#if defined( AUDIO_SUPPORT_ALSA )
 	audio_device( DEFAULT_ALSA_DEVICE );
 	sample_rate( atoi(DEFAULT_SAMPLE_RATE) );
 	period_size( atoi(DEFAULT_PERIOD_SIZE) );
 	periods_per_buffer( atoi(DEFAULT_PERIODS_PER_BUFFER) );
+#endif
 	startup_file( QString() );
 	autoconnect(true);
 	compositing(true);
