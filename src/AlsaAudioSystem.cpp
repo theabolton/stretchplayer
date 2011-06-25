@@ -335,6 +335,11 @@ namespace StretchPlayer
 	return 0;
     }
 
+    int AlsaAudioSystem::set_segment_size_callback(process_callback_t, void*, QString*)
+    {
+	// This API never changes the segment size automatically
+    }
+
     int AlsaAudioSystem::activate(QString *err_msg)
     {
 	assert(!_active);
@@ -382,6 +387,21 @@ namespace StretchPlayer
     float AlsaAudioSystem::dsp_load()
     {
 	return _dsp_load;
+    }
+
+    uint32_t AlsaAudioSystem::time_stamp()
+    {
+	return 0;
+    }
+
+    uint32_t AlsaAudioSystem::segment_start_time_stamp()
+    {
+	return 0;
+    }
+
+    uint32_t AlsaAudioSystem::current_segment_size()
+    {
+	return _period_nframes;
     }
 
     static inline unsigned long calc_elapsed(const timeval& a, const timeval& b)
