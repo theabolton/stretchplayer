@@ -78,7 +78,7 @@ namespace StretchPlayer
 	_bits(16), */
 	_little_endian(true),
 	_sample_rate(44100),
-	_period_nframes(2048),
+	_period_nframes(512),
 	_active(false),
 	_playback_handle(0),
 	_left_root(0),
