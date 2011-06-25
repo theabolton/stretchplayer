@@ -38,10 +38,12 @@ namespace StretchPlayer
 #ifdef AUDIO_SUPPORT_JACK
 	case Configuration::JackDriver:
 	    d = new JackAudioSystem;
+	    break;
 #endif
 #ifdef AUDIO_SUPPORT_ALSA
 	case Configuration::AlsaDriver:
 	    d = new AlsaAudioSystem;
+	    break;
 #endif
 	default:
 	    throw std::runtime_error("Unsupported driver requested");
