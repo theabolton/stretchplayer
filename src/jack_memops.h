@@ -20,8 +20,11 @@
 #ifndef __jack_memops_h__
 #define __jack_memops_h__
 
-#include <jack/types.h>
+/* #include <jack/types.h> */
 #include <string.h>
+
+/* Copied declarations from jack/types.h */
+typedef float jack_default_audio_sample_t;
 
 typedef	enum  {
 	None,
