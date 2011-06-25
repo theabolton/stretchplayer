@@ -29,6 +29,7 @@
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
+#include <cstdio> // For snprintf
 #include <QString>
 #include <alsa/asoundlib.h>
 
@@ -379,34 +380,45 @@ namespace StretchPlayer
 	int err;
 	snd_pcm_sframes_t frames_to_deliver;
 	uint32_t f;
-
+	const char *err_msg, *str_err;
+	const int misc_msg_size = 256;
+	char misc_msg[misc_msg_size] = "";
 	assert(_active);
+
+	// Set RT priority
+	sched_param thread_sched_param;
+	thread_sched_param.sched_priority = 80;
+	pthread_setschedparam( pthread_self(), SCHED_FIFO, &thread_sched_param );
+
+	err = 0;
 
 	/* the interface will interrupt the kernel every
 	 * _period_nframes frames, and ALSA will wake up this program
 	 * very soon after that.
 	 */
 	if((err = snd_pcm_prepare(_playback_handle)) < 0) {
-	    cerr << "cannot prepare audio interface for use"
-		 << " (" << snd_strerror(err) << ")" << endl;
-	    assert(false);
+	    err_msg = "Cannot prepare audio interface for use [snd_pcm_prepare()].";
+	    str_err = snd_strerror(err);
+	    goto run_bail;
 	}
 
 	while(_active) {
 	    assert(_callback);
 
 	    if((err = snd_pcm_wait(_playback_handle, 1000)) < 0) {
-		cerr << "Poll failed " << strerror(errno) << endl;
-		break;
+		err_msg = "Audio poll failed [snd_pcm_wait()].";
+		str_err = strerror(errno);
+		goto run_bail;
 	    }
 
 	    if((frames_to_deliver = snd_pcm_avail_update(_playback_handle)) < 0) {
 		if(frames_to_deliver == -EPIPE) {
-		    cerr << "an xrun occured" << endl;
+		    /* An XRUN Occurred.  Ignoring. */
 		} else {
-		    cerr << "unknown ALSA snd_pcm_avail_update return value"
-			 << "(" << frames_to_deliver << ")" << endl;
-		    break;
+		    err_msg = "Unknown ALSA snd_pcm_avail_update return value [snd_pcm_avail_update()].";
+		    snprintf(misc_msg, misc_msg_size, "%ld", frames_to_deliver);
+		    str_err = misc_msg;
+		    goto run_bail;
 		}
 	    }
 
@@ -417,21 +429,38 @@ namespace StretchPlayer
 	    assert( 0 == ((frames_to_deliver-1)&frames_to_deliver) );  // is power of 2.
 
 	    if( _callback(frames_to_deliver, _callback_arg) != 0 ) {
-		cerr << "Audio callback failed" << endl;
-		break;
+		err_msg = "Application's audio callback failed.";
+		str_err = 0;
+		goto run_bail;
 	    }
 
 	    _convert_to_output(frames_to_deliver);
 
-	skippit:
 	    if((err = snd_pcm_writei(_playback_handle, _buf, frames_to_deliver)) < 0) {
-		cerr << "write failed"
-		     << " (" << snd_strerror(err) << ")" << endl;
-		assert(false);
+		err_msg = "Write to audio card failed [snd_pcm_writei()].";
+		str_err = snd_strerror(err);
+		goto run_bail;
 	    }
 
 	}
+
 	_active = false;
+
+	return;
+
+    run_bail:
+
+	_active = false;
+	thread_sched_param.sched_priority = 0;
+	pthread_setschedparam( pthread_self(), SCHED_OTHER, &thread_sched_param );
+
+	cerr << "ERROR: " << err_msg;
+	if(str_err)
+	    cerr << " (" << str_err << ")";
+	cerr << endl;
+	cerr << "Aborting audio driver." << endl;
+
+	return;
     }
 
     /**
