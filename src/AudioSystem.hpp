@@ -148,6 +148,8 @@ namespace StretchPlayer
 	virtual uint32_t current_segment_size() = 0;
     };
 
+    AudioSystem* audio_system_factory(int driver);
+
 } // namespace StretchPlayer
 
 #endif // AUDIOSYSTEM_HPP

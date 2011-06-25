@@ -61,6 +61,7 @@ LIST(APPEND sp_cpp
   PlayerSizes.cpp
   ThinSlider.cpp
   Marquee.cpp
+  AudioSystem.cpp
   jack_memops.c
   bams_format.c
   RubberBandServer.cpp

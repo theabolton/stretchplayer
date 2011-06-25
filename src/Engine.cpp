@@ -32,12 +32,6 @@
 #include <QString>
 
 #include "config.h"
-#ifdef AUDIO_SUPPORT_JACK
-#include "JackAudioSystem.hpp"
-#endif
-#ifdef AUDIO_SUPPORT_ALSA
-#include "AlsaAudioSystem.hpp"
-#endif
 
 using RubberBand::RubberBandStretcher;
 
@@ -63,32 +57,11 @@ namespace StretchPlayer
 
 	Configuration::driver_t pref_driver;
 
-#if defined( AUDIO_SUPPORT_JACK )
-	pref_driver = Configuration::JackDriver;
-#elif defined( AUDIO_SUPPORT_ALSA )
-	pref_driver = Configuration::AlsaDriver;
-#else
-#error "No AUDIO API's are defined"
-#endif
-
 	if(_config) {
 	    pref_driver = _config->driver();
 	}
 
-	switch(pref_driver) {
-#ifdef AUDIO_SUPPORT_JACK
-	case Configuration::JackDriver:
-	    _audio_system.reset( new JackAudioSystem );
-	    break;
-#endif
-#ifdef AUDIO_SUPPORT_ALSA
-	case Configuration::AlsaDriver:
-	    _audio_system.reset( new AlsaAudioSystem );
-	    break;
-#endif
-	default:
-	    throw std::runtime_error("Unsupported driver requested");
-	}
+	_audio_system.reset( audio_system_factory(pref_driver) );
 
 	QString app_name("StretchPlayer");
 	_audio_system->init( &app_name, _config, &err );
