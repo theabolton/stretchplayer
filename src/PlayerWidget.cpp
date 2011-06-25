@@ -71,14 +71,13 @@ namespace StretchPlayer
 			| Qt::FramelessWindowHint
 	    );
 
-#if (QT_VERSION >= 0x040500) && STRETCHPLAYER_USE_COMPOSITING
-#warning "Compositing is enabled"
-	setAttribute( Qt::WA_TranslucentBackground );
-	_compositing = true;
-#else
-#warning "Compositing is dis-abled"
-	_compositing = false;
-#endif
+	if( _config->compositing() && (QT_VERSION >= 0x040500) ) {
+	    setAttribute( Qt::WA_TranslucentBackground );
+	    _compositing = true;
+	} else {
+	    _compositing = false;
+	}
+
 	setMinimumSize(_sizes.preferred_width()*2/3, _sizes.preferred_height()*2/3);
 
 	QSizePolicy policy(QSizePolicy::Fixed, QSizePolicy::Fixed);
