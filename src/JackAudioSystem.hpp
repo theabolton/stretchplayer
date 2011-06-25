@@ -24,6 +24,8 @@
 
 namespace StretchPlayer
 {
+    class Configuration;
+
     /**
      * \brief Pure virtual interface to an audio driver API.
      *
@@ -39,7 +41,7 @@ namespace StretchPlayer
 
 	/* Implementing all of AudioSystem's interface:
 	 */
-	virtual int init(QString * app_name, QString *err_msg = 0);
+	virtual int init(QString * app_name, Configuration *config, QString *err_msg = 0);
 	virtual void cleanup();
 	virtual int set_process_callback(process_callback_t cb, void* arg, QString* err_msg = 0);
 	virtual int set_segment_size_callback(segment_size_callback_t cb, void* arg, QString* err_msg = 0);

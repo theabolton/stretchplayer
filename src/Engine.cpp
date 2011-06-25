@@ -19,9 +19,10 @@
 
 #include "Engine.hpp"
 #include "AudioSystem.hpp"
-//#include "JackAudioSystem.hpp"
+#include "JackAudioSystem.hpp"
 #include "AlsaAudioSystem.hpp"
 #include "RubberBandServer.hpp"
+#include "Configuration.hpp"
 #include <sndfile.h>
 #include <stdexcept>
 #include <cassert>
@@ -36,8 +37,9 @@ using RubberBand::RubberBandStretcher;
 
 namespace StretchPlayer
 {
-    Engine::Engine()
-	: _playing(false),
+    Engine::Engine(Configuration *config)
+	: _config(config),
+	  _playing(false),
 	  _hit_end(false),
 	  _state_changed(false),
 	  _position(0),
@@ -53,15 +55,33 @@ namespace StretchPlayer
 
 	QMutexLocker lk(&_audio_lock);
 
-	//_audio_system.reset( new JackAudioSystem );
-	_audio_system.reset( new AlsaAudioSystem );
+	Configuration::driver_t pref_driver = Configuration::JackDriver;
+
+	if(_config) {
+	    pref_driver = _config->driver();
+	}
+
+	switch(pref_driver) {
+	case Configuration::JackDriver:
+	    _audio_system.reset( new JackAudioSystem );
+	    break;
+	case Configuration::AlsaDriver:
+	    _audio_system.reset( new AlsaAudioSystem );
+	    break;
+	default:
+	    throw std::runtime_error("Unsupported driver requested");
+	}
+
 	QString app_name("StretchPlayer");
-	_audio_system->init( &app_name, &err);
+	_audio_system->init( &app_name, _config, &err );
 	_audio_system->set_process_callback(Engine::static_process_callback, this);
 	_audio_system->set_segment_size_callback(Engine::static_segment_size_callback, this);
 
-	if( ! err.isNull() )
-	    throw std::runtime_error(err.toLocal8Bit().data());
+	if( ! err.isNull() ) {
+	    char msg[513];
+	    strncpy(msg, err.toLocal8Bit().data(), 512); 
+	    throw std::runtime_error(msg);
+	}
 
 
 	uint32_t sample_rate = _audio_system->sample_rate();

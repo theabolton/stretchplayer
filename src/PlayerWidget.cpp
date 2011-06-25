@@ -20,6 +20,7 @@
 #include "PlayerWidget.hpp"
 #include "Engine.hpp"
 #include "StatusWidget.hpp"
+#include "Configuration.hpp"
 
 #include <QWidget>
 #include <QToolButton>
@@ -61,8 +62,10 @@ namespace StretchPlayer
 
     }
 
-    PlayerWidget::PlayerWidget(QWidget *parent)
-	: QMainWindow(parent)
+    PlayerWidget::PlayerWidget(Configuration *config, QWidget *parent)
+	: QMainWindow(parent),
+	  _config(config)
+	  
     {
 	setWindowFlags( Qt::Window
 			| Qt::FramelessWindowHint
@@ -647,7 +650,7 @@ namespace StretchPlayer
     void PlayerWidget::_setup_signals_and_slots()
     {
 	_engine_callback.reset(new Details::PlayerWidgetMessageCallback(this));
-	_engine.reset(new Engine);
+	_engine.reset(new Engine(_config) );
 	_engine->subscribe_errors(_engine_callback.get());
 	_engine->subscribe_messages(_engine_callback.get());
 

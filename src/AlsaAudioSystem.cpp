@@ -26,6 +26,7 @@
 
 #include "AlsaAudioSystem.hpp"
 #include "AlsaAudioSystemPrivate.hpp"
+#include "Configuration.hpp"
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
@@ -108,17 +109,22 @@ namespace StretchPlayer
 	_d = 0;
     }
 
-    int AlsaAudioSystem::init(QString * app_name, QString *err_msg)
+    int AlsaAudioSystem::init(QString * /*app_name*/, Configuration *config, QString *err_msg)
     {
 	QString name("StretchPlayer");
 	QString emsg;
-	unsigned nfrags = 3;
+	unsigned nfrags;
 	int err;
 	snd_pcm_format_t format = SND_PCM_FORMAT_UNKNOWN;
 	int k;
 
-	if(app_name) {
-	    name = *app_name;
+	_sample_rate = config->sample_rate();
+	_period_nframes = config->period_size();
+	nfrags = config->periods_per_buffer();
+
+	if( config == 0 ) {
+	    emsg = "The AlsaAudioSystem::init() function must have a non-null config parameter.";
+	    goto init_bail;
 	}
 
 	snd_pcm_hw_params_t *hw_params;
@@ -303,6 +309,7 @@ namespace StretchPlayer
 	if(err_msg) {
 	    *err_msg = emsg;
 	}
+	cleanup();
 	return 0xDEADBEEF;
     }
 

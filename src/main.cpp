@@ -26,6 +26,7 @@
 #include <iostream>
 #include <QPlastiqueStyle>
 #include <memory>
+#include <stdexcept>
 
 int main(int argc, char* argv[])
 {
@@ -43,19 +44,26 @@ int main(int argc, char* argv[])
     }
 
     std::auto_ptr<StretchPlayer::PlayerWidget> pw;
-    pw.reset(new StretchPlayer::PlayerWidget);
+    try{
+	pw.reset( new StretchPlayer::PlayerWidget(&config) );
 
-    app.setStyle( new QPlastiqueStyle );
+	app.setStyle( new QPlastiqueStyle );
 
-    pw->show();
+	pw->show();
 
-    if(argc > 1) {
-	QString fn(argv[1]);
-	std::cout << "Loading file " << argv[1] << std::endl;
-	pw->load_song(fn);
+	if(! config.startup_file().isEmpty() ) {
+	    std::cout << "Loading file " 
+		      << (config.startup_file().toLocal8Bit().data())
+		      << std::endl;
+	    pw->load_song( config.startup_file() );
+	}
+
+	app.exec();
+    } catch (std::runtime_error& e) {
+	std::cerr << "Exception caught: " << e.what() << std::endl;
+    } catch (...) {
+	std::cerr << "Unhandled exception... aborting." << std::endl;
     }
-
-    app.exec();
 
     return 0;
 }

@@ -30,6 +30,7 @@
 namespace StretchPlayer
 {
 
+class Configuration;
 class EngineMessageCallback;
 class AudioSystem;
 class RubberBandServer;
@@ -37,7 +38,7 @@ class RubberBandServer;
 class Engine
 {
 public:
-    Engine();
+    Engine(Configuration *config = 0);
     ~Engine();
 
     QString load_song(const QString& filename);
@@ -138,6 +139,7 @@ private:
     void _subscribe_list(callback_seq_t& seq, EngineMessageCallback* obj);
     void _unsubscribe_list(callback_seq_t& seq, EngineMessageCallback* obj);
 
+    Configuration *_config;
     bool _playing;
     bool _hit_end;
     bool _state_changed;

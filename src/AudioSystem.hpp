@@ -25,6 +25,8 @@ class QString;
 
 namespace StretchPlayer
 {
+    class Configuration;
+
     /**
      * \brief Pure virtual interface to an audio driver API.
      *
@@ -54,7 +56,7 @@ namespace StretchPlayer
 	 *
 	 * \returns 0 on success, nonzero on error.
 	 */
-	virtual int init(QString* app_name, QString *err_msg = 0) = 0;
+	virtual int init(QString* app_name, Configuration *config, QString *err_msg = 0) = 0;
 
 	/**
 	 * Clean up the system.

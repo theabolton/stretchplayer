@@ -36,6 +36,7 @@ class QStyle;
 namespace StretchPlayer
 {
 
+class Configuration;
 class Engine;
 class EngineMessageCallback;
 class StatusWidget;
@@ -44,7 +45,7 @@ class PlayerWidget : public QMainWindow
 {
     Q_OBJECT
 public:
-    PlayerWidget(QWidget *parent = 0);
+    PlayerWidget(Configuration *config = 0, QWidget *parent = 0);
     ~PlayerWidget();
 
     void load_song(const QString& filename);
@@ -135,13 +136,13 @@ private:
     QSlider *_volume;
     PlayerSizes _sizes;
 
-    std::auto_ptr<Engine> _engine;
     std::auto_ptr<EngineMessageCallback> _engine_callback;
+    std::auto_ptr<Engine> _engine;
 
     // State variables
     QPoint _anchor; // for window moves
     bool _compositing;
-
+    Configuration *_config;
 }; // PlayerWidget
 
 } // namespace StretchPlayer

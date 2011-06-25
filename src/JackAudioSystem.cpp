@@ -38,7 +38,7 @@ namespace StretchPlayer
 	cleanup();
     }
 
-    int JackAudioSystem::init(QString * app_name, QString *err_msg)
+    int JackAudioSystem::init(QString * app_name, Configuration * /*config*/, QString *err_msg)
     {
 	QString name("StretchPlayer"), err;
 
