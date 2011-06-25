@@ -42,12 +42,16 @@ namespace StretchPlayer
 	virtual int init(QString * app_name, QString *err_msg = 0);
 	virtual void cleanup();
 	virtual int set_process_callback(process_callback_t cb, void* arg, QString* err_msg = 0);
+	virtual int set_segment_size_callback(segment_size_callback_t cb, void* arg, QString* err_msg = 0);
 	virtual int activate(QString *err_msg = 0);
 	virtual int deactivate(QString *err_msg = 0);
 	virtual sample_t* output_buffer(int index);
 	virtual uint32_t output_buffer_size(int index);
 	virtual uint32_t sample_rate();
 	virtual float dsp_load();
+	virtual uint32_t time_stamp();
+	virtual uint32_t segment_start_time_stamp();
+	virtual uint32_t current_segment_size();
 
     private:
 	jack_client_t *_client;

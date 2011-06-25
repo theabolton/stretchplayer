@@ -1,3 +1,333 @@
+commit e70cb833b4dd4e69505ac090018fe767fd058730
+Merge: ebcfe50 24f8f8c
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Jun 16 23:22:41 2011 -0500
+
+    Merge branch 'features/worker_thread'
+
+commit ebcfe50d4db033f711370da1c1091b1efe58e239
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Jun 16 23:22:13 2011 -0500
+
+    Bump version to 0.504 for development.
+
+M	CMakeLists.txt
+M	debian/changelog
+
+commit 24f8f8cd224bcdbcea266b600b95931a72d48495
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Jun 16 22:56:19 2011 -0500
+
+    Engine: Add some documentation in the process() callback.
+
+M	src/Engine.cpp
+
+commit 53895c9acbfaab22f702f29c3304087a52645a94
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Jun 16 22:49:09 2011 -0500
+
+    RubberBandServer: Reformat one block for ledgibility
+
+M	src/RubberBandServer.cpp
+
+commit 53e557c4be048bedaa59dfda7db471fc5dfadf83
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Jun 16 22:42:40 2011 -0500
+
+    Rearrange worker thread a little to put parameter updates at beginning.
+
+M	src/RubberBandServer.cpp
+
+commit 0b9cf9d53262498f6fc786ec8566c3d9652c6f44
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Jun 16 22:11:58 2011 -0500
+
+    RubberBandServer: Improve the thread safety of resets.
+    
+    This was actually causing the loss-of-first-buffer issue.
+
+M	src/Engine.cpp
+M	src/RubberBandServer.cpp
+
+commit bbbeebaedb4856922066e638340ae05ba6749807
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Jun 16 18:59:05 2011 -0500
+
+    RubberBandServer: Fix initial buffer corruption.
+    
+    On playback, the very first set of samples were becoming corrupt
+    because I was pushing data into the stretcher when I shouldn't be.
+    Instead of pushing a small amount, call
+    RubberBandStretcher::process(bufs,count=0,false).
+
+M	src/RubberBandServer.cpp
+
+commit 458c1b42788033f11816443db975dd2435f84465
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Jun 15 00:45:43 2011 -0500
+
+    Engine: Handle more segment sizes, and adjust if it changes.
+    
+    If the segment size was large (e.g. 4096) then playing would stall.
+    In addition, large segment sizes were not being handled at all because
+    of fixed buffer sizes.  This improves some of that.
+    
+    However, it appears that the first segment or so of input audio is
+    being truncated.  This is very apparent for the 4096 size
+    segment... but not so much when <= 512.
+
+M	src/AudioSystem.hpp
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/JackAudioSystem.cpp
+M	src/JackAudioSystem.hpp
+M	src/RubberBandServer.cpp
+M	src/RubberBandServer.hpp
+
+commit 72abd7a233c4846e2206cceb49cddcdad2a545c6
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jun 14 22:30:47 2011 -0500
+
+    RubberBandServer: Add CPU load estimator for worker thread.
+
+M	src/Engine.cpp
+M	src/RubberBandServer.cpp
+M	src/RubberBandServer.hpp
+
+commit c1fa0cb2d87c4b5d0227c51c655f25272ff9847b
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jun 14 21:45:34 2011 -0500
+
+    Set RT scheduling and use a wait condition on worker thread.
+
+M	src/RubberBandServer.cpp
+M	src/RubberBandServer.hpp
+
+commit 8c4918dcff2a241aadebe42454fdf73e33c2e56c
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jun 14 21:23:34 2011 -0500
+
+    Engine: Remove misc. debugging output.
+
+M	src/Engine.cpp
+
+commit 71d4c522d59087b88b7fdaa4d5ae8dea55dfa11f
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jun 14 21:17:39 2011 -0500
+
+    Engine: Detect end of song and flush the stretcher buffers
+    
+    Engine was getting stuck at end of song because there was not enough
+    to pull off for a normal cycle in the middle of the song.
+
+M	src/Engine.cpp
+
+commit 057bce2dfc9c6bdea7d39af35db6cdd2dfc8331f
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jun 14 20:56:59 2011 -0500
+
+    Move buffer feed and latency calcs from Engine to RubberBandServer
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/RubberBandServer.cpp
+M	src/RubberBandServer.hpp
+
+commit a9fbbe8831f8e2b636348c082d2b6ccda10edef5
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jun 14 20:42:58 2011 -0500
+
+    Engine.cpp: Fix _n_feed_segs at 2.
+
+M	src/Engine.cpp
+
+commit 93a6ce36103386c4b02fa85cfaaa9fad6d85203d
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Jun 14 20:30:18 2011 -0500
+
+    Improved calculation of loop points and actual output pointer.
+    
+    Note that the cached number of buffered segments sometimes runs away
+    (especially at the end of the song).  However, it's possible that this
+    number should be fixed at 2 and controlled by the RubberBandServer.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/RubberBandServer.cpp
+
+commit 9660d8230bffa88ff3c97fc9b1ef11d3544e1aac
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Jun 12 22:56:30 2011 -0500
+
+    AudioSystem: Add interface for frame-based time-stamps.
+    
+    This is needed to estimate UI input timings.
+
+M	src/AudioSystem.hpp
+M	src/JackAudioSystem.cpp
+M	src/JackAudioSystem.hpp
+
+commit a1a7403039a5dcf7b15e1d7e771321d343c6cc7b
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 23 13:44:33 2011 -0500
+
+    Add bug about startup error checking.
+    
+    Reported by Federico Bruni <fedelogy@gmail.com>
+
+M	BUGS.txt
+
+commit 259eac1f5e5bd5f5a13cd718a33018708ee410fd
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 23 13:42:53 2011 -0500
+
+    Commit system to track output position.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+
+commit 123349a02ae6987b2b97d7f7a995c38fed995c04
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Feb 6 22:32:00 2011 -0600
+
+    Improve thread safety of A/B repeat.
+    
+    Instead of changing variables on the fly, increment an atomic integer
+    to be processed in the normal process() callback.
+
+M	src/Engine.cpp
+M	src/Engine.hpp
+
+commit 63ec35447861ee8096b2fe840f72b6c7d20f1794
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Mon Jan 17 16:42:15 2011 -0600
+
+    Throttle the feed to the stretcher.
+    
+    Keep the buffers of the stretcher between 512 and 1024 frames.  First
+    step to tracking latency.
+    
+    Known issue:  Audio will stutter at the beginning of the song.
+
+M	src/Engine.cpp
+M	src/RubberBandServer.cpp
+M	src/RubberBandServer.hpp
+
+commit 229ca6c78571823c8a39c0e9e5a60f5edca8a49d
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Jan 16 02:26:20 2011 -0600
+
+    Add documentation on frame position synchronization.
+
+A	Documentation/position-math-model.py
+A	Documentation/position-math.txt
+
+commit 054b93966162a1bd8373bdea0e458e238090a3ea
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Fri Jan 14 20:07:02 2011 -0600
+
+    Allow for non-aligned buffers when applying gain.
+
+M	src/Engine.cpp
+
+commit 72985e081231152f0ce46e720bd12bdcc9089c6f
+Merge: 71a87af fb4b9c4
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Wed Jan 12 20:15:31 2011 -0600
+
+    Merge remote branch 'master' into features/worker_thread
+    
+    Conflicts:
+    	debian/changelog
+    	debian/compat
+    	debian/control
+    	src/Engine.cpp
+
+commit fb4b9c4ae833de465968dc2f553cab0240fe89b5
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Aug 19 23:29:39 2010 -0500
+
+    Enable SIMD (SSE2) instructions when applying gain.
+    
+    SIMD instructions allow four floats to be processed in a single
+    instruction.  The vectored notation in this commit is a GCC extension,
+    but still more portable than writing assembly code.  This typically
+    results in a 2x speed increase for this type of operation.
+
+M	src/Engine.cpp
+
+commit f739f8d565607ce64ae6c6595a0c6bcc43015848
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Aug 19 23:25:34 2010 -0500
+
+    No longer clip the output.
+    
+    I thought this was required... but it isn't.  Let the audio card clip
+    its own darn floats.  :-)
+
+M	src/Engine.cpp
+
+commit c34a5de90f46eaa2946fb935160f45cf52e9a81a
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu Jul 29 20:32:57 2010 -0500
+
+    Reset RubberBandStretcher in init.
+    
+    Hopefully this will prevent the "first run" xrun we sometimes get.
+
+M	src/Engine.cpp
+
+commit c33558cce64ab25deb000c17bd9a435b5ca3ce70
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Fri Jul 23 21:12:35 2010 -0500
+
+    Add several great ideas from Ivan Tarozzi
+
+M	BUGS.txt
+
+commit e314c538db5e536255d00b303485e0c75bb45f75
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Jul 17 23:39:33 2010 -0500
+
+    Add dep between stretchplayer and -dbg package.
+
+M	debian/control
+
+commit 6d15f081359b8793fcf183dc122bba20df0d67c0
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Jul 17 23:38:07 2010 -0500
+
+    Update Debian standards versions.
+
+M	debian/compat
+M	debian/control
+
+commit 3723281756e3e3ba591596c38a4db3d60ff56209
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Jul 17 23:43:52 2010 -0500
+
+    Change output tarball name to .orig.tar.gz
+    
+    ...as a Debian convention.
+
+M	CMakeLists.txt
+
+commit c6859434806f9d8f7b8ce8c02ef6beac5cc176d9
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Jul 17 23:17:32 2010 -0500
+
+    Add -0 to debian packaging.
+
+M	debian/changelog
+
+commit cc0654cf7a3550a1ef071cabe5884e84a9e85e30
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Jul 17 23:06:40 2010 -0500
+
+    Update ChangeLog.
+
+M	ChangeLog
+
 commit e5deafdb3d6e846270107d42704ccaa00a448b38
 Author: Gabriel M. Beddingfield <gabriel@teuton.org>
 Date:   Sat Jul 17 23:05:41 2010 -0500
@@ -275,6 +605,56 @@ A	debian/changelog
 A	debian/compat
 A	debian/control
 A	debian/rules
+
+commit 71a87af3c6fe9be5c3831215a546c20ae6b0bbd6
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Thu May 6 23:09:38 2010 -0500
+
+    Add build dependency on CMake and CDBS for Debian.
+
+M	debian/control
+
+commit bc85a18a21bf9a4ae1148183451f365ec90414ec
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sat Apr 24 14:59:51 2010 -0500
+
+    Get the -dbg package working.
+    
+    Had to up debhelper (and possibly 'compat') to 5.
+
+M	.gitignore
+A	debian/.gitignore
+M	debian/compat
+M	debian/control
+M	debian/rules
+
+commit cae8eaf799d367c2c221e19c46f66d7c83a5b3cc
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Tue Apr 20 17:51:06 2010 -0500
+
+    Add debian packaging.
+
+A	debian/changelog
+A	debian/compat
+A	debian/control
+A	debian/rules
+
+commit cbca90e6a3a25df2325afbf9e4cd6dc301acb166
+Author: Gabriel M. Beddingfield <gabriel@teuton.org>
+Date:   Sun Apr 11 17:32:23 2010 -0500
+
+    Put all RubberBand calculations on a worker thread.
+    
+    Since I can't get an gaurantees on how long RubberBand calculations
+    will take, I put it on a worker thread so that I can skip a buffer or
+    two if it takes too long to calculate.
+
+M	src/CMakeLists.txt
+M	src/Engine.cpp
+M	src/Engine.hpp
+M	src/RingBuffer.hpp
+A	src/RubberBandServer.cpp
+A	src/RubberBandServer.hpp
 
 commit dc48bab6ca4476b59960ad8b93e1326f25eeebed
 Author: Gabriel M. Beddingfield <gabriel@teuton.org>

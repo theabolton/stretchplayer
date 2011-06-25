@@ -25,7 +25,7 @@
 #define TRITIUM_RINGBUFFER_HPP
 
 #include <cstring>
-#include <glib.h>
+#include <QAtomicInt>
 
 namespace Tritium
 {
@@ -34,9 +34,9 @@ template<class T>
 class RingBuffer 
 {
   public:
-	RingBuffer (guint sz) {
+	RingBuffer (unsigned sz) {
 //	size = ffs(sz); /* find first [bit] set is a single inlined assembly instruction. But it looks like the API rounds up so... */
-	guint power_of_two;
+	unsigned power_of_two;
 	for (power_of_two = 1; 1U<<power_of_two < sz; power_of_two++);
 		size = 1<<power_of_two;
 		size_mask = size;
@@ -52,44 +52,50 @@ class RingBuffer
 
 	void reset () {
 		/* !!! NOT THREAD SAFE !!! */
-		g_atomic_int_set (&write_idx, 0);
-		g_atomic_int_set (&read_idx, 0);
+		write_idx.fetchAndStoreOrdered(0);
+		read_idx.fetchAndStoreOrdered(0);
 	}
 
-	void set (guint r, guint w) {
+	void set (unsigned r, unsigned w) {
 		/* !!! NOT THREAD SAFE !!! */
-		g_atomic_int_set (&write_idx, w);
-		g_atomic_int_set (&read_idx, r);
+		write_idx.fetchAndStoreOrdered(w);
+		read_idx.fetchAndStoreOrdered(r);
 	}
 	
-	guint read  (T *dest, guint cnt);
-	guint  write (T *src, guint cnt);
+	unsigned read  (T *dest, unsigned cnt);
+	unsigned  write (T *src, unsigned cnt);
 
 	struct rw_vector {
 	    T *buf[2];
-	    guint len[2];
+	    unsigned len[2];
 	};
 
 	void get_read_vector (rw_vector *);
 	void get_write_vector (rw_vector *);
 	
-	void decrement_read_idx (guint cnt) {
-		g_atomic_int_set (&read_idx, (g_atomic_int_get(&read_idx) - cnt) & size_mask);
+	void decrement_read_idx (unsigned cnt) {
+		read_idx.fetchAndStoreOrdered(
+			read_idx.fetchAndAddOrdered( - (int)cnt ) & size_mask
+			);
 	}                
 
-	void increment_read_idx (guint cnt) {
-		g_atomic_int_set (&read_idx, (g_atomic_int_get(&read_idx) + cnt) & size_mask);
+	void increment_read_idx (unsigned cnt) {
+		read_idx.fetchAndStoreOrdered(
+			read_idx.fetchAndAddOrdered( (int)cnt ) & size_mask
+			);
 	}                
 
-	void increment_write_idx (guint cnt) {
-		g_atomic_int_set (&write_idx,  (g_atomic_int_get(&write_idx) + cnt) & size_mask);
+	void increment_write_idx (unsigned cnt) {
+		write_idx.fetchAndStoreOrdered(
+			write_idx.fetchAndAddOrdered( (int)cnt ) & size_mask
+			);
 	}                
 
-	guint write_space () {
-		guint w, r;
+	unsigned write_space () {
+		unsigned w, r;
 		
-		w = g_atomic_int_get (&write_idx);
-		r = g_atomic_int_get (&read_idx);
+		w = (int) write_idx;
+		r = (int) read_idx;
 		
 		if (w > r) {
 			return ((r - w + size) & size_mask) - 1;
@@ -100,11 +106,11 @@ class RingBuffer
 		}
 	}
 	
-	guint read_space () {
-		guint w, r;
+	unsigned read_space () {
+		unsigned w, r;
 		
-		w = g_atomic_int_get (&write_idx);
-		r = g_atomic_int_get (&read_idx);
+		w = (int) write_idx;
+		r = (int) read_idx;
 		
 		if (w > r) {
 			return w - r;
@@ -114,28 +120,28 @@ class RingBuffer
 	}
 
 	T *buffer () { return buf; }
-	guint get_write_idx () const { return g_atomic_int_get (&write_idx); }
-	guint get_read_idx () const { return g_atomic_int_get (&read_idx); }
-	guint bufsize () const { return size; }
+	unsigned get_write_idx () const { return (int)write_idx; }
+	unsigned get_read_idx () const { return (int)read_idx; }
+	unsigned bufsize () const { return size; }
 
   protected:
 	T *buf;
-	guint size;
-	mutable gint write_idx;
-	mutable gint read_idx;
-	guint size_mask;
+	unsigned size;
+	mutable QAtomicInt write_idx;
+	mutable QAtomicInt read_idx;
+	unsigned size_mask;
 };
 
-template<class T> guint 
-RingBuffer<T>::read (T *dest, guint cnt)
+template<class T> unsigned 
+RingBuffer<T>::read (T *dest, unsigned cnt)
 {
-        guint free_cnt;
-        guint cnt2;
-        guint to_read;
-        guint n1, n2;
-        guint priv_read_idx;
+        unsigned free_cnt;
+        unsigned cnt2;
+        unsigned to_read;
+        unsigned n1, n2;
+        unsigned priv_read_idx;
 
-        priv_read_idx=g_atomic_int_get(&read_idx);
+        priv_read_idx = (int) read_idx;
 
         if ((free_cnt = read_space ()) == 0) {
                 return 0;
@@ -161,21 +167,21 @@ RingBuffer<T>::read (T *dest, guint cnt)
                 priv_read_idx = n2;
         }
 
-        g_atomic_int_set(&read_idx, priv_read_idx);
+        read_idx.fetchAndStoreOrdered(priv_read_idx);
         return to_read;
 }
 
-template<class T> guint
-RingBuffer<T>::write (T *src, guint cnt)
+template<class T> unsigned
+RingBuffer<T>::write (T *src, unsigned cnt)
 
 {
-        guint free_cnt;
-        guint cnt2;
-        guint to_write;
-        guint n1, n2;
-        guint priv_write_idx;
+        unsigned free_cnt;
+        unsigned cnt2;
+        unsigned to_write;
+        unsigned n1, n2;
+        unsigned priv_write_idx;
 
-        priv_write_idx=g_atomic_int_get(&write_idx);
+        priv_write_idx = (int) write_idx;
 
         if ((free_cnt = write_space ()) == 0) {
                 return 0;
@@ -201,7 +207,7 @@ RingBuffer<T>::write (T *src, guint cnt)
                 priv_write_idx = n2;
         }
 
-        g_atomic_int_set(&write_idx, priv_write_idx);
+	write_idx.fetchAndStoreOrdered( priv_write_idx );
         return to_write;
 }
 
@@ -209,12 +215,12 @@ template<class T> void
 RingBuffer<T>::get_read_vector (RingBuffer<T>::rw_vector *vec)
 
 {
-	guint free_cnt;
-	guint cnt2;
-	guint w, r;
+	unsigned free_cnt;
+	unsigned cnt2;
+	unsigned w, r;
 	
-	w = g_atomic_int_get (&write_idx);
-	r = g_atomic_int_get (&read_idx);
+	w = (int) write_idx;
+	r = (int) read_idx;
 	
 	if (w > r) {
 		free_cnt = w - r;
@@ -249,12 +255,12 @@ template<class T> void
 RingBuffer<T>::get_write_vector (RingBuffer<T>::rw_vector *vec)
 
 {
-	guint free_cnt;
-	guint cnt2;
-	guint w, r;
+	unsigned free_cnt;
+	unsigned cnt2;
+	unsigned w, r;
 	
-	w = g_atomic_int_get (&write_idx);
-	r = g_atomic_int_get (&read_idx);
+	w = (int) write_idx;
+	r = (int) read_idx;
 	
 	if (w > r) {
 		free_cnt = ((r - w + size) & size_mask) - 1;

@@ -52,6 +52,7 @@ LIST(APPEND sp_cpp
   AlsaAudioSystem.cpp
   jack_memops.c
   bams_format.c
+  RubberBandServer.cpp
   )
 
 LIST(APPEND sp_hpp
@@ -67,6 +68,8 @@ LIST(APPEND sp_hpp
   AlsaAudioSystemPrivate.hpp
   jack_memops.h
   bams_format.h
+  RubberBandServer.cpp
+  RingBuffer.hpp
   )
 
 LIST(APPEND sp_moc_hpp
