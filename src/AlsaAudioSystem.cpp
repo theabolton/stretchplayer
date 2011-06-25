@@ -625,14 +625,17 @@ namespace StretchPlayer
 
     void AlsaAudioSystem::_convert_to_output_float(uint32_t nframes)
     {
-	float *out;
-	uint32_t f;
+	float *out, *l, *r;
+	uint32_t f, count;
 	assert(_bits == 32);
 	assert(_little_endian);
 	out = (float*)_buf;
-	for(f=0 ; f<nframes ; ++f) {
-	    (*out++) = _left[f];
-	    (*out++) = _right[f];
+	l = &_left[0];
+	r = &_right[0];
+	count = nframes;
+	while(count--) {
+	    (*out++) = (*l++);
+	    (*out++) = (*r++);
 	}
 	/* Check for non-native byte ordering */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
