@@ -43,6 +43,44 @@
 
 namespace StretchPlayer
 {
+    static const char slider_stylesheet[] =
+	"QSlider {\n"
+	"    border-radius: 6px;\n"
+	"}\n"
+	"\n"
+	"QSlider::groove {\n"
+	"    border: 0px solid #000000;\n"
+	"    background: #000000;\n"
+	"}\n"
+	"\n"
+	"QSlider::groove:horizontal {\n"
+	"    height: 2px;\n"
+	"    margin-left: 10px;\n"
+	"    margin-right: 10px;\n"
+	"}\n"
+	"\n"
+	"QSlider::groove:vertical {\n"
+	"    width: 2px;\n"
+	"    margin-top: 10px;\n"
+	"    margin-bottom: 10px;\n"
+	"}\n"
+	"\n"
+	"QSlider::handle {\n"
+	"    background: #000000;\n"
+	"    border-radius: 6px;\n"
+	"    border-width: 1px;\n"
+	"    width: 10px;\n"
+	"    height: 10px;\n"
+	"}\n"
+	"QSlider::handle:horizontal {\n"
+	"    margin-top: -6px;\n"
+	"    margin-bottom: -6px;\n"
+	"}\n"
+	"QSlider::handle:vertical {\n"
+	"    margin-left: -6px;\n"
+	"    margin-right: -6px;\n"
+	"}\n";
+
     namespace Details
     {
 	class PlayerWidgetMessageCallback : public EngineMessageCallback
@@ -581,11 +619,13 @@ namespace StretchPlayer
 	_stretch->setMinimum(0);
 	_stretch->setMaximum(1000);
 	_stretch->setToolTip("Playback Speed [Left/Right Arrow]");
+	_stretch->setStyleSheet(StretchPlayer::slider_stylesheet);
 
 	_volume = new QSlider(Qt::Vertical, this);
 	_volume->setMinimum(0);
 	_volume->setMaximum(1000);
 	_volume->setToolTip("Volume [Up/Down]");
+	_volume->setStyleSheet(StretchPlayer::slider_stylesheet);
     }
 
     void PlayerWidget::_layout_widgets()
