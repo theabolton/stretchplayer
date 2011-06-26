@@ -8,5 +8,6 @@
     <file>img/plus.png</file>
     <file>img/minus.png</file>
     <file>img/file.png</file>
+    <file>img/circle.png</file>
 </qresource>
 </RCC>
