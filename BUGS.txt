@@ -17,8 +17,6 @@ bugs.
 * The font layout is .... ok.... but still looks
   a little amateurish.
 
-* Doesn't work with buffer size < 256
-
 * Doesn't work on older computers (<= 800 MHz)
 
 * Memory hog.  Needs to stream.
@@ -30,8 +28,6 @@ bugs.
 * Create Windows version with MSI package.
 
 * Add PortAudio support
-
-* Sliders don't match the UI.
 
 * Get the Git version into the CMake stuff.
 
