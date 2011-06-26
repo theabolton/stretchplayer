@@ -78,7 +78,7 @@ LIST(APPEND sp_hpp
   AudioSystem.hpp
   jack_memops.h
   bams_format.h
-  RubberBandServer.cpp
+  RubberBandServer.hpp
   RingBuffer.hpp
   )
 
