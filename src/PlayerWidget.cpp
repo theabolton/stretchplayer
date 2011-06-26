@@ -41,46 +41,58 @@
 #include <cmath>
 #include "config.h"
 
+#include <iostream>
+using namespace std;
+
 namespace StretchPlayer
 {
-    static const char slider_stylesheet[] =
-	"QSlider {\n"
-	"    border-radius: 6px;\n"
-	"}\n"
-	"\n"
-	"QSlider::groove {\n"
-	"    border: 0px solid #000000;\n"
-	"    background: #000000;\n"
-	"}\n"
-	"\n"
-	"QSlider::groove:horizontal {\n"
-	"    height: 2px;\n"
-	"    margin-left: 10px;\n"
-	"    margin-right: 10px;\n"
-	"}\n"
-	"\n"
-	"QSlider::groove:vertical {\n"
-	"    width: 2px;\n"
-	"    margin-top: 10px;\n"
-	"    margin-bottom: 10px;\n"
-	"}\n"
-	"\n"
-	"QSlider::handle {\n"
-	"    image: url(:img/circle.png);\n"
-	"    width: 24px;\n"
-	"    height: 24px;\n"
-	"}\n"
-	"QSlider::handle:horizontal {\n"
-	"    margin-top: -8px;\n"
-	"    margin-bottom: -8px;\n"
-	"}\n"
-	"QSlider::handle:vertical {\n"
-	"    margin-left: -8px;\n"
-	"    margin-right: -8px;\n"
-	"}\n";
-
     namespace Details
     {
+
+	static QString slider_stylesheet(int grid_pixels)
+	{
+	    static const char css[] =
+		"QSlider {\n"
+		"    border-radius: 6px;\n"
+		"}\n"
+		"\n"
+		"QSlider::groove {\n"
+		"    border: 0px solid #000000;\n"
+		"    background: #000000;\n"
+		"}\n"
+		"\n"
+		"QSlider::groove:horizontal {\n"
+		"    height: 2px;\n"
+		"    margin-left: 10px;\n"
+		"    margin-right: 10px;\n"
+		"}\n"
+		"\n"
+		"QSlider::groove:vertical {\n"
+		"    width: 2px;\n"
+		"    margin-top: 10px;\n"
+		"    margin-bottom: 10px;\n"
+		"}\n"
+		"\n"
+		"QSlider::handle {\n"
+		"    image: url(:img/circle.png);\n"
+		"    width: %1px;\n"
+		"    height: %1px;\n"
+		"}\n"
+		"QSlider::handle:horizontal {\n"
+		"    margin-top: -%2px;\n"
+		"    margin-bottom: -%2px;\n"
+		"}\n"
+		"QSlider::handle:vertical {\n"
+		"    margin-left: -%2px;\n"
+		"    margin-right: -%2px;\n"
+		"}\n";
+	    int size, margin;
+	    size = float(grid_pixels)*2.0/3.0;
+	    margin = float(size)*.44;
+
+	    return QString(css).arg(size).arg(margin);
+	}
+
 	class PlayerWidgetMessageCallback : public EngineMessageCallback
 	{
 	public:
@@ -316,7 +328,11 @@ namespace StretchPlayer
 
     void PlayerWidget::resizeEvent(QResizeEvent * /*event*/)
     {
+	QString css;
 	_sizes.set_scale_from(width(), height());
+	css = Details::slider_stylesheet(_sizes.widget_grid_size());
+	_stretch->setStyleSheet(css);
+	_volume->setStyleSheet(css);
 	_layout_widgets();
     }
 
@@ -613,17 +629,18 @@ namespace StretchPlayer
 
 	_status = new StatusWidget(this, &_sizes);
 
+	QString css = Details::slider_stylesheet(_sizes.widget_grid_size());
 	_stretch = new QSlider(Qt::Horizontal, this);
 	_stretch->setMinimum(0);
 	_stretch->setMaximum(1000);
 	_stretch->setToolTip("Playback Speed [Left/Right Arrow]");
-	_stretch->setStyleSheet(StretchPlayer::slider_stylesheet);
+	_stretch->setStyleSheet(css);
 
 	_volume = new QSlider(Qt::Vertical, this);
 	_volume->setMinimum(0);
 	_volume->setMaximum(1000);
 	_volume->setToolTip("Volume [Up/Down]");
-	_volume->setStyleSheet(StretchPlayer::slider_stylesheet);
+	_volume->setStyleSheet(css);
     }
 
     void PlayerWidget::_layout_widgets()
