@@ -60,7 +60,7 @@ public:
 	return _stretch;
     }
     void set_stretch(float str) {
-	if(str > 0.5 && str < 2.0) {
+	if(str > 0.2499 && str < 1.2501) {  /* would be 'if(str >= 0.25 && str <= 1.25)', but floating point is tricky... */
 	    _stretch = str;
 	    //_state_changed = true;
 	}

@@ -234,7 +234,7 @@ namespace StretchPlayer
 
     void PlayerWidget::stretch(int pos)
     {
-	_engine->set_stretch( 0.5 + double(pos)/1000.0 );
+	_engine->set_stretch( 0.25 + double(pos)/1000.0 );
     }
 
     void PlayerWidget::volume(int vol)
@@ -322,7 +322,7 @@ namespace StretchPlayer
 	_volume->setValue( _to_fader(vol) );
 	_status->volume( _volume->value() / 1000.0 );
 
-	_stretch->setValue( (sch-0.5) * 1000 );
+	_stretch->setValue( (sch-0.25) * 1000 );
 	_status->update();
     }
 
