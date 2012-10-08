@@ -1,0 +1,19 @@
+# FindLibMpg123
+# Try to find libLibMpg123
+#
+# Once found, will define:
+#
+#    LibMpg123_FOUND
+#    LibMpg123_INCLUDE_DIRS
+#    LibMpg123_LIBRARIES
+#
+
+INCLUDE(TritiumPackageHelper)
+
+TPH_FIND_PACKAGE(LibMpg123 mpg123 mpg123.h mpg123)
+
+INCLUDE(TritiumFindPackageHandleStandardArgs)
+
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(LibMpg123 DEFAULT_MSG LibMpg123_LIBRARIES LibMpg123_INCLUDE_DIRS)
+
+MARK_AS_ADVANCED(LibMpg123_INCLUDE_DIRS LibMpg123_LIBRARIES)

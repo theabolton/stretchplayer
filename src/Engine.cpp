@@ -22,6 +22,7 @@
 #include "RubberBandServer.hpp"
 #include "Configuration.hpp"
 #include <sndfile.h>
+#include <mpg123.h>
 #include <stdexcept>
 #include <cassert>
 #include <cstring>
@@ -299,12 +300,11 @@ namespace StretchPlayer
 
 	_message( QString("Opening file...") );
 	sf = sf_open(filename.toLocal8Bit().data(), SFM_READ, &sf_info);
-	if( !sf ) {
-	    _error( QString("Error opening file '%1': %2")
-		    .arg(filename)
-		    .arg( sf_strerror(sf) ) );
-	    return QString();
-	}
+      if( sf ) {
+	/* I (smbolton) refactored here, but I didn't change the indentation of
+         * the code below so that my changes are obvious. (The alternative is a
+         * really ugly diff.)  If Gabriel wants to incorporate my changes, he or
+         * I can reformat then. */
 
 	_sample_rate = sf_info.samplerate;
 	_left.reserve( sf_info.frames );
@@ -317,7 +317,7 @@ namespace StretchPlayer
 	    return QString();
 	}
 
-	_message( QString("Opening file...") );
+	_message( QString("Reading file...") );
 	std::vector<float> buf(4096, 0.0f);
 	sf_count_t read, k;
 	unsigned mod;
@@ -341,6 +341,90 @@ namespace StretchPlayer
 	}
 
 	sf_close(sf);
+	QFileInfo f_info(filename);
+	return f_info.fileName();
+      }
+
+	/* MP3 loading via libmpg123 -- adapted by Sean Bolton from mpg123_to_wav.c */
+	mpg123_handle *mh = 0;
+	int err, channels, encoding;
+	long rate;
+
+	if ((err = mpg123_init()) != MPG123_OK ||
+	    (mh = mpg123_new(0, &err)) == 0 ||
+	    mpg123_open(mh, filename.toLocal8Bit().data()) != MPG123_OK ||
+	    mpg123_getformat(mh, &rate, &channels, &encoding) != MPG123_OK) {
+
+	    _error( QString("Error opening file '%1': %2")
+		    .arg(filename)
+		    .arg(mh == NULL ? mpg123_plain_strerror(err) : mpg123_strerror(mh)) );
+	    mpg123_close(mh);
+	    mpg123_delete(mh);
+	    mpg123_exit();
+	    return QString();
+	}
+	if (encoding != MPG123_ENC_SIGNED_16) {
+	    _error( QString("Error: unsupported encoding format.") );
+	    mpg123_close(mh);
+	    mpg123_delete(mh);
+	    mpg123_exit();
+	    return QString();
+	}
+	/* lock the output format */
+	mpg123_format_none(mh);
+	mpg123_format(mh, rate, channels, encoding);
+
+	off_t length = mpg123_length(mh);
+	if (length == MPG123_ERR || length == 0) {
+	    _error( QString("Error: file is empty or length unknown.") );
+	    mpg123_close(mh);
+	    mpg123_delete(mh);
+	    mpg123_exit();
+	    return QString();
+	}
+
+	_sample_rate = rate;
+	_left.reserve( length );
+	_right.reserve( length );
+	
+	_message( QString("Reading file...") );
+	std::vector<signed short> buffer(4096, 0);
+	size_t read = 0, k;
+
+	while (1) {
+	    err = mpg123_read(mh, (unsigned char*)&buffer[0], buffer.size(), &read);
+	    if (err != MPG123_OK && err != MPG123_DONE)
+		break;
+	    if (read > 0) {
+		read /= sizeof(signed short);
+		for(k = 0; k < read ; k++) {
+		    unsigned int mod = k % channels;
+		    if( mod == 0 ) {
+			_left.push_back( (float)buffer[k] / 32768.0f );
+		    }
+		    if( mod == 1 || channels == 1 ) {
+			_right.push_back( (float)buffer[k] / 32768.0f );
+		    }
+		    /* remaining channels ignored */
+		}
+	    }
+	    if (err == MPG123_DONE)
+		break;
+	};
+
+	if(err != MPG123_DONE) {
+	    _error( QString("Error decoding file: %1.")
+		    .arg(err == MPG123_ERR ? mpg123_strerror(mh) : mpg123_plain_strerror(err)));
+	    _error( QString("Error: file is empty or length unknown.") );
+	    mpg123_close(mh);
+	    mpg123_delete(mh);
+	    mpg123_exit();
+	    return QString();
+	}
+
+	mpg123_close(mh);
+	mpg123_delete(mh);
+	mpg123_exit();
 	QFileInfo f_info(filename);
 	return f_info.fileName();
     }
