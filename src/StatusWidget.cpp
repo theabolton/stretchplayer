@@ -132,7 +132,7 @@ namespace StretchPlayer
 
 	_bg_zone.setRect( 0, 0, w, h );
 
-	_position->set_line_widths( _sizes->thin_line(), _sizes->thicker_line() );
+	_position->set_line_widths( _sizes->thin_line(), _sizes->thicker_line() * 4);
 	QSize pos_sz = _position->sizeHint();
 	_position->setGeometry( margin,
 				h - margin - pos_sz.height(),
