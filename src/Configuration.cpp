@@ -300,7 +300,7 @@ namespace StretchPlayer
 
 	int o = optind;
 	for( o=optind ; o < argc; ++o ) {
-	    startup_file( argv[o] );
+	    startup_file( QString::fromLocal8Bit(argv[o]) );
 	}
 
 	// Check if setup is sane.
