@@ -125,6 +125,8 @@ private:
 
     void _zero_buffers(uint32_t nframes);
     void _process_playing(uint32_t nframes);
+    bool _load_song_using_libsndfile(const QString &filename);
+    bool _load_song_using_libmpg123(const QString &filename);
     void _handle_loop_ab();
 
     typedef std::set<EngineMessageCallback*> callback_seq_t;
