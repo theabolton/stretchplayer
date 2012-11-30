@@ -409,10 +409,10 @@ namespace StretchPlayer
 		break;
 	};
 
-        if (err == MPG123_NEED_MORE) {
+	if (err == MPG123_NEED_MORE) {
 	    _error( QString("Warning: premature end of MP3 stream"));
-            /* allow user to play what we did manage to read */
-        } else if (err != MPG123_DONE) {
+	    /* allow user to play what we did manage to read */
+	} else if (err != MPG123_DONE) {
 	    _error( QString("Error decoding file: %1.")
 		    .arg(err == MPG123_ERR ? mpg123_strerror(mh) : mpg123_plain_strerror(err)));
 	    goto mpg123error;
