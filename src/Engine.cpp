@@ -605,7 +605,7 @@ namespace StretchPlayer
 	int alignment;
 	unsigned ctr = nframes/4;
 
-	alignment = (((int)buf)%16);
+	alignment = reinterpret_cast<uintptr_t>(buf) & 0x0F;
 
 	switch(alignment) {
 	case 4: (*buf++) *= gain;
@@ -618,7 +618,7 @@ namespace StretchPlayer
 	  goto LAME;
 	}
 
-	assert( (((int)buf)&0xf) == 0 );
+	assert( (reinterpret_cast<uintptr_t>(buf) & 0x0F) == 0 );
 	opt = (vf4*) buf;
 	while(ctr--) {
 	    opt->v *= gg.v; ++opt;
