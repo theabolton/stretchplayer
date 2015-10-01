@@ -68,7 +68,7 @@ static const snd_pcm_format_t aas_supported_formats[] = {
 namespace StretchPlayer
 {
     inline bool not_aligned_16(void* ptr) {
-	return ((int)ptr) % 16;
+	return (reinterpret_cast<uintptr_t>(ptr) & 0x0F);
     }
 
     AlsaAudioSystem::AlsaAudioSystem() :
