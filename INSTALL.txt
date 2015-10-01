@@ -68,6 +68,7 @@ installed on your system, and the development header files.
           work on some systems)
 	* libsndfile >=1.0.17
 	* librubberband
+	* libmpg123
 
 On a dual-core, 32-bit, 1800MHz processor using a parallel build,
 StretchPlayer takes about 10 seconds to compile.
